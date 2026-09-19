@@ -1,4 +1,4 @@
-# Projeto Hermes: Estudo Comparativo de Agentes Autônomos em Documentos Administrativos (SEI)
+# Projeto Hermes: Estudo Comparativo de Agentes Autônomos em Documentos Administrativos e Institucionais
 
 **Centro de Inovação em Inteligência Artificial (CIIA) - Universidade do Distrito Federal (UnDF)**
 

@@ -1,60 +1,65 @@
-# Projeto Hermes: Estudo Comparativo de Agentes Autônomos em Documentos Administrativos e Institucionais
+# Projeto Hermes — comparação de agentes sobre documentos administrativos
 
-**Centro de Inovação em Inteligência Artificial (CIIA) - Universidade do Distrito Federal (UnDF)**
+Centro de Inovação em Inteligência Artificial (CIIA) — Universidade do Distrito Federal (UnDF).
 
-## 1. Apresentação
+Comparamos implementações Hermes e LangGraph utilizando o mesmo corpus, ferramentas e modelo de linguagem. A pergunta é como diferem em conclusão de tarefas, fundamentação, latência e custo. Os documentos são exportados manualmente do SEI; toda consulta e futura escrita ocorre no ambiente experimental. Não existe conexão com o SEI real.
 
-O presente repositório contém as especificações, documentação e artefatos de implementação do Projeto Hermes. O objetivo primordial do projeto é construir e avaliar comparativamente dois agentes autônomos capazes de consultar documentos administrativos exportados do Sistema Eletrônico de Informações (SEI) e executar tarefas específicas em um ambiente de testes rigorosamente controlado.
+## Comece por aqui
 
-Um dos agentes utilizará o sistema executor "Hermes", enquanto o outro será implementado através do framework "LangGraph". Ambos compartilharão a mesma base documental, o mesmo catálogo de ferramentas e o mesmo modelo de linguagem (LLM). O intuito é garantir que a comparação das implementações se dê em condições idênticas e documentadas, propiciando a geração de evidências empíricas e a publicação de um artigo científico.
+Instale Git e [uv](https://docs.astral.sh/uv/getting-started/installation/). Na raiz:
 
-## 2. Arquitetura do Sistema
+```sh
+uv sync --locked
+uv run --locked python -m scripts.dev demo
+uv run --locked python -m scripts.dev check
+```
 
-A arquitetura estabelecida separa logicamente a preparação documental, a execução das ferramentas e o controle cognitivo dos agentes, garantindo independência e testabilidade.
+Também funciona no PowerShell. A demo importa documento fictício, gera chunks, persiste em SQLite e consulta a API em processo, sem chave de LLM. Para HTTP e PostgreSQL/Compose, veja [início rápido](docs/getting-started.md). Com Make: `make setup`, `make demo`, `make check`.
 
-*   **Linguagem Base e API:** Python (versão 3.11 ou 3.12), orquestrando requisições através do FastAPI e esquemas Pydantic.
-*   **Armazenamento de Dados:** PostgreSQL integrado via SQLAlchemy. O uso da extensão `pgvector` viabiliza a busca semântica em base vetorial.
-*   **Extração e Ingestão Documental:** Emprego de PyMuPDF para extração de texto direto de PDFs e Tesseract (OCR em português) para reconhecimento de páginas digitalizadas.
-*   **Orquestração e Execução:** Adaptadores Hermes e LangGraph atuando de maneira independente, mas consumindo a mesma API compartilhada (`HTTPX`).
-*   **Infraestrutura e Ambiente:** Implantação em servidor Linux gerenciada via Docker Compose, com persistência adequada para garantir execuções reproduzíveis.
+## Arquitetura
 
-## 3. Estrutura das Equipes e Frentes de Trabalho
+```mermaid
+flowchart LR
+    E[Exportação manual] --> D[Pipeline de documentos]
+    D --> DB[(Corpus e metadados)]
+    H[Hermes: integração pendente] --> B[Backend: ferramentas]
+    L[LangGraph: integração pendente] --> B
+    B --> DB
+    H <--> M[Endpoint LLM externo]
+    L <--> M
+    B --> A[Registros para avaliação: previstos]
+```
 
-O desenvolvimento e a execução da pesquisa são distribuídos em frentes especializadas, coordenadas de maneira integrada:
+Os agentes selecionam ferramentas; o backend valida e executa operações autorizadas. A VPS Hostinger hospedará serviços; não se presume GPU ou assinatura de LLM. [Arquitetura](docs/architecture.md).
 
-*   **Documentos:** Responsável pelo inventário, extração (pipeline de ingestão), chunking, vetorização (embeddings) e conferência manual das fontes no escopo do SEI.
-*   **Backend:** Encarregada do banco de dados, da API de comunicação e do catálogo central de ferramentas compartilhadas (por exemplo, `consultar_processo`, `buscar_documentos`, `registrar_pendencia`).
-*   **Hermes:** Configuração do ambiente, integração de ferramentas e persistência de logs próprios do executor Hermes.
-*   **LangGraph:** Construção do grafo de estado, definição de nós, arestas condicionais e limites do ciclo modelo-ferramenta utilizando a biblioteca LangGraph.
-*   **Infraestrutura:** Gestão da VPS, containers, persistência de volumes, gerenciamento de rede e monitoramento.
-*   **Metodologia:** Formulação das tarefas do benchmark, definição de rubricas de avaliação, métricas de sucesso e delineamento do desenho experimental.
-*   **Coordenação:** Gerenciamento geral da arquitetura, priorização de tarefas, garantia das interfaces entre equipes e compilação do manuscrito científico.
+## Onde trabalhar
 
-## 4. Metodologia Experimental
+| Pasta | Conteúdo / equipe |
+| --- | --- |
+| [pipelines/documents](pipelines/documents/README.md) | Extração, qualidade, chunking, metadados e recuperação — Documentos (3) |
+| [services/backend](services/backend/README.md) | API, persistência e ferramentas — Backend (3) |
+| [agents/hermes](agents/hermes/README.md) | Integração do Hermes a confirmar — Hermes (2) |
+| [agents/langgraph](agents/langgraph/README.md) | Estado e ciclo modelo–ferramenta previstos — LangGraph (2) |
+| [infra](infra/README.md) | Compose, persistência, configuração e operação — Infraestrutura (2) |
+| [evaluation](evaluation/README.md) | Tarefas, rubricas e métricas antes da coleta — Metodologia (2) |
+| [contracts](contracts/README.md) | Interfaces v0.1 compartilhadas |
+| [scripts](scripts/README.md) / [tests](tests/README.md) | Comandos de desenvolvimento e verificações |
+| [examples](examples/README.md) | Dados exclusivamente fictícios |
+| [docs](docs/README.md) | Guias, decisões, runbooks e PDFs históricos |
+| [.github](.github/README.md) | CI, templates e mapa de revisão |
 
-O delineamento experimental tem como questão central: sob o mesmo modelo fundamental, ferramentas e base documental, como as implementações com Hermes e LangGraph diferem no que tange à conclusão de tarefas, latência, uso de ferramentas e custo financeiro?
+Coordenação: André / Gustavo / João Enomoto. Preencha responsáveis nos [guias das equipes](docs/teams/README.md). A proposta soma 14 vagas técnicas; participação e sobreposição da coordenação precisam ser confirmadas para o total aproximado de 15 pessoas.
 
-As métricas primárias e secundárias capturadas durante os testes englobam:
-1.  **Sucesso da Tarefa:** Verificação do atendimento a todos os requisitos e de ações confirmadas.
-2.  **Uso de Ferramentas:** Coerência nas chamadas de funções e ausência de escritas indevidas (alucinações operacionais).
-3.  **Qualidade Factual:** Nível de embasamento das afirmações baseadas estritamente nas fontes extraídas.
-4.  **Latência e Consistência:** Tempo percorrido por etapa e constância dos resultados entre repetições iterativas.
-5.  **Custo e Consumo:** Mensuração dos gastos associados ao consumo da infraestrutura e dos tokens dos modelos de linguagem.
+## Contribuir
 
-O projeto estipula a realização de até 360 execuções isoladas ao longo das sessões de benchmark.
+Trabalhe na branch da equipe, opcionalmente usando branches curtas integradas primeiro nela. Abra PR `team/* → main`; após integração, a coordenação aprova PR `main → production`. Use **merge commits**, sem force push e sem excluir branches permanentes. `production` é a versão estável experimental. Antes de iniciar tarefas e antes de integrar entregas, cada equipe coordena a incorporação manual da `main`. Atualizações da `main` não abrem PRs nem modificam as branches das equipes automaticamente. Merge e implantação na Hostinger são etapas distintas. Leia [CONTRIBUTING](CONTRIBUTING.md) e [fluxo Git](docs/git-workflow.md).
 
-## 5. Requisitos Computacionais e Orçamento
+## Estado atual
 
-Dada a natureza intensiva de processamento paralelo na extração de texto (OCR) e a exigência de memória RAM para a busca textual e vetorial no PostgreSQL, as especificações computacionais estipuladas contemplam:
+Implementados: corpus sintético paginado, chunks rastreáveis, persistência transacional, consulta de processo, busca textual filtrada e leitura de documento; testes e comandos locais. Compose e CI estão preparados para PostgreSQL.
 
-*   **Hardware (VPS):** Instância virtualizada dotada de múltiplos núcleos de processamento (vCPU da linha AMD EPYC) e no mínimo 16 GB de memória RAM para suprimir riscos de sobrecarga (*Out of Memory*).
-*   **Provedor e Integração de IA:** Hospedagem primária sob infraestrutura da Hostinger (Plano KVM 4) e processamento de linguagem viabilizado via agregador OpenRouter, permitindo a transição ágil de modelos durante o experimento.
-*   **Estimativa Orçamentária:** Custo operacional tecnológico trimestral projetado entre R$ 694,00 e R$ 744,00.
+Pendentes: PDF/OCR, recuperação semântica, requisitos validados, ferramentas de escrita, autenticação para uso compartilhado, agentes reais, coleta experimental e implantação. Os pontos de entrada dos agentes exercitam somente HTTP. O Hermes exato precisa de URL e versão. Não há resultados comparativos coletados.
 
-## 6. Cronograma Consolidado
+O fluxo Git exige branches, revisão humana e checks obrigatórios. Veja [status e evidências](docs/project-status.md), [governança](docs/runbooks/github-governance.md), [backlog](docs/backlog.md) e [Codex/Claude Code](docs/ai-development.md).
 
-A execução é prevista para o trimestre final de 2026:
-*   **Setembro:** Configuração de ambientes, estudo da stack tecnológica e extração inicial de dados piloto.
-*   **Outubro:** Desenvolvimento final da base de dados, consolidação de APIs e encerramento do desenvolvimento de funcionalidades sistêmicas.
-*   **Novembro:** Congelamento de versão de código (code freeze), deflagração das rodadas do experimento principal e início do fechamento dos resultados estatísticos.
-*   **Dezembro (até 10/12):** Verificação de materiais, aprovação final e submissão do manuscrito científico resultante da pesquisa.
+Prazo final planejado: **10/12/2026**. Os [PDFs originais](docs/README.md) permanecem como propostas históricas; não comprovam conclusão de marcos, implantação ou preços atuais.

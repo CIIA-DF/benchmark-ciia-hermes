@@ -1,0 +1,11 @@
+{
+  "document_id": "DOC-DEMO-001",
+  "process_id": "PROC-DEMO-001",
+  "corpus_version": "synthetic-v1",
+  "title": "Requerimento fictício",
+  "source": "synthetic://requerimento-001",
+  "pages": [
+    {"number": 1, "text": "DOCUMENTO FICTÍCIO PARA TESTES. Solicita-se material didático para uma oficina experimental. A justificativa informa que o material será utilizado por estudantes durante a atividade."},
+    {"number": 2, "text": "DOCUMENTO FICTÍCIO PARA TESTES. A previsão de entrega do material didático é dezembro de 2026. Esta exportação é parcial; outros anexos podem existir no processo de origem."}
+  ]
+}

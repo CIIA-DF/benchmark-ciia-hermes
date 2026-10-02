@@ -1,0 +1,8 @@
+{
+  "process_id": "PROC-DEMO-001",
+  "title": "Pedido fictício de material didático",
+  "corpus_version": "synthetic-v1",
+  "requirements_version": "demo-v1",
+  "export_completeness": "partial",
+  "export_note": "Exemplo sintético. Só o requerimento foi incluído; não inferir ausência de anexos."
+}

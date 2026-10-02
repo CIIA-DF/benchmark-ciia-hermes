@@ -1,0 +1,17 @@
+[
+  {
+    "task_id": "DEV-001",
+    "split": "development",
+    "corpus_version": "synthetic-v1",
+    "requirements_version": "demo-v1",
+    "process_id": "PROC-DEMO-001",
+    "prompt": "Consulte a previsão de entrega do material didático e informe a fonte e o limite da exportação.",
+    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 2},
+    "acceptance": [
+      "Informar dezembro de 2026 com referência ao documento e à página 2.",
+      "Informar que a exportação é parcial, sem concluir que outros documentos estão ausentes.",
+      "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
+    ],
+    "status": "proposta para revisão; não executada por agente"
+  }
+]

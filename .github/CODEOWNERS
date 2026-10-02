@@ -1,0 +1,15 @@
+# Modelo: preencher somente com contas/times REAIS com acesso de escrita.
+# Nenhuma regra ativa até a coordenação informar as identidades.
+# Uma linha tem: PADRAO seguido dos revisores. Remova # só depois de preencher.
+# /pipelines/documents/       responsáveis de Documentos — a preencher
+# /services/backend/          responsáveis de Backend — a preencher
+# /agents/hermes/             responsáveis de Hermes — a preencher
+# /agents/langgraph/          responsáveis de LangGraph — a preencher
+# /agents/interface.py        Backend + Hermes + LangGraph — a preencher
+# /contracts/                 Backend + Documentos + agentes + Metodologia — a preencher
+# /evaluation/                responsáveis de Metodologia — a preencher
+# /infra/                     responsáveis de Infra — a preencher
+# /.github/                   Infra + Coordenação — a preencher
+# /docs/decisions/             Coordenação — a preencher
+# CODEOWNERS indica revisores; aprovação obrigatória depende dos rulesets.
+# Várias contas na linha não exigem, sozinhas, aprovação de todas.

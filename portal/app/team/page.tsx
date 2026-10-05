@@ -218,6 +218,35 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
                     tr: ({ ...props }) => (
                       <tr className="hover:bg-white/[0.02] transition-colors" {...props} />
                     ),
+                    a: ({ href, children, ...props }) => {
+                      if (!href) return <a {...props}>{children}</a>;
+                      if (href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('#')) {
+                        return (
+                          <a 
+                            href={href} 
+                            target={href.startsWith('http') ? '_blank' : undefined} 
+                            rel={href.startsWith('http') ? 'noopener noreferrer' : undefined} 
+                            {...props}
+                          >
+                            {children}
+                          </a>
+                        );
+                      }
+                      let resolvedPath = href;
+                      if (!href.startsWith('/')) {
+                        const currentDir = path.dirname(currentPath);
+                        resolvedPath = path.join(currentDir, href);
+                      } else {
+                        resolvedPath = href.replace(/^\//, '');
+                      }
+                      const [docPath, anchor] = resolvedPath.split('#');
+                      const hash = anchor ? `#${anchor}` : '';
+                      return (
+                        <Link href={`?doc=${encodeURIComponent(docPath)}${hash}`} {...props}>
+                          {children}
+                        </Link>
+                      );
+                    },
                   }}
                 >
                   {markdownContent}

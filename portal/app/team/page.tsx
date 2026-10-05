@@ -134,11 +134,11 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
         <header className="flex flex-col gap-3 pb-6 border-b border-white/10">
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono font-semibold tracking-widest text-cyan-400 uppercase bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 rounded-full">
-              Centro de Pesquisa P&D
+              CIIA e NIAUnDF
             </span>
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
-            Portal de Orquestração: Experimento SEI
+            Portal de Orquestração: Benchmark SEI
           </h1>
           <p className="text-sm md:text-base text-slate-400 max-w-3xl leading-relaxed">
             Documentação técnica, diretrizes de desenvolvimento e guias de infraestrutura para os 15 pesquisadores e desenvolvedores.
@@ -222,10 +222,10 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
                       if (!href) return <a {...props}>{children}</a>;
                       if (href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('#')) {
                         return (
-                          <a 
-                            href={href} 
-                            target={href.startsWith('http') ? '_blank' : undefined} 
-                            rel={href.startsWith('http') ? 'noopener noreferrer' : undefined} 
+                          <a
+                            href={href}
+                            target={href.startsWith('http') ? '_blank' : undefined}
+                            rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
                             {...props}
                           >
                             {children}
@@ -295,11 +295,10 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
                     <a
                       key={`${item.id}-${idx}`}
                       href={`#${item.id}`}
-                      className={`text-xs leading-relaxed transition-colors duration-200 ${
-                        item.level === 2
-                          ? 'text-slate-300 hover:text-cyan-400 font-medium'
-                          : 'text-slate-500 hover:text-cyan-300 pl-3 border-l border-white/10 text-[11px]'
-                      }`}
+                      className={`text-xs leading-relaxed transition-colors duration-200 ${item.level === 2
+                        ? 'text-slate-300 hover:text-cyan-400 font-medium'
+                        : 'text-slate-500 hover:text-cyan-300 pl-3 border-l border-white/10 text-[11px]'
+                        }`}
                     >
                       {item.text}
                     </a>

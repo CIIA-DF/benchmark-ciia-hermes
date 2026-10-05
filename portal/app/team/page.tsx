@@ -1,8 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
 import Link from 'next/link';
-import { Users, GitBranch, Terminal, ShieldAlert, FileText, ChevronRight, ChevronLeft, BookOpen, ListTree } from 'lucide-react';
+import { Users, GitBranch, ShieldAlert, FileText, ChevronRight, ChevronLeft, BookOpen, ListTree } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
 import GithubSlugger from 'github-slugger';
 
@@ -174,28 +175,6 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
               </nav>
             </div>
 
-            {/* Terminal Mockup Card */}
-            <div className="bg-[#030816] border border-slate-800/80 rounded-2xl overflow-hidden font-mono text-sm shadow-2xl relative group">
-              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="bg-[#050B1A] border-b border-slate-800/80 px-4 py-3 flex items-center justify-between">
-                <div className="flex gap-2">
-                  <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
-                </div>
-                <span className="text-slate-500 text-xs font-medium tracking-wider uppercase">CLI Utils</span>
-              </div>
-              <div className="p-5 text-slate-300 flex flex-col gap-3 relative z-10 leading-relaxed">
-                <div className="flex flex-col">
-                  <p className="flex items-center gap-2 text-cyan-300"><Terminal size={14} className="opacity-70" /> <span>uv sync --locked</span></p>
-                  <p className="text-slate-500/80 pl-6 text-[11px]"># Instalação controlada</p>
-                </div>
-                <div className="flex flex-col">
-                  <p className="flex items-center gap-2 text-cyan-300"><Terminal size={14} className="opacity-70" /> <span>make demo</span></p>
-                  <p className="text-slate-500/80 pl-6 text-[11px]"># Simulação experimental</p>
-                </div>
-              </div>
-            </div>
           </aside>
 
           {/* Main Content Area */}
@@ -214,10 +193,32 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
               prose-pre:bg-[#030816] prose-pre:border prose-pre:border-white/10 prose-pre:shadow-xl prose-pre:mb-6
               prose-blockquote:border-l-cyan-500 prose-blockquote:bg-cyan-950/10 prose-blockquote:py-2 prose-blockquote:px-5 prose-blockquote:rounded-r-xl prose-blockquote:text-slate-300 prose-blockquote:font-normal prose-blockquote:not-italic prose-blockquote:mb-6
               prose-hr:border-white/10 prose-hr:my-8
-              prose-th:text-slate-200 prose-th:bg-white/5 prose-th:p-3
-              prose-td:border-t prose-td:border-white/10 prose-td:p-3
             ">
-              <ReactMarkdown rehypePlugins={[rehypeSlug]}>{markdownContent}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeSlug]}
+                components={{
+                  table: ({ ...props }) => (
+                    <div className="overflow-x-auto my-6 border border-white/10 rounded-xl bg-[#050C1E]">
+                      <table className="w-full text-left border-collapse text-sm text-slate-300" {...props} />
+                    </div>
+                  ),
+                  thead: ({ ...props }) => (
+                    <thead className="bg-white/5 border-b border-white/10 text-xs font-semibold uppercase tracking-wider text-slate-200" {...props} />
+                  ),
+                  th: ({ ...props }) => (
+                    <th className="p-3.5 border-r border-white/5 last:border-r-0 font-semibold text-cyan-300" {...props} />
+                  ),
+                  td: ({ ...props }) => (
+                    <td className="p-3.5 border-t border-white/5 border-r border-white/5 last:border-r-0 text-slate-300 leading-normal" {...props} />
+                  ),
+                  tr: ({ ...props }) => (
+                    <tr className="hover:bg-white/[0.02] transition-colors" {...props} />
+                  ),
+                }}
+              >
+                {markdownContent}
+              </ReactMarkdown>
             </div>
 
             {/* Pagination / Prev & Next */}
@@ -261,8 +262,8 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
                     key={`${item.id}-${idx}`}
                     href={`#${item.id}`}
                     className={`text-sm leading-tight transition-colors duration-200 ${item.level === 2
-                        ? 'text-slate-300 hover:text-cyan-400 font-medium'
-                        : 'text-slate-500 hover:text-cyan-300 ml-4 text-[13px]'
+                      ? 'text-slate-300 hover:text-cyan-400 font-medium'
+                      : 'text-slate-500 hover:text-cyan-300 ml-4 text-[13px]'
                       }`}
                   >
                     {item.text}

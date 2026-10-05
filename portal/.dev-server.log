@@ -1,0 +1,33 @@
+
+> portal@0.1.0 dev
+> next dev
+
+node:internal/modules/cjs/loader:1459
+  throw err;
+  ^
+
+Error: Cannot find module './future/normalizers/locale-route-normalizer'
+Require stack:
+- /Users/gustavo/Documents/benchmark-ciia-hermes/portal/node_modules/next/dist/server/base-server.js
+- /Users/gustavo/Documents/benchmark-ciia-hermes/portal/node_modules/next/dist/server/lib/router-server.js
+- /Users/gustavo/Documents/benchmark-ciia-hermes/portal/node_modules/next/dist/server/lib/start-server.js
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1456:15)
+    at /Users/gustavo/Documents/benchmark-ciia-hermes/portal/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1066:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1071:22)
+    at Module._load (node:internal/modules/cjs/loader:1242:25)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1556:12)
+    at mod.require (/Users/gustavo/Documents/benchmark-ciia-hermes/portal/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:152:16)
+    at Object.<anonymous> (/Users/gustavo/Documents/benchmark-ciia-hermes/portal/node_modules/next/dist/server/base-server.js:58:32) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/gustavo/Documents/benchmark-ciia-hermes/portal/node_modules/next/dist/server/base-server.js',
+    '/Users/gustavo/Documents/benchmark-ciia-hermes/portal/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/gustavo/Documents/benchmark-ciia-hermes/portal/node_modules/next/dist/server/lib/start-server.js'
+  ]
+}
+
+Node.js v24.14.0
+[?25h

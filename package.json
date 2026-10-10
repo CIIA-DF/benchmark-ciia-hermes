@@ -1,0 +1,10 @@
+{
+  "name": "benchmark-ciia-hermes-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix portal run dev",
+    "start": "npm --prefix portal run start",
+    "build": "npm --prefix portal run build",
+    "lint": "npm --prefix portal run lint"
+  }
+}

@@ -20,7 +20,7 @@ Configurar rulesets ou proteções equivalentes cobrindo main, production e as s
 
 Primeiro rode a CI para os checks aparecerem na interface; selecione os nomes realmente emitidos (não invente variações). Não use filtros de caminhos que deixem checks obrigatórios sem execução. O workflow cobre PR, push nas permanentes e merge_group; workflow_dispatch é diagnóstico, não substitui check de PR.
 
-A incorporação manual de main passa por uma branch curta baseada na equipe e um PR revisado para essa equipe, conforme o [guia Git](../git-workflow.md). Não há mais exceção de proteção motivada por PRs automáticos com main como origem. Antes do merge, confira se os checks correspondem à versão atual e incorpore mudanças adicionais da base na branch curta quando necessário. Alterações nas proteções remotas continuam sendo ação administrativa autorizada.
+A incorporação manual de main passa por uma branch curta baseada na equipe e um PR revisado para essa equipe, conforme o [guia Git](../00-comece-aqui/02-fluxo-git.md). Não há mais exceção de proteção motivada por PRs automáticos com main como origem. Antes do merge, confira se os checks correspondem à versão atual e incorpore mudanças adicionais da base na branch curta quando necessário. Alterações nas proteções remotas continuam sendo ação administrativa autorizada.
 
 Restrinja atualizações de production aos responsáveis nomeados usando regra de restrição de push/atores disponível no plano. Combine-a com regras obrigatórias separadas e sem bypass para revisão/checks; valide efetivamente com conta não autorizada. Quando necessário, use proteção clássica para a restrição de quem pode atualizar production, mantendo os requisitos de PR/CI. A regra de identidade de responsáveis depende das contas reais.
 

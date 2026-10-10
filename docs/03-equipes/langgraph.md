@@ -1,7 +1,10 @@
 # LangGraph
 
-Pessoas propostas: 2. Branch: `team/langgraph`.
-Responsável nominal: **a preencher**. Integrantes: **a preencher**. Revisor: **a preencher**.
+Integrantes: 1 | Monitor: João Enomoto. Branch: `team/langgraph`.
+
+- **Monitor:** João Enomoto
+- **Integrantes:**
+  - Igor Razzi*
 
 ## Objetivo e responsabilidades
 
@@ -23,7 +26,7 @@ Pastas: agents/langgraph/; agents/interface.py compartilhado.
 
 LangGraph oficial, mensagens, estado, grafos, tool calling, arestas condicionais, limites e checkpoints.
 
-Primeiro siga [instalação](../getting-started.md) e execute a demo. Comando da frente:
+Primeiro siga [instalação](../00-comece-aqui/01-inicio-rapido.md) e execute a demo. Comando da frente:
 
 ```sh
 uv run --locked python -m agents.smoke --adapter langgraph
@@ -41,4 +44,4 @@ Pré-requisito: demo executada e API em outro terminal com `uv run --locked pyth
 
 Interface exercitada, estado/limites revisados e plano dinâmico de integração sem solução pré-programada das tarefas. Diff revisado, documentação coerente e limitações relatadas. Marque tarefas concluídas somente com evidência.
 
-[Backlog conjunto](../backlog.md) · [Git](../git-workflow.md) · [Contratos](../../contracts/README.md)
+[Backlog conjunto](../01-overview/backlog.md) · [Git](../00-comece-aqui/02-fluxo-git.md) · [Contratos](../../contracts/README.md)

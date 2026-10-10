@@ -4,4 +4,4 @@ Implementado: carregar JSON sintético paginado, calcular hash do arquivo e gera
 
 `uv run --locked python -m scripts.dev demo` ingere a fixture no banco local. `uv run --locked python -m scripts.dev test-documents` verifica rastreabilidade e repetição. Texto não pode atravessar páginas. Alterar conteúdo/parâmetros requer nova corpus_version.
 
-[Guia da equipe](../../docs/teams/documentos.md) · [Contratos](../../contracts/README.md). Corpus real deve ficar fora do Git e passar por autorização e preparação acordadas.
+[Guia da equipe](../../docs/03-equipes/documentos.md) · [Contratos](../../contracts/README.md). Corpus real deve ficar fora do Git e passar por autorização e preparação acordadas.

@@ -10,7 +10,7 @@ Repositório em main, commit 48ee67223fde1935113aea244d706ae71c24bb5d, sem alter
 
 Base Python 3.12 com dependências exatas/hashes em uv.lock; contratos Pydantic v0.1; JSON fictício, chunking rastreável e ingestão transacional; consulta de processo, busca textual limitada e leitura de documento. Scripts, Compose com PostgreSQL, instruções de contribuição/IA, guias de equipes, backlog e protocolo inicial.
 
-CI de validação preservada. Conforme a [ADR 002](decisions/002-atualizacao-manual-equipes.md), a equipe incorpora main manualmente antes de iniciar tarefas e antes de integrar suas entregas. Uma atualização da main não abre PRs nem modifica branches de equipe automaticamente. O mecanismo anterior e seus testes exclusivos foram removidos; backend, contratos, pipeline, infraestrutura, metodologia e demais verificações permanecem.
+CI de validação preservada. Conforme a [ADR 002](../05-decisoes/002-atualizacao-manual-equipes.md), a equipe incorpora main manualmente antes de iniciar tarefas e antes de integrar suas entregas. Uma atualização da main não abre PRs nem modifica branches de equipe automaticamente. O mecanismo anterior e seus testes exclusivos foram removidos; backend, contratos, pipeline, infraestrutura, metodologia e demais verificações permanecem.
 
 ## Revisão do fluxo em 30/09/2026
 
@@ -20,7 +20,7 @@ Verificações desta revisão: `scripts.dev check` aprovou lint, formato, links/
 
 A comparação de hashes antes/depois confirmou preservação do código da aplicação, contratos, pipeline, exemplos, infraestrutura, metodologia, CI, templates e dependências. A única alteração no código Python foi retirar a validação específica do workflow removido. Nenhum commit, push, configuração remota ou acesso à VPS foi realizado nesta revisão.
 
-Consulta remota somente leitura: Git anunciou apenas main no commit original e nenhuma referência de PR. A API pública retornou 404; configurações administrativas não puderam ser auditadas. Veja a [conferência de pendências no GitHub](runbooks/github-governance.md).
+Consulta remota somente leitura: Git anunciou apenas main no commit original e nenhuma referência de PR. A API pública retornou 404; configurações administrativas não puderam ser auditadas. Veja a [conferência de pendências no GitHub](../04-operacoes/github-governance.md).
 
 ## Validação da preparação de 29/09/2026 (histórico)
 
@@ -50,7 +50,7 @@ PDF/OCR, recuperação semântica, requisitos institucionais validados, autentic
 
 ## Ativações e decisões
 
-- GitHub: publicar branches ausentes após aprovação, preencher CODEOWNERS e configurar rulesets/checks/revisores. Conferir eventuais configurações antigas conforme a [governança](runbooks/github-governance.md); não é necessária credencial de bot para a atualização manual das equipes.
+- GitHub: publicar branches ausentes após aprovação, preencher CODEOWNERS e configurar rulesets/checks/revisores. Conferir eventuais configurações antigas conforme a [governança](../04-operacoes/github-governance.md); não é necessária credencial de bot para a atualização manual das equipes.
 - Hostinger: confirmar IP/SO/recursos/SSH, operadores, rede, segredo de banco, backup externo e janela autorizada; seguir runbook.
 - Coordenação: responsáveis/contas e composição das vagas; Hermes exato; versão LangGraph; procedimento, especialista/corpus e acesso a dados; modelo/endpoint/orçamento; desenho final, volume de rodadas e veículo do artigo.
 
@@ -65,4 +65,4 @@ PDF/OCR, recuperação semântica, requisitos institucionais validados, autentic
 | Até 27/11 | Rascunho completo do artigo | Proposto nos PDFs; confirmar |
 | Até 10/12 | Revisão final, reprodução e entrega | Prazo final planejado |
 
-Veja [backlog](backlog.md), [decisão inicial](decisions/001-base-inicial.md) e [decisão vigente do fluxo Git](decisions/002-atualizacao-manual-equipes.md).
+Veja [backlog](backlog.md), [decisão inicial](../05-decisoes/001-base-inicial.md) e [decisão vigente do fluxo Git](../05-decisoes/002-atualizacao-manual-equipes.md).

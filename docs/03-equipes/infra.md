@@ -1,7 +1,10 @@
-# Infraestrutura
+# Infraestrutura (AI Infra)
 
-Pessoas propostas: 2. Branch: `team/infra`.
-Responsável nominal: **a preencher**. Integrantes: **a preencher**. Revisor: **a preencher**.
+Integrantes: 2. Branch: `team/infra`.
+
+- **Integrantes:**
+  - Daniel Lucas Damasceno (3° semestre eng. de software)
+  - Danilo Moura (5° semestre eng. de software)
 
 ## Objetivo e responsabilidades
 
@@ -23,7 +26,7 @@ Pastas: infra/, .github/workflows/ci.yml, scripts/validate_repository.py, docs/r
 
 Linux/SSH, Docker Compose, redes, volumes, PostgreSQL backup, GitHub Actions, revisão, rulesets e menor privilégio.
 
-Primeiro siga [instalação](../getting-started.md) e execute a demo. Comando da frente:
+Primeiro siga [instalação](../00-comece-aqui/01-inicio-rapido.md) e execute a demo. Comando da frente:
 
 ```sh
 uv run --locked python -m scripts.dev up
@@ -41,4 +44,4 @@ Pré-requisito: Docker Compose e .env com senha. Depois rode `uv run --locked py
 
 Comandos reproduzíveis, healthchecks aprovados, persistência/recuperação demonstradas e nenhum serviço sensível publicado por padrão. Diff revisado, documentação coerente e limitações relatadas. Marque tarefas concluídas somente com evidência.
 
-[Backlog conjunto](../backlog.md) · [Git](../git-workflow.md) · [Contratos](../../contracts/README.md)
+[Backlog conjunto](../01-overview/backlog.md) · [Git](../00-comece-aqui/02-fluxo-git.md) · [Contratos](../../contracts/README.md)

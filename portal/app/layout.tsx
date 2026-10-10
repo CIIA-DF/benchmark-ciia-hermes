@@ -13,8 +13,13 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CIIA-DF | Developer Hub",
+  title: "Portal de Orquestração: Benchmark SEI | CIIA-DF",
   description: "Portal de Orquestração da Equipe de P&D",
+  icons: {
+    icon: "/ciia_logo.png",
+    shortcut: "/ciia_logo.png",
+    apple: "/ciia_logo.png",
+  },
 };
 
 export default function RootLayout({

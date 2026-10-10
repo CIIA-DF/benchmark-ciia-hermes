@@ -10,7 +10,7 @@ uv run --locked python -m scripts.dev demo
 uv run --locked python -m scripts.dev check
 ```
 
-Selecione sua branch pelo [guia Git](git-workflow.md). Se a branch remota ainda não existir, a coordenação precisa ativá-la.
+Selecione sua branch pelo [guia Git](02-fluxo-git.md). Se a branch remota ainda não existir, a coordenação precisa ativá-la.
 
 A demo lê os JSONs fictícios de `examples/`, calcula SHA-256, gera chunks por página e grava `data/demo.db`. Outra conexão consulta a API com o cliente ASGI do FastAPI. A saída traz run_id, processo, versões, texto, documento, página e offsets. A segunda execução imprime `Chunks novos persistidos: 0` e continua retornando dados: não duplica a ingestão.
 
@@ -61,4 +61,4 @@ Compose define DATABASE_URL para PostgreSQL. A demo local usa SQLite, exceto se 
 
 Execute na raiz. `check` faz lint, formato, links/YAML e testes. Formate só os arquivos da tarefa com `uv run ruff format caminho.py`.
 
-Se uv não for reconhecido, reabra o terminal após instalar. Sem Docker, use a demo local. Senha diferente de volume existente exige procedimento administrativo, não apagar volume. Veja [operação](runbooks/operations.md). Falha de lock exige revisar se os arquivos estão sincronizados antes de atualizar dependências.
+Se uv não for reconhecido, reabra o terminal após instalar. Sem Docker, use a demo local. Senha diferente de volume existente exige procedimento administrativo, não apagar volume. Veja [operação](../04-operacoes/operations.md). Falha de lock exige revisar se os arquivos estão sincronizados antes de atualizar dependências.

@@ -18,4 +18,4 @@ Logs operacionais: IDs de execução, componentes, duração, status e versão; 
 
 Antes de ativar corpus real: combinar retenção/acessos, autenticação/autorização e auditoria. Monitore disco, espaço para backup, memória, reinícios, duração de consultas e disponibilidade. Defina limiares após medir a carga; números dos PDFs não são medições.
 
-Para problemas de SQL/schema, não editar banco manualmente sem decisão registrada. create_all não migra estruturas. Consulte [backup](backup-restore.md) e [implantação](hostinger-deploy.md).
+Para problemas de SQL/schema, não editar banco manualmente sem decisão registrada. create_all não migra estruturas. Consulte [backup](backup-restore.md) e [implantação](deploy-vps-hostinger.md).

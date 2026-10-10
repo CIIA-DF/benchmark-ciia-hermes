@@ -7,4 +7,4 @@ Executar na raiz via `uv run --locked python -m scripts.NOME`.
 - database_backup: backup FILE ou restore-test FILE; exige Compose, preserva original e cria banco novo para restauração.
 - validate_repository: links Markdown locais, YAML e invariantes de CI/Compose; não executa workflows remotos.
 
-Scripts não publicam branches nem implantam como parte do check. A incorporação da main é uma ação manual coordenada pela equipe, conforme o [fluxo Git](../docs/git-workflow.md).
+Scripts não publicam branches nem implantam como parte do check. A incorporação da main é uma ação manual coordenada pela equipe, conforme o [fluxo Git](../docs/00-comece-aqui/02-fluxo-git.md).

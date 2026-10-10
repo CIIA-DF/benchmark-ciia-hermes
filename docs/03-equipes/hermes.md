@@ -1,7 +1,8 @@
 # Hermes
 
-Pessoas propostas: 2. Branch: `team/hermes`.
-Responsável nominal: **a preencher**. Integrantes: **a preencher**. Revisor: **a preencher**.
+Monitor: Gustavo Antônio. Branch: `team/hermes`.
+
+- **Monitor:** Gustavo Antônio
 
 ## Objetivo e responsabilidades
 
@@ -23,7 +24,7 @@ Pastas: agents/hermes/; agents/interface.py é compartilhado e exige revisão da
 
 Documentação oficial do Hermes confirmado, tool calling, HTTP, timeouts, estado, encerramento e instrumentação.
 
-Primeiro siga [instalação](../getting-started.md) e execute a demo. Comando da frente:
+Primeiro siga [instalação](../00-comece-aqui/01-inicio-rapido.md) e execute a demo. Comando da frente:
 
 ```sh
 uv run --locked python -m agents.smoke --adapter hermes
@@ -41,4 +42,4 @@ Pré-requisito: demo executada e API em outro terminal com `uv run --locked pyth
 
 Identidade do Hermes comprovada e primeira chamada rastreável sem ferramenta duplicada; integração real só pode ser declarada após teste do executor aprovado. Diff revisado, documentação coerente e limitações relatadas. Marque tarefas concluídas somente com evidência.
 
-[Backlog conjunto](../backlog.md) · [Git](../git-workflow.md) · [Contratos](../../contracts/README.md)
+[Backlog conjunto](../01-overview/backlog.md) · [Git](../00-comece-aqui/02-fluxo-git.md) · [Contratos](../../contracts/README.md)

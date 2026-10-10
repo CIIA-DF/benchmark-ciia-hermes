@@ -1,7 +1,10 @@
-# Backend e ferramentas
+# Backend e ferramentas (BACK)
 
-Pessoas propostas: 3. Branch: `team/backend`.
-Responsável nominal: **a preencher**. Integrantes: **a preencher**. Revisor: **a preencher**.
+Integrantes: 1 | Monitor: Roger Quinelato. Branch: `team/backend`.
+
+- **Monitor:** Roger Quinelato
+- **Integrantes:**
+  - Letícia Pires de Oliveira (3° semestre eng. de software)
 
 ## Objetivo e responsabilidades
 
@@ -23,7 +26,7 @@ Pastas: services/backend/, tests/backend/, tests/integration/; contracts/ em rev
 
 HTTP, FastAPI, Pydantic, SQLAlchemy, PostgreSQL, transações, constraints, autorização e idempotência.
 
-Primeiro siga [instalação](../getting-started.md) e execute a demo. Comando da frente:
+Primeiro siga [instalação](../00-comece-aqui/01-inicio-rapido.md) e execute a demo. Comando da frente:
 
 ```sh
 uv run --locked python -m scripts.dev test-backend
@@ -41,4 +44,4 @@ Use `uv run --locked python -m scripts.dev check` antes do PR.
 
 Entradas inválidas rejeitadas, processo/corpus isolados, saída aderente ao contrato e testes de sucesso/falha com persistência comprovada quando houver escrita. Diff revisado, documentação coerente e limitações relatadas. Marque tarefas concluídas somente com evidência.
 
-[Backlog conjunto](../backlog.md) · [Git](../git-workflow.md) · [Contratos](../../contracts/README.md)
+[Backlog conjunto](../01-overview/backlog.md) · [Git](../00-comece-aqui/02-fluxo-git.md) · [Contratos](../../contracts/README.md)

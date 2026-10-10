@@ -4,4 +4,4 @@ Não há pacote Hermes instalado por este projeto. A coordenação deve confirma
 
 Ponto de entrada comum: [AgentAdapter e ToolClient](../interface.py). Com API populada em execução, `uv run --locked python -m agents.smoke --adapter hermes` verifica somente HTTP. Não integra Hermes nem chama LLM.
 
-Próxima etapa: registrar identidade em ADR, verificar documentação oficial e mapear seleção/chamada de ferramentas, estado, encerramento e logs ao contrato comum. Não inventar nomes de métodos ou capacidades. [Guia da equipe](../../docs/teams/hermes.md).
+Próxima etapa: registrar identidade em ADR, verificar documentação oficial e mapear seleção/chamada de ferramentas, estado, encerramento e logs ao contrato comum. Não inventar nomes de métodos ou capacidades. [Guia da equipe](../../docs/03-equipes/hermes.md).

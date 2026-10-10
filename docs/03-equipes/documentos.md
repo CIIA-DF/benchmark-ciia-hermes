@@ -1,7 +1,12 @@
-# Documentos
+# Documentos (RAG)
 
-Pessoas propostas: 3. Branch: `team/documentos`.
-Responsável nominal: **a preencher**. Integrantes: **a preencher**. Revisor: **a preencher**.
+Integrantes: 3 | Monitor: André Vital. Branch: `team/documentos`.
+
+- **Monitor:** André Vital
+- **Integrantes:**
+  - Victor Hugo Silva Moraes (5° semestre S.I.)
+  - Vinícius Melo Maciel (5° semestre de sistemas de informação)
+  - Lucas Farias de Sousa (5° semestre de sistemas de informação)
 
 ## Objetivo e responsabilidades
 
@@ -23,7 +28,7 @@ Pastas: pipelines/documents/, examples/ (somente sintéticos), tests/documents/;
 
 Python, JSON, PDF/OCR, hashes, offsets, chunking, busca textual; depois embeddings e pgvector.
 
-Primeiro siga [instalação](../getting-started.md) e execute a demo. Comando da frente:
+Primeiro siga [instalação](../00-comece-aqui/01-inicio-rapido.md) e execute a demo. Comando da frente:
 
 ```sh
 uv run --locked python -m scripts.dev test-documents
@@ -41,4 +46,4 @@ Use `uv run --locked python -m scripts.dev check` antes do PR.
 
 Documento rastreável, repetição sem duplicação, erro detectável e pelo menos uma consulta com referência conferida. Diff revisado, documentação coerente e limitações relatadas. Marque tarefas concluídas somente com evidência.
 
-[Backlog conjunto](../backlog.md) · [Git](../git-workflow.md) · [Contratos](../../contracts/README.md)
+[Backlog conjunto](../01-overview/backlog.md) · [Git](../00-comece-aqui/02-fluxo-git.md) · [Contratos](../../contracts/README.md)

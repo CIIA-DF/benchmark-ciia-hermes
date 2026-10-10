@@ -78,7 +78,7 @@ git push -u origin task/documentos-evidencias
 
 No GitHub: Pull requests → New pull request. Base = `team/documentos`; compare = branch curta. Preencha template, aguarde checks e revisão, incorpore por **Create a merge commit**. Para integrar a equipe, abra outro PR com base `main`, compare `team/documentos`.
 
-Fluxo: tarefa opcional → equipe → PR/revisão → main → verificação integrada → PR aprovado por André/Gustavo/João Enomoto ou delegado → production → implantação autorizada. Merge/promover código e implantar são etapas distintas: aprovar o PR não coloca serviços em execução na Hostinger. A implantação segue o [runbook autorizado](runbooks/hostinger-deploy.md); esta mudança de fluxo não cria automação de implantação. production é estável experimental.
+Fluxo: tarefa opcional → equipe → PR/revisão → main → verificação integrada → PR aprovado por André/Gustavo/João Enomoto ou delegado → production → implantação autorizada. Merge/promover código e implantar são etapas distintas: aprovar o PR não coloca serviços em execução na Hostinger. A implantação segue o [runbook autorizado](../04-operacoes/deploy-vps-hostinger.md); esta mudança de fluxo não cria automação de implantação. production é estável experimental.
 
 ## Push rejeitado
 
@@ -94,4 +94,4 @@ Commit incorreto já compartilhado: numa branch de correção, use `git revert S
 
 Merge commits preservam os pais e permitem reconhecer integrações anteriores nos dois sentidos main ↔ equipe. Squash perde ancestralidade; rebase reescreve IDs. Neste fluxo permanente, ambos podem causar diffs repetidos e conflitos. Use merge commits também para main → production.
 
-Force push e exclusão automática das branches permanentes são proibidos. Branch curta só pode ser removida depois da integração confirmada. Veja [governança](runbooks/github-governance.md).
+Force push e exclusão automática das branches permanentes são proibidos. Branch curta só pode ser removida depois da integração confirmada. Veja [governança](../04-operacoes/github-governance.md).

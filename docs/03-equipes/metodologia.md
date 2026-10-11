@@ -1,7 +1,14 @@
-# Metodologia e avaliação
+# Metodologia e avaliação (Evaluation)
 
-Pessoas propostas: 2. Branch: `team/metodologia`.
-Responsável nominal: **a preencher**. Integrantes: **a preencher**. Revisor: **a preencher**.
+Integrantes: 5 | Monitor: Gustavo Antônio. Branch: `team/metodologia`.
+
+- **Monitor:** Gustavo Antônio
+- **Integrantes:**
+  - Nelson da Rocha Bomfim Neto (3° semestre eng. de software)
+  - Hugo Coelho Teixeira (3° semestre eng. de software)
+  - Sarah Leticia da Silva (3° semestre de sistemas de informação)
+  - João Pedro Silva dos Santos (5° semestre eng. de software)
+  - Isaac Joaquim (5° semestre eng. de software)
 
 ## Objetivo e responsabilidades
 
@@ -23,7 +30,7 @@ Pastas: evaluation/, contratos de ExperimentRun em revisão conjunta, documenta�
 
 Desenho experimental pareado, rubricas, avaliação cega, unidades de análise, medidas repetidas, latência/tokens/custo e análise de erros.
 
-Primeiro siga [instalação](../getting-started.md) e execute a demo. Comando da frente:
+Primeiro siga [instalação](../00-comece-aqui/01-inicio-rapido.md) e execute a demo. Comando da frente:
 
 ```sh
 uv run --locked python -m scripts.dev check
@@ -41,4 +48,4 @@ Use `uv run --locked python -m scripts.dev check` antes do PR.
 
 Tarefas/rubricas versionadas antes da coleta, conjuntos separados, versões congeláveis e regra explícita de confirmação de resultado. Diff revisado, documentação coerente e limitações relatadas. Marque tarefas concluídas somente com evidência.
 
-[Backlog conjunto](../backlog.md) · [Git](../git-workflow.md) · [Contratos](../../contracts/README.md)
+[Backlog conjunto](../01-overview/backlog.md) · [Git](../00-comece-aqui/02-fluxo-git.md) · [Contratos](../../contracts/README.md)

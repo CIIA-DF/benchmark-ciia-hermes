@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def validate() -> list[str]:
     errors = []
     for path in ROOT.rglob("*.md"):
-        if any(part in {".venv", ".git", ".pytest_cache"} for part in path.parts):
+        if any(part in {".venv", ".git", ".pytest_cache", "node_modules"} for part in path.parts):
             continue
         content = re.sub(r"```.*?```", "", path.read_text(encoding="utf-8"), flags=re.S)
         for target in re.findall(r"\[[^\]]*\]\(([^)]+)\)", content):

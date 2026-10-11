@@ -14,7 +14,7 @@ uv run --locked python -m scripts.dev demo
 uv run --locked python -m scripts.dev check
 ```
 
-Também funciona no PowerShell. A demo importa documento fictício, gera chunks, persiste em SQLite e consulta a API em processo, sem chave de LLM. Para HTTP e PostgreSQL/Compose, veja [início rápido](docs/getting-started.md). Com Make: `make setup`, `make demo`, `make check`.
+Também funciona no PowerShell. A demo importa documento fictício, gera chunks, persiste em SQLite e consulta a API em processo, sem chave de LLM. Para HTTP e PostgreSQL/Compose, veja [início rápido](docs/00-comece-aqui/01-inicio-rapido.md). Com Make: `make setup`, `make demo`, `make check`.
 
 ## Arquitetura
 
@@ -30,7 +30,7 @@ flowchart LR
     B --> A[Registros para avaliação: previstos]
 ```
 
-Os agentes selecionam ferramentas; o backend valida e executa operações autorizadas. A VPS Hostinger hospedará serviços; não se presume GPU ou assinatura de LLM. [Arquitetura](docs/architecture.md).
+Os agentes selecionam ferramentas; o backend valida e executa operações autorizadas. A VPS Hostinger hospedará serviços; não se presume GPU ou assinatura de LLM. [Arquitetura](docs/02-arquitetura/architecture.md).
 
 ## Onde trabalhar
 
@@ -48,11 +48,11 @@ Os agentes selecionam ferramentas; o backend valida e executa operações autori
 | [docs](docs/README.md) | Guias, decisões, runbooks e PDFs históricos |
 | [.github](.github/README.md) | CI, templates e mapa de revisão |
 
-Coordenação: André / Gustavo / João Enomoto. Preencha responsáveis nos [guias das equipes](docs/teams/README.md). A proposta soma 14 vagas técnicas; participação e sobreposição da coordenação precisam ser confirmadas para o total aproximado de 15 pessoas.
+Coordenação: André / Gustavo / João Enomoto. Preencha responsáveis nos [guias das equipes](docs/00-comece-aqui/04-equipes.md). A proposta soma 14 vagas técnicas; participação e sobreposição da coordenação precisam ser confirmadas para o total aproximado de 15 pessoas.
 
 ## Contribuir
 
-Trabalhe na branch da equipe, opcionalmente usando branches curtas integradas primeiro nela. Abra PR `team/* → main`; após integração, a coordenação aprova PR `main → production`. Use **merge commits**, sem force push e sem excluir branches permanentes. `production` é a versão estável experimental. Antes de iniciar tarefas e antes de integrar entregas, cada equipe coordena a incorporação manual da `main`. Atualizações da `main` não abrem PRs nem modificam as branches das equipes automaticamente. Merge e implantação na Hostinger são etapas distintas. Leia [CONTRIBUTING](CONTRIBUTING.md) e [fluxo Git](docs/git-workflow.md).
+Trabalhe na branch da equipe, opcionalmente usando branches curtas integradas primeiro nela. Abra PR `team/* → main`; após integração, a coordenação aprova PR `main → production`. Use **merge commits**, sem force push e sem excluir branches permanentes. `production` é a versão estável experimental. Antes de iniciar tarefas e antes de integrar entregas, cada equipe coordena a incorporação manual da `main`. Atualizações da `main` não abrem PRs nem modificam as branches das equipes automaticamente. Merge e implantação na Hostinger são etapas distintas. Leia [CONTRIBUTING](CONTRIBUTING.md) e [fluxo Git](docs/00-comece-aqui/02-fluxo-git.md).
 
 ## Estado atual
 
@@ -60,6 +60,6 @@ Implementados: corpus sintético paginado, chunks rastreáveis, persistência tr
 
 Pendentes: PDF/OCR, recuperação semântica, requisitos validados, ferramentas de escrita, autenticação para uso compartilhado, agentes reais, coleta experimental e implantação. Os pontos de entrada dos agentes exercitam somente HTTP. O Hermes exato precisa de URL e versão. Não há resultados comparativos coletados.
 
-O fluxo Git exige branches, revisão humana e checks obrigatórios. Veja [status e evidências](docs/project-status.md), [governança](docs/runbooks/github-governance.md), [backlog](docs/backlog.md) e [Codex/Claude Code](docs/ai-development.md).
+O fluxo Git exige branches, revisão humana e checks obrigatórios. Veja [status e evidências](docs/01-overview/project-status.md), [governança](docs/04-operacoes/github-governance.md), [backlog](docs/01-overview/backlog.md) e [Codex/Claude Code](docs/02-arquitetura/ai-development.md).
 
 Prazo final planejado: **10/12/2026**. Os [PDFs originais](docs/README.md) permanecem como propostas históricas; não comprovam conclusão de marcos, implantação ou preços atuais.

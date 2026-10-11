@@ -24,4 +24,4 @@ Os adaptadores compartilharão `AgentAdapter`, `ToolContext`, `ToolClient` e `Mo
 
 API sem autenticação, somente para dados sintéticos em loopback/rede interna. Filtro de processo é isolamento funcional, não autorização por usuário. Autenticação, autorização por processo e proteção de rede são necessárias antes de uso compartilhado com corpus real. Escritas retornam 501.
 
-Healthcheck consulta banco; erros não ecoam entradas ou SQL; access logs estão desativados. Não existe ainda coletor de métricas/traces nem armazenamento de ExperimentRun. Instrumentação futura registra IDs, duração, status e versões sem conteúdo/chaves. Veja [protocolo](../evaluation/protocol.md) e [operação](runbooks/operations.md).
+Healthcheck consulta banco; erros não ecoam entradas ou SQL; access logs estão desativados. Não existe ainda coletor de métricas/traces nem armazenamento de ExperimentRun. Instrumentação futura registra IDs, duração, status e versões sem conteúdo/chaves. Veja [protocolo](../../evaluation/protocol.md) e [operação](../04-operacoes/operations.md).

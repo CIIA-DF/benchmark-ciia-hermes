@@ -1,7 +1,13 @@
-# Coordenação
+# Coordenação e Monitoria
 
-Coordenação indicada: André / Gustavo / João Enomoto.
-Responsável por integração: **a preencher**. Responsável por promoção: **a preencher**. Revisor suplente: **a preencher**.
+Monitores e coordenação indicada: André Vital / Gustavo Antônio / João Enomoto / Roger Quinelato.
+
+## Distribuição das Monitórias
+- **RAG (Documentos):** André Vital
+- **HERMES:** Gustavo Antônio
+- **BACK (Backend):** Roger Quinelato
+- **LANGGRAPH:** João Enomoto
+- **EVALUATION (Metodologia e Avaliação):** Gustavo Antônio
 
 Objetivo: manter escopo, interfaces, prioridades e artigo até 10/12/2026. Responsabilidades: decisões de domínio/corpus, nomeação de responsáveis, resolução de dependências, aprovação de protocolo, revisão entre equipes e promoção main → production.
 

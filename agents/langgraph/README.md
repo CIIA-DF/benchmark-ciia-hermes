@@ -6,4 +6,4 @@ Ciclo previsto: tarefa e estado chegam ao modelo; o modelo pode solicitar uma ou
 
 Nós/arestas controlam transições; não fixam uma sequência de ferramentas que já solucione o benchmark. Estado, mensagens, tratamento de erro e checkpoints precisam ser definidos para permitir comparação com Hermes. Não há inferência, persistência de checkpoint ou agente completo hoje.
 
-Com API populada em execução: `uv run --locked python -m agents.smoke --adapter langgraph`. Isso testa apenas HTTP. [Guia da equipe](../../docs/teams/langgraph.md) e [quickstart oficial consultado](https://docs.langchain.com/oss/python/langgraph/quickstart).
+Com API populada em execução: `uv run --locked python -m agents.smoke --adapter langgraph`. Isso testa apenas HTTP. [Guia da equipe](../../docs/03-equipes/langgraph.md) e [quickstart oficial consultado](https://docs.langchain.com/oss/python/langgraph/quickstart).

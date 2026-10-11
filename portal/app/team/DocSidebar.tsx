@@ -28,11 +28,11 @@ const CATEGORY_NAMES: Record<string, string> = {
 export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+
   // Find which category the active file belongs to so it starts expanded
   const activeFileObj = files.find(f => f.path === currentPath);
   const initialCategory = activeFileObj ? activeFileObj.category : '01-overview';
-  
+
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     [initialCategory]: true,
     '01-overview': true,
@@ -71,7 +71,7 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
   return (
     <>
       {/* Botão de Menu Sanduíche (Visível apenas no Mobile) */}
-      <button 
+      <button
         onClick={() => setIsMobileMenuOpen(true)}
         className="lg:hidden flex items-center justify-center gap-3 bg-white/5 border border-white/10 rounded-xl px-5 py-4 w-full text-slate-100 mb-2 font-bold tracking-wider shadow-lg hover:bg-white/10 transition-colors"
       >
@@ -81,7 +81,7 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
 
       {/* Overlay Escuro para Mobile */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 z-40 bg-[#020617]/80 backdrop-blur-sm lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
@@ -94,9 +94,9 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full lg:h-auto p-6 lg:p-0">
-          
+
           {/* Botão de Fechar no Mobile */}
-          <button 
+          <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="lg:hidden absolute top-5 right-5 p-2 bg-white/5 border border-white/10 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
           >
@@ -106,7 +106,6 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
           {/* Sidebar Header */}
           <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5 lg:mb-0">
             <div className="flex items-center gap-2.5">
-              <img src="/ciia_logo.png" alt="Logo CIIA" className="h-6 w-auto object-contain" />
               <h2 className="text-base font-bold tracking-wider text-slate-200 uppercase">Documentação</h2>
             </div>
             <span className="hidden lg:inline-block text-sm font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2.5 py-0.5 rounded-full font-medium">
@@ -177,11 +176,10 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
                               key={file.path}
                               href={`?doc=${encodeURIComponent(file.path)}`}
                               onClick={() => setIsMobileMenuOpen(false)}
-                              className={`flex items-start justify-between p-2.5 lg:p-2 rounded-lg text-sm transition-all duration-200 group ${
-                                isActive
+                              className={`flex items-start justify-between p-2.5 lg:p-2 rounded-lg text-sm transition-all duration-200 group ${isActive
                                   ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30 shadow-[inset_0_0_12px_rgba(6,182,212,0.08)]'
                                   : 'text-slate-300 hover:bg-white/5 hover:text-white font-medium'
-                              }`}
+                                }`}
                             >
                               <div className="flex items-start gap-2.5 lg:gap-2">
                                 <FileText size={18} className={`mt-0.5 flex-shrink-0 ${isActive ? 'text-cyan-400 opacity-100' : 'text-slate-400 opacity-80 group-hover:opacity-100 group-hover:text-cyan-400'}`} />

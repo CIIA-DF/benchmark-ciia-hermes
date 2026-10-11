@@ -32,6 +32,11 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${inter.variable} ${robotoMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="icon" href="/ciia_logo.png" type="image/png" sizes="any" />
+        <link rel="shortcut icon" href="/ciia_logo.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/ciia_logo.png" />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

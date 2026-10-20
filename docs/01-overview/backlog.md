@@ -56,17 +56,23 @@
 
 ---
 
-## 5. Hermes (Integração do Executor Autônomo) — Gustavo Antônio
+## 5. Hermes (Integração e Construção do Agente Autônomo) — Gustavo Antônio, Hugo Coelho
 
-**Objetivo:** Integrar e configurar o motor Hermes no runtime do projeto, conectando seu ciclo operacional às ferramentas compartilhadas do Backend.
+**Objetivo:** Construir o agente autônomo baseado no ecossistema Hermes com loop de tool-calling dinâmico, conectar às ferramentas padronizadas do SEI e instrumentar suas execuções para o benchmark comparativo pareado.
 
-- **Task 5.1 — Fixação de Repositório e Mapeamento de Tool Calling:** Mapear o software-fonte, realizar auditoria de licenças, fixar tag/commit estável e mapear o mecanismo nativo de tool calling.
-- **Task 5.2 — Loop Operacional e Conexão HTTP à API:** Conectar o ciclo do runtime ao endpoint LLM e despachar chamadas JSON padronizadas contra a API de ferramentas do Backend.
-- **Task 5.3 — Isolamento de Sessões e Reset de Contexto:** Garantir execuções estanques vinculadas a um `run_id` global único, impedindo a contaminação ou persistência indevida de histórico entre tarefas.
-- **Task 5.4 — Padronização de Prompts e Instruções de Evidência:** Configurar o prompt de sistema para instruir a consulta de requisitos, preservação de referências e declaração explícita de limites da base.
-- **Task 5.5 — Coleta de Logs Estruturados para Auditoria:** Configurar a exportação detalhada de eventos contendo prompts, tokens consumidos, chamadas executadas e retornos das ferramentas no formato comum do projeto.
+### Fase 1: Construção do Agente e Runtime Operacional
+- **Task 5.1 — Fixação de Dependências e Mecanismo de Tool Calling:** Definir a biblioteca/runtime oficial (ex.: ecossistema Nous Research / Hermes Tool Calling), realizar auditoria de licenças e fixar dependências no `pyproject.toml`.
+- **Task 5.2 — Implementação do HermesAdapter e Loop ReAct:** Desenvolver a classe `HermesAdapter(AgentAdapter)` em `agents/hermes/` com o loop de raciocínio da LLM, parsing de argumentos em formato JSON e despacho das chamadas de ferramentas via `ToolClient`.
+- **Task 5.3 — Mapeamento dos Schemas de Ferramentas:** Converter os esquemas Pydantic das ferramentas do Backend (`consultar_processo`, `buscar_documentos`, `ler_documento`) em especificações de *function calling* compreensíveis pelo modelo.
+- **Task 5.4 — Engenharia de Prompts e Políticas de Evidência SEI:** Estruturar o System Prompt oficial instruindo o agente a fundamentar conclusões citando documento e página física, tratar buscas sem retorno e reconhecer limitações de integridade da base.
+- **Task 5.5 — Controle de Execução e Prevenção de Loops:** Implementar critério de parada, limite de iterações (`max_turns`), timeouts com HTTPX e tratamento de exceções (404/vazio e 422 de validação).
 
-**Milestone:** Chamar uma ferramenta fictícia via API no loop do Hermes e exportar o log estruturado completo da sessão.
+### Fase 2: Instrumentação e Integração ao Benchmark
+- **Task 5.6 — Isolamento Estanque por Sessão (`ToolContext`):** Assegurar que toda iteração receba e repasse `run_id`, `process_id`, `corpus_version` e `requirements_version`, impedindo contaminação de contexto entre execuções.
+- **Task 5.7 — Coleta Estruturada de Métricas (`ExperimentRun`):** Exportar o relatório padronizado da execução contendo tokens consumidos (prompt/completion), custo estimado, latência total, ferramentas acionadas e sucesso verificado.
+- **Task 5.8 — Validação em Cenário Sintético Piloto:** Executar o agente de ponta a ponta contra a API de desenvolvimento em tarefas de teste da Metodologia para homologação preliminar.
+
+**Milestone:** Agente Hermes operacional resolvendo tarefas piloto completas com chamadas reais via `ToolClient` e exportando `ExperimentRun` auditável para o benchmark pareado.
 
 ---
 

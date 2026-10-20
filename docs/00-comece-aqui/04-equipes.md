@@ -26,7 +26,7 @@ Antes de programar, tire 30 minutos para concluir as etapas essenciais de onboar
 
 ### [Hermes (Agente Autônomo)](../03-equipes/hermes.md)
 **Missão:** Configurar, tunar e acoplar o executor nativo autônomo (Hermes) consumindo as APIs REST do Backend.
-- **Membros:** Gustavo Antônio.
+- **Membros:** Gustavo Antônio, Hugo Coelho.
 
 ### [AI Infra (Hospedagem)](../03-equipes/infra.md)
 **Missão:** Conteinerizar (Docker), proteger e publicar a aplicação na nuvem (Hostinger e VPS), gerenciando deploy e segurança.
@@ -34,7 +34,7 @@ Antes de programar, tire 30 minutos para concluir as etapas essenciais de onboar
 
 ### [Evaluation (Metodologia)](../03-equipes/metodologia.md)
 **Missão:** Homologar gabaritos com especialistas e rodar testes para medir a precisão (F1, Taxa de sucesso) das respostas da IA.
-- **Membros:** Gustavo Antônio, Nelson Neto, Hugo Coelho, Sarah Leticia, João Pedro, Isaac Joaqu.
+- **Membros:** Gustavo Antônio, Nelson Neto, Sarah Leticia, João Pedro, Isaac Joaqu.
 
 ---
 

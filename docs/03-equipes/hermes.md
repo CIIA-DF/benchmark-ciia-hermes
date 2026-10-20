@@ -1,16 +1,20 @@
 # Hermes
 
-Monitor: Gustavo Antônio. Branch: `team/hermes`.
+Integrantes: 1 | Monitor: Gustavo Antônio. Branch: `team/hermes`.
 
 - **Monitor:** Gustavo Antônio
+- **Integrantes:**
+  - Hugo Coelho Teixeira (3° semestre eng. de software)
 
 ## Objetivo e responsabilidades
 
-Integrar o executor Hermes aprovado às ferramentas e ao protocolo comum.
+Construir e integrar o agente autônomo baseado em Hermes às ferramentas REST compartilhadas do SEI e ao protocolo comum de benchmark.
 
-Confirmar produto/repositório/versão/licença, documentar extensão de ferramentas, limites, prompts internos e registros do executor.
+A frente está dividida em duas etapas claras:
+1. **Construção do Agente e Runtime Operacional:** Modelagem do loop ReAct/tool calling, schemas de chamadas, prompts de sistema com foco em citação estrita de evidências e tratamento de erros/timeouts.
+2. **Harness de Benchmark e Instrumentação:** Coleta estruturada de logs (`ExperimentRun`), rastreabilidade de chamadas (`run_id`), medição de tokens/latência e conexão com a frente de Metodologia para o pareamento experimental com o LangGraph.
 
-Limites: Não instalar um homônimo nem inventar APIs. Não duplicar ferramentas ou acessar o banco diretamente. Não implementar agente completo nesta base inicial.
+Limites: Não instalar um homônimo sem auditar a fonte. Não duplicar ferramentas de negócio ou acessar o banco diretamente (usar sempre `ToolClient`). Não alterar schemas de contratos sem alinhamento com Backend.
 
 ## Entradas, saídas e dependências
 
@@ -34,12 +38,13 @@ Pré-requisito: demo executada e API em outro terminal com `uv run --locked pyth
 
 ## Primeiras tarefas
 
-1. Registrar URL oficial, versão/commit, licença e API de extensão em decisão; critério: outro integrante consegue verificar a fonte.
-2. Com API local populada em execução, executar o smoke; registrar que não é integração real.
-3. Mapear uma ferramenta ao contrato comum em proposta revisada, incluindo timeout e tradução de erros.
+1. **Definição de Runtime e Dependências:** Fixar repositório/pacote oficial (Nous Research / Hermes Tool Calling), licença e travar no `pyproject.toml`.
+2. **Loop de Tool Calling e Adapters:** Implementar `HermesAdapter(AgentAdapter)` conectando o loop autônomo ao `ToolClient` para consumir as ferramentas de leitura (`consultar_processo`, `buscar_documentos`, `ler_documento`).
+3. **Engenharia de Prompt e Regras SEI:** Desenvolver o System Prompt orientando o agente a citar evidências físicas (processo, documento e página), respeitar limitações de bases parciais e não inventar fatos em buscas vazias.
+4. **Instrumentação e Coleta para Benchmark:** Estruturar a geração de `ExperimentRun` (tokens, latência, histórico de chamadas e controle rígido por `run_id`).
 
 ## Critério de conclusão
 
-Identidade do Hermes comprovada e primeira chamada rastreável sem ferramenta duplicada; integração real só pode ser declarada após teste do executor aprovado. Diff revisado, documentação coerente e limitações relatadas. Marque tarefas concluídas somente com evidência.
+Agente Hermes funcional resolvendo tarefas sintéticas e reais via chamadas ao backend, com exportação de `ExperimentRun` auditável e pronta para execução no harness pareado de benchmark. Marque tarefas concluídas somente com evidência.
 
 [Backlog conjunto](../01-overview/backlog.md) · [Git](../00-comece-aqui/02-fluxo-git.md) · [Contratos](../../contracts/README.md)

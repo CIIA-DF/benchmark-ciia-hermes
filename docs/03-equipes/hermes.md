@@ -16,6 +16,8 @@ A frente está dividida em duas etapas claras:
 
 Limites: Não instalar um homônimo sem auditar a fonte. Não duplicar ferramentas de negócio ou acessar o banco diretamente (usar sempre `ToolClient`). Não alterar schemas de contratos sem alinhamento com Backend.
 
+As definições OpenAI/ChatML das três ferramentas de leitura ficam em `agents/hermes/tools.py` e derivam seus parâmetros dos modelos de entrada em `contracts/models.py`.
+
 ## Entradas, saídas e dependências
 
 Recebe tarefa, ToolContext, endpoint/modelo aprovados e API; entregará resultado e ExperimentRun rastreável.

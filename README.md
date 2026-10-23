@@ -22,7 +22,7 @@ Também funciona no PowerShell. A demo importa documento fictício, gera chunks,
 flowchart LR
     E[Exportação manual] --> D[Pipeline de documentos]
     D --> DB[(Corpus e metadados)]
-    H[Hermes: integração pendente] --> B[Backend: ferramentas]
+    H[Hermes: adaptador ReAct experimental] --> B[Backend: ferramentas]
     L[LangGraph: integração pendente] --> B
     B --> DB
     H <--> M[Endpoint LLM externo]

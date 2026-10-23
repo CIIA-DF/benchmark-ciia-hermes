@@ -1,3 +1,5 @@
+"""Verifica os schemas de ferramentas expostos pelo adaptador Hermes."""
+
 from agents.hermes.tools import TOOLS
 from contracts.models import ReadInput, SearchInput, ToolContext
 

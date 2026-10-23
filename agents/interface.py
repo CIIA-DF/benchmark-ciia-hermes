@@ -1,4 +1,4 @@
-"""Ponto de integração compartilhado. Nenhum executor real está implementado."""
+"""Ponto de integração compartilhado pelos adaptadores de agentes."""
 
 import os
 from dataclasses import dataclass, field

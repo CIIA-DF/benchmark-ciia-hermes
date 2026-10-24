@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Search, Folder, FolderOpen, FileText, ChevronRight, ChevronDown, X, Menu } from 'lucide-react';
+import { Search, FileText, ChevronRight, ChevronDown, X, Menu, FileSpreadsheet } from 'lucide-react';
 
 export interface MarkdownFile {
   path: string;
@@ -17,11 +17,13 @@ interface DocSidebarProps {
 }
 
 const CATEGORY_NAMES: Record<string, string> = {
+  '00-comece-aqui': '00. Comece Aqui',
   '01-overview': '01. Visão Geral',
   '02-arquitetura': '02. Arquitetura',
   '03-equipes': '03. Equipes',
   '04-operacoes': '04. Operações',
   '05-decisoes': '05. Decisões',
+  '06-arquivo': '06. Arquivo Histórico',
   'outros': 'Outros Documentos',
 };
 
@@ -29,17 +31,18 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Find which category the active file belongs to so it starts expanded
   const activeFileObj = files.find(f => f.path === currentPath);
   const initialCategory = activeFileObj ? activeFileObj.category : '01-overview';
 
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     [initialCategory]: true,
+    '00-comece-aqui': true,
     '01-overview': true,
     '02-arquitetura': true,
     '03-equipes': true,
     '04-operacoes': true,
     '05-decisoes': true,
+    '06-arquivo': true,
   });
 
   const toggleCategory = (cat: string) => {
@@ -49,14 +52,12 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
     }));
   };
 
-  // Filter files by search query
   const filteredFiles = files.filter(file => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return file.title.toLowerCase().includes(query) || file.path.toLowerCase().includes(query);
   });
 
-  // Group files by category
   const categoriesMap: Record<string, MarkdownFile[]> = {};
   filteredFiles.forEach(file => {
     const cat = file.category || 'outros';
@@ -70,73 +71,80 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
 
   return (
     <>
-      {/* Botão de Menu Sanduíche (Visível apenas no Mobile) */}
+      {/* Mobile Menu Trigger */}
       <button
         onClick={() => setIsMobileMenuOpen(true)}
-        className="lg:hidden flex items-center justify-center gap-3 bg-white/5 border border-white/10 rounded-xl px-5 py-4 w-full text-slate-100 mb-2 font-bold tracking-wider shadow-lg hover:bg-white/10 transition-colors"
+        className="lg:hidden flex items-center justify-between bg-[#0C0F17] border border-slate-800/90 rounded-lg px-4 py-3 w-full text-slate-200 mb-2 text-xs font-medium tracking-wide hover:bg-slate-900 transition-colors"
       >
-        <Menu size={22} className="text-cyan-400" />
-        <span className="text-sm uppercase">Navegação do Menu</span>
+        <span className="flex items-center gap-2.5">
+          <Menu size={16} className="text-sky-400" />
+          <span>Índice da Documentação</span>
+        </span>
+        <span className="font-mono text-[11px] text-slate-400 bg-slate-800/70 px-2 py-0.5 rounded">
+          {files.length} docs
+        </span>
       </button>
 
-      {/* Overlay Escuro para Mobile */}
+      {/* Mobile Backdrop */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-[#020617]/80 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/70 backdrop-blur-xs lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Container do Sidebar (Menu Lateral) */}
+      {/* Sidebar Container */}
       <div className={`
-        fixed top-0 left-0 bottom-0 z-50 w-[85%] max-w-sm bg-[#061224] border-r border-white/10 shadow-[20px_0_40px_rgba(0,0,0,0.5)] transition-transform duration-300 ease-in-out
-        lg:static lg:w-auto lg:max-w-none lg:bg-white/5 lg:border lg:rounded-2xl lg:p-5 lg:backdrop-blur-md lg:shadow-2xl lg:translate-x-0 lg:flex lg:flex-col lg:gap-5
+        fixed top-0 left-0 bottom-0 z-50 w-[85%] max-w-xs bg-[#090B10] border-r border-slate-800/90 shadow-2xl transition-transform duration-200 ease-out
+        lg:static lg:w-auto lg:max-w-none lg:bg-[#0C0F17] lg:border lg:border-slate-800/80 lg:rounded-xl lg:p-4 lg:shadow-none lg:translate-x-0 lg:flex lg:flex-col lg:gap-4
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="flex flex-col h-full lg:h-auto p-6 lg:p-0">
+        <div className="flex flex-col h-full lg:h-auto p-5 lg:p-0 gap-4">
 
-          {/* Botão de Fechar no Mobile */}
+          {/* Mobile Close Button */}
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="lg:hidden absolute top-5 right-5 p-2 bg-white/5 border border-white/10 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors"
+            className="lg:hidden absolute top-4 right-4 p-1.5 bg-slate-900 border border-slate-800 rounded-md text-slate-400 hover:text-white transition-colors"
           >
-            <X size={20} />
+            <X size={16} />
           </button>
 
           {/* Sidebar Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5 lg:mb-0">
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-base font-bold tracking-wider text-slate-200 uppercase">Documentação</h2>
-            </div>
-            <span className="hidden lg:inline-block text-sm font-mono bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-2.5 py-0.5 rounded-full font-medium">
-              {files.length} docs
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+            <h2 className="text-[11px] font-mono font-semibold tracking-wider text-slate-400 uppercase">
+              Repositório de Docs
+            </h2>
+            <span className="hidden lg:inline-block text-[11px] font-mono bg-slate-800/70 text-slate-300 border border-slate-700/60 px-2 py-0.5 rounded">
+              {files.length} arq.
             </span>
           </div>
 
-          {/* Real-time Search Box */}
-          <div className="relative mb-5 lg:mb-0">
-            <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          {/* Search Box */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar documento..."
-              className="w-full bg-[#030816] border border-white/10 rounded-xl pl-11 pr-10 py-3 lg:py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all"
+              placeholder="Filtrar por título ou caminho..."
+              className="w-full bg-[#07090E] border border-slate-800/90 rounded-lg pl-8 pr-8 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-sky-500/60 focus:ring-1 focus:ring-sky-500/20 transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white p-1"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-200 p-0.5"
               >
-                <X size={16} />
+                <X size={13} />
               </button>
             )}
           </div>
 
-          {/* Accordion Categories Navigation */}
-          <nav className="flex flex-col gap-4 lg:gap-3 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          {/* Categories Tree */}
+          <nav className="flex flex-col gap-3 flex-1 overflow-y-auto pr-1 custom-scrollbar max-h-[calc(100vh-14rem)]">
             {categoryKeys.length === 0 ? (
-              <p className="text-sm text-slate-500 py-4 text-center">Nenhum documento encontrado.</p>
+              <p className="text-xs text-slate-500 py-6 text-center font-mono">
+                Nenhum documento correspondente.
+              </p>
             ) : (
               categoryKeys.map(catKey => {
                 const catTitle = CATEGORY_NAMES[catKey] || catKey;
@@ -144,31 +152,26 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
                 const isOpen = searchQuery.trim() !== '' || !!openCategories[catKey];
 
                 return (
-                  <div key={catKey} className="flex flex-col gap-1.5">
-                    {/* Category Header Button */}
+                  <div key={catKey} className="flex flex-col gap-1">
                     <button
                       onClick={() => toggleCategory(catKey)}
-                      className="flex items-center justify-between p-2.5 lg:p-2 rounded-lg hover:bg-white/5 text-slate-200 hover:text-white transition-colors text-sm font-semibold tracking-wide uppercase group text-left"
+                      className="flex items-center justify-between py-1.5 px-2 rounded-md hover:bg-slate-800/40 text-slate-300 hover:text-white transition-colors text-xs font-semibold tracking-tight group text-left"
                     >
-                      <div className="flex items-center gap-3 lg:gap-2">
-                        {isOpen ? (
-                          <FolderOpen size={20} className="text-cyan-400 flex-shrink-0" />
-                        ) : (
-                          <Folder size={20} className="text-slate-400 group-hover:text-cyan-400 flex-shrink-0 transition-colors" />
-                        )}
-                        <span className="leading-tight">{catTitle}</span>
-                      </div>
-                      <div className="flex items-center gap-2 lg:gap-1.5 flex-shrink-0">
-                        <span className="text-xs font-mono text-slate-400 bg-white/5 px-2 lg:px-1.5 py-0.5 rounded">
+                      <span className="truncate">{catTitle}</span>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span className="text-[10px] font-mono text-slate-500">
                           {catFiles.length}
                         </span>
-                        {isOpen ? <ChevronDown size={16} className="text-slate-400" /> : <ChevronRight size={16} className="text-slate-500" />}
+                        {isOpen ? (
+                          <ChevronDown size={13} className="text-slate-500 group-hover:text-slate-300" />
+                        ) : (
+                          <ChevronRight size={13} className="text-slate-600 group-hover:text-slate-400" />
+                        )}
                       </div>
                     </button>
 
-                    {/* Collapsible Documents List */}
                     {isOpen && (
-                      <div className="flex flex-col gap-1 pl-4 ml-2.5 border-l border-white/10">
+                      <div className="flex flex-col gap-0.5 pl-2.5 ml-2 border-l border-slate-800/80">
                         {catFiles.map(file => {
                           const isActive = currentPath === file.path;
                           return (
@@ -176,23 +179,27 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
                               key={file.path}
                               href={`?doc=${encodeURIComponent(file.path)}`}
                               onClick={() => setIsMobileMenuOpen(false)}
-                              className={`flex items-start justify-between p-2.5 lg:p-2 rounded-lg text-sm transition-all duration-200 group ${isActive
-                                  ? 'bg-cyan-500/15 text-cyan-300 font-semibold border border-cyan-500/30 shadow-[inset_0_0_12px_rgba(6,182,212,0.08)]'
-                                  : 'text-slate-300 hover:bg-white/5 hover:text-white font-medium'
-                                }`}
+                              className={`flex items-start justify-between py-1.5 px-2.5 rounded-r-md text-[13px] transition-colors group ${
+                                isActive
+                                  ? 'bg-sky-500/[0.09] text-slate-50 font-medium border-l-2 border-sky-400 -ml-[11px] pl-[19px]'
+                                  : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-200 font-normal'
+                              }`}
                             >
-                              <div className="flex items-start gap-2.5 lg:gap-2">
-                                <FileText size={18} className={`mt-0.5 flex-shrink-0 ${isActive ? 'text-cyan-400 opacity-100' : 'text-slate-400 opacity-80 group-hover:opacity-100 group-hover:text-cyan-400'}`} />
-                                <span className="leading-snug" title={file.title}>{file.title}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 flex-shrink-0">
-                                {file.isPdf && (
-                                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">
-                                    PDF
-                                  </span>
+                              <div className="flex items-start gap-2 min-w-0 pr-1">
+                                {file.isPdf ? (
+                                  <FileSpreadsheet size={14} className={`mt-0.5 flex-shrink-0 ${isActive ? 'text-rose-400' : 'text-slate-500 group-hover:text-slate-400'}`} />
+                                ) : (
+                                  <FileText size={14} className={`mt-0.5 flex-shrink-0 ${isActive ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-400'}`} />
                                 )}
-                                {isActive && <ChevronRight size={16} className="text-cyan-400 flex-shrink-0" />}
+                                <span className="leading-snug truncate" title={file.title}>
+                                  {file.title}
+                                </span>
                               </div>
+                              {file.isPdf && (
+                                <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-rose-950/60 text-rose-300 border border-rose-800/50 uppercase flex-shrink-0 mt-0.5">
+                                  PDF
+                                </span>
+                              )}
                             </Link>
                           );
                         })}

@@ -1,11 +1,10 @@
 # Metodologia e avaliação (Evaluation)
 
-Integrantes: 5 | Monitor: Gustavo Antônio. Branch: `team/metodologia`.
+Integrantes: 4 | Monitor: Gustavo Antônio. Branch: `team/metodologia`.
 
 - **Monitor:** Gustavo Antônio
 - **Integrantes:**
   - Nelson da Rocha Bomfim Neto (3° semestre eng. de software)
-  - Hugo Coelho Teixeira (3° semestre eng. de software)
   - Sarah Leticia da Silva (3° semestre de sistemas de informação)
   - João Pedro Silva dos Santos (5° semestre eng. de software)
   - Isaac Joaquim (5° semestre eng. de software)

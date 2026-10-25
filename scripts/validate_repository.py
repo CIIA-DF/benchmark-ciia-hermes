@@ -11,9 +11,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def validate() -> list[str]:
     errors = []
-    for path in ROOT.rglob("*.md"):
-        if any(part in {".venv", ".git", ".pytest_cache", "node_modules"} for part in path.parts):
-            continue
+    ignored = {".venv", ".git", ".pytest_cache", "node_modules", ".next"}
+    markdown = []
+    for directory, subdirs, files in ROOT.walk():
+        subdirs[:] = [name for name in subdirs if name not in ignored]
+        markdown.extend(directory / name for name in files if name.endswith(".md"))
+    for path in markdown:
         content = re.sub(r"```.*?```", "", path.read_text(encoding="utf-8"), flags=re.S)
         for target in re.findall(r"\[[^\]]*\]\(([^)]+)\)", content):
             target = target.split("#", 1)[0]

@@ -1,8 +1,30 @@
 # Arquitetura e limites do MVP
 
+## Evolução v0.2 em revisão
+
+Detalhamento vigente: [PRD Backend](backend-prd.md), [TDD](backend-tdd.md) e
+[ADRs de integração](../05-decisoes/README.md). As seções posteriores ao resumo
+v0.2 registram a base histórica v0.1, não as capacidades atuais.
+
+O [chat experimental](../04-operacoes/chat.md) acrescenta conversas,
+memória, fila em PostgreSQL e eventos SSE persistidos antes da transmissão.
+Alembic controla o schema. As seis tools exigem worker autenticado e uma
+reserva ativa de execução. Checklists são importados administrativamente;
+pendências e minutas usam transação, evidências e idempotência.
+As concessões atuais do proprietário e do worker limitam cada operação.
+
+O portal local representa um operador configurado no servidor e mantém
+credenciais fora do navegador. Uso remoto depende de identidade individual
+integrada pela Infra. O simulador não chama LLM; integrações reais e busca
+semântica continuam dependentes das equipes responsáveis.
+
+O fluxo de benchmark permanece isolado do histórico das conversas.
+As seções seguintes descrevem a base v0.1 preservada e seus limites de
+extração, corpus e recuperação textual.
+
 Pipeline → banco → ferramentas HTTP → adaptadores → endpoint externo da LLM. A ingestão acontece antes das tarefas: não se reextrai/reindexa o corpus a cada pergunta. Infra mantém configuração, volumes e saúde; Metodologia especifica a avaliação.
 
-## Fronteiras
+## Fronteiras da base v0.1 (histórico)
 
 Documentos prepara extração, qualidade, chunking, metadados, cobertura e evidências. Backend expõe a busca, aplica filtros e valida operações. Mudanças na recuperação exigem revisão conjunta. O agente seleciona ferramentas; somente o backend deverá executar escritas autorizadas. Adaptadores não recebem acesso direto ao banco.
 
@@ -12,7 +34,7 @@ Chaves de processo/documento incluem corpus_version. IDs de chunks derivam de pr
 
 Busca atual: substring literal, sem ranking, limite máximo 20, filtro de processo/corpus antes do limite, ordem determinística por documento/ID. Curingas % e _ são escapados. Maiúsculas Unicode podem ter comportamento diferente entre SQLite e PostgreSQL; avaliar normalização antes de medir recuperação. Resultado vazio não comprova ausência no processo original.
 
-## Stack e evolução
+## Stack e evolução da base v0.1 (histórico)
 
 Python 3.12, FastAPI/Pydantic, SQLAlchemy 2, PostgreSQL 17 no Compose. SQLite facilita o primeiro uso; CI tem job PostgreSQL. `create_all` cria o schema inicial, mas não migra tabelas. Antes de modificá-las, introduzir migrações revisadas, backup e rollback.
 
@@ -20,7 +42,7 @@ PDF/PyMuPDF, OCR/Tesseract, embeddings e pgvector são extensões previstas, nã
 
 Os adaptadores compartilharão `AgentAdapter`, `ToolContext`, `ToolClient` e `ModelConfig`, com LLM_BASE_URL, LLM_MODEL, LLM_API_KEY e timeout. O ponto de integração não implementa inferência; verificar protocolo e tool calling do provedor. Não há GPU ou assinatura de LLM presumida na VPS.
 
-## Acesso e observabilidade
+## Acesso e observabilidade da base v0.1 (histórico)
 
 API sem autenticação, somente para dados sintéticos em loopback/rede interna. Filtro de processo é isolamento funcional, não autorização por usuário. Autenticação, autorização por processo e proteção de rede são necessárias antes de uso compartilhado com corpus real. Escritas retornam 501.
 

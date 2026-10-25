@@ -1,6 +1,59 @@
 # Estado do projeto e evidências
 
+## Entrega Backend & Tools — 24/10/2026
+
+Implementação local atual na branch `team/backend`, com seis tools, API, memória,
+chat, participante pseudônimo, artefatos verificáveis e integração por adaptadores.
+PRD, TDD e ADRs atualizados. Suíte: **42 testes em SQLite e 42 em PostgreSQL 17**;
+build de produção do portal aprovado. Consulte o
+[registro de validação](../04-operacoes/validacao-backend-2026-10-24.md) para
+comandos, evidências, limites e dependências externas. As notas abaixo são históricas.
+
 Data da preparação: 29/09/2026. Fluxo Git revisado em 30/09/2026. Prazo final planejado: **10/12/2026**.
+
+## Backend v0.2 — 20/10/2026, America/Sao_Paulo
+
+Implementação local na branch `task/backend-chat-streaming`, derivada de
+`team/backend`, com incorporação por merge da `origin/main` consultada em
+`9f279fe0a1ae247b44b10f442ae192bcc0477d47`. Notas locais preservadas.
+
+Entregas: seis tools autenticadas; checklist versionado; migrações Alembic
+com verificação do schema legado; pendências e minutas transacionais e
+idempotentes; perfis e concessões por processo/corpus; fila de execuções
+com reserva, heartbeat e expiração; histórico, eventos SSE e chat no portal.
+Há worker simulado e protocolo comum para as equipes dos agentes.
+
+Evidências locais:
+
+- `scripts.dev check`: lint, formato, links e 34 testes aprovados em SQLite,
+  incluindo rejeição de chave primária incompatível antes de adotar schema legado.
+- PostgreSQL 17 em container local de testes: suíte completa de 32 testes
+  aprovada e, após acrescentar reserva por ID, o novo teste dirigido aprovado.
+- Portal: lint e TypeScript aprovados; build de produção concluído. Houve
+  uma falha inicial de cache ao executar dev/build simultaneamente; o build
+  limpo, em sequência, concluiu corretamente.
+- Demo: reingestão inseriu zero chunks e tools autenticadas retornaram
+  processo, inventário e fontes.
+- Navegador: duas perguntas na mesma conversa, streaming, fontes e histórico
+  recuperado após recarregar a página.
+- Nginx local: duas perguntas concluídas por SSE, 11 deltas por resposta,
+  sem reconexão; primeiros deltas em 2,66 s e 2,52 s nessa demonstração
+  simulada. Esses tempos não representam medições de agentes reais.
+- Compose validado com `config --quiet`; imagem do PostgreSQL 17 obtida com
+  configuração pública isolada após 401 nas credenciais Docker existentes.
+- Credenciais geradas ausentes dos arquivos não ignorados pelo Git.
+
+Avisos preservados: depreciação Starlette/HTTPX nos testes e aviso de imagem
+no portal de documentação preexistente. O simulador não chama LLM e não
+produz resultados comparativos de agentes reais.
+
+Pendências externas: adaptadores reais de Hermes/LangGraph; corpus e
+checklists homologados; recuperação semântica pela equipe de Documentos;
+identidade individual para uso remoto; revisão das equipes e implantação
+pela Infra. Build completo das imagens da aplicação e implantação na VPS
+não são comprovados por esta validação local.
+
+Os registros seguintes preservam o histórico da base v0.1.
 
 ## Antes desta preparação
 

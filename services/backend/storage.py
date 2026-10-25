@@ -69,8 +69,9 @@ def make_engine(url: str | None = None) -> Engine:
 
 
 def initialize(engine: Engine) -> None:
-    # Apenas criação inicial. Mudanças de schema exigirão migrações revisadas.
-    metadata.create_all(engine)
+    from services.backend.migrate import migrate
+
+    migrate(engine)
 
 
 def ingest(engine: Engine, process: Process, document: Document, items: list[Chunk]) -> int:

@@ -34,7 +34,19 @@ uv run --locked python -m scripts.dev test-backend
 
 Use `uv run --locked python -m scripts.dev check` antes do PR.
 
-## Primeiras tarefas
+## Entrega local e próximas integrações
+
+[PRD](../02-arquitetura/backend-prd.md), [TDD](../02-arquitetura/backend-tdd.md),
+[referência da API](../02-arquitetura/backend-api.md) e [handoff dos agentes](../04-operacoes/integracao-agentes.md) descrevem a entrega.
+Demonstração das seis tools: `uv run --locked python -m scripts.tools_demo`.
+
+## Primeiras tarefas (histórico v0.1)
+
+Implementação v0.2: [chat e operação](../04-operacoes/chat.md),
+contratos de workers, migrações e ferramentas estão disponíveis para revisão.
+Próximo aceite conjunto: conectar cada adaptador real, homologar os
+checklists e conferir a execução em PostgreSQL e na infraestrutura aprovada.
+As tarefas abaixo preservam o onboarding da base v0.1.
 
 1. Executar demo e conferir consulta, busca e leitura no /docs.
 2. Revisar o teste de leitura entre processos e propor o primeiro caso de autorização por usuário/execução.

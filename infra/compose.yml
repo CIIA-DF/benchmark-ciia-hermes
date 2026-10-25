@@ -20,6 +20,9 @@ services:
       dockerfile: infra/Dockerfile
     environment:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-benchmark}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no .env}@db:5432/${POSTGRES_DB:-benchmark}
+      BACKEND_OPERATOR_TOKEN: ${BACKEND_OPERATOR_TOKEN:?Execute scripts.chat setup}
+      BACKEND_WORKER_TOKEN: ${BACKEND_WORKER_TOKEN:?Execute scripts.chat setup}
+      SEED_SYNTHETIC: "1"
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -31,5 +34,40 @@ services:
       timeout: 5s
       retries: 6
     restart: unless-stopped
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    command: [python, -m, agents.worker]
+    environment:
+      BACKEND_URL: http://backend:8000
+      BACKEND_WORKER_TOKEN: ${BACKEND_WORKER_TOKEN:?Execute scripts.chat setup}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+  portal:
+    build:
+      context: ..
+      dockerfile: infra/portal.Dockerfile
+    environment:
+      BACKEND_URL: http://backend:8000
+      BACKEND_OPERATOR_TOKEN: ${BACKEND_OPERATOR_TOKEN:?Execute scripts.chat setup}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+  proxy:
+    image: nginx:1.28
+    profiles: [proxy]
+    volumes:
+      - ./nginx-chat.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "127.0.0.1:3080:8080"
+    depends_on:
+      portal:
+        condition: service_started
 volumes:
   postgres_data:

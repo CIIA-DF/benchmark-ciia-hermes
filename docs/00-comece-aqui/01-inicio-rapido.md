@@ -16,29 +16,33 @@ A demo lê os JSONs fictícios de `examples/`, calcula SHA-256, gera chunks por 
 
 ## API HTTP local
 
+Na v0.2, as tools exigem autenticação e uma execução reservada. Para
+inicialização completa, use o [guia do chat](../04-operacoes/chat.md).
+
 Depois da demo, execute:
 
 ```sh
-uv run --locked python -m scripts.dev serve
+uv run --locked python -m scripts.chat setup
+uv run --locked python -m scripts.chat serve
 ```
 
 Em outro terminal:
 
 ```sh
-uv run --locked python -m scripts.demo --url http://127.0.0.1:8000
-uv run --locked python -m agents.smoke --adapter langgraph
+uv run --locked python -m scripts.chat verify
 ```
 
 Abra `http://127.0.0.1:8000/docs` para contratos e `http://127.0.0.1:8000/health` para saúde. O smoke testa apenas a interface HTTP, sem executar agente ou LLM. Ctrl+C encerra a API.
 
 ## PostgreSQL com Docker Compose
 
-Copie `.env.example` para `.env`: `cp .env.example .env` no Linux/WSL ou `Copy-Item .env.example .env` no PowerShell. Defina `POSTGRES_PASSWORD`. Para gerar senha hexadecimal compatível com a URL: `uv run python -c "import secrets; print(secrets.token_hex(24))"`. Não publique o valor.
+O setup do chat gera senha de banco e tokens em arquivos privados.
+Execute na raiz:
 
 ```sh
-uv run --locked python -m scripts.dev up
-uv run --locked python -m scripts.dev demo-compose
-uv run --locked python -m scripts.dev down
+uv run --locked python -m scripts.chat setup
+uv run --locked python -m scripts.chat up
+uv run --locked python -m scripts.chat down
 ```
 
 `up` constrói e aguarda healthchecks. `demo-compose` ingere dentro do container e consulta por HTTP, persistindo no PostgreSQL. `down` preserva o volume. Não use `down -v`: apaga os dados. Banco sem porta publicada; API somente em `127.0.0.1`.

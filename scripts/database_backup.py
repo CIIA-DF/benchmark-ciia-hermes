@@ -6,14 +6,18 @@ from pathlib import Path
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
-COMPOSE = ["docker", "compose", "--env-file", ".env", "-f", "infra/compose.yml"]
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", choices=["backup", "restore-test"])
     parser.add_argument("file", type=Path)
+    parser.add_argument("--env-file", default=".env")
+    parser.add_argument("--project-name")
     args = parser.parse_args()
+    compose = ["docker", "compose", "--env-file", args.env_file, "-f", "infra/compose.yml"]
+    if args.project_name:
+        compose += ["--project-name", args.project_name]
     try:
         if args.operation == "backup":
             args.file.parent.mkdir(parents=True, exist_ok=True)
@@ -21,7 +25,7 @@ def main():
             with args.file.open("xb") as output:
                 subprocess.run(
                     [
-                        *COMPOSE,
+                        *compose,
                         "exec",
                         "-T",
                         "db",
@@ -40,7 +44,7 @@ def main():
                 target = "restore_check_" + uuid4().hex[:12]
                 subprocess.run(
                     [
-                        *COMPOSE,
+                        *compose,
                         "exec",
                         "-T",
                         "db",
@@ -55,7 +59,7 @@ def main():
                 )
                 subprocess.run(
                     [
-                        *COMPOSE,
+                        *compose,
                         "exec",
                         "-T",
                         "db",
@@ -72,7 +76,7 @@ def main():
                 )
                 subprocess.run(
                     [
-                        *COMPOSE,
+                        *compose,
                         "exec",
                         "-T",
                         "db",
@@ -81,7 +85,12 @@ def main():
                         'psql -U "$POSTGRES_USER" -d "$1" -v ON_ERROR_STOP=1 -c '
                         "'SELECT (SELECT count(*) FROM processes) AS processes, "
                         "(SELECT count(*) FROM documents) AS documents, "
-                        "(SELECT count(*) FROM chunks) AS chunks;'",
+                        "(SELECT count(*) FROM chunks) AS chunks, "
+                        "(SELECT count(*) FROM conversations) AS conversations, "
+                        "(SELECT count(*) FROM messages) AS messages, "
+                        "(SELECT count(*) FROM runs) AS runs, "
+                        "(SELECT count(*) FROM run_events) AS run_events, "
+                        "(SELECT count(*) FROM artifacts) AS artifacts;'",
                         "sh",
                         target,
                     ],

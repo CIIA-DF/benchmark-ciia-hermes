@@ -1,9 +1,10 @@
 [project]
 name = "benchmark-ciia-hermes"
-version = "0.1.0"
+version = "0.2.0"
 description = "Base experimental CIIA: documentos e ferramentas para Hermes e LangGraph"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+  "alembic>=1.14,<2",
   "fastapi>=0.115,<1",
   "pydantic>=2.10,<3",
   "sqlalchemy>=2.0,<2.1",

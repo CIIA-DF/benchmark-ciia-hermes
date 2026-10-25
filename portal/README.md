@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portal e chat local
 
-## Getting Started
+Next.js 14/React 18 conforme package-lock.json. O portal apresenta documentação
+em /team e o chat experimental em /chat. Não há upload de documentos nesta etapa.
 
-First, run the development server:
+Na raiz, prepare a configuração privada e inicie a API e o worker em terminais separados:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```powershell
+uv run --locked python -m scripts.chat setup
+uv run --locked python -m scripts.chat serve
+uv run --locked python -m scripts.chat worker
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Nesta pasta:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```powershell
+npm ci
+npm run dev -- --hostname 127.0.0.1
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Abra http://127.0.0.1:3000/chat. Sem login no piloto: um UUID local identifica
+conversas para análise, sem conceder permissões ou comprovar identidade.
+O proxy guarda credenciais no servidor e bloqueia hosts remotos. Textos e eventos
+ficam no banco. Somente o marcador e a última conversa ficam no navegador.
 
-## Learn More
+Verificação: npm run lint, npx tsc --noEmit e npm run build (sem dev simultâneo).
+O diretório de guias node_modules/next/dist/docs citado por AGENTS.md não existe
+na versão 14 instalada; consulte a documentação oficial dessa versão para APIs.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[Operação](../docs/04-operacoes/chat.md) · [PRD](../docs/02-arquitetura/backend-prd.md) ·
+[Contratos](../contracts/README.md) ·
+[Route Handlers Next.js 14](https://nextjs.org/docs/14/app/building-your-application/routing/route-handlers).

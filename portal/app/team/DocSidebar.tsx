@@ -100,6 +100,7 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex flex-col h-full lg:h-auto p-5 lg:p-0 gap-4">
+          <Link href="/chat" className="rounded-lg border border-teal-800 bg-teal-950/40 px-4 py-3 text-sm text-teal-200 hover:bg-teal-900/40">Abrir chat experimental ↗</Link>
 
           {/* Mobile Close Button */}
           <button

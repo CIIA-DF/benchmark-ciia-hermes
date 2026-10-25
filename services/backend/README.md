@@ -1,14 +1,29 @@
 # Backend compartilhado
 
-FastAPI com SQLAlchemy; três leituras implementadas, três contratos com HTTP 501. [Aplicação](app.py), [persistência](storage.py), [catálogo](../../contracts/README.md).
+As seis tools estão implementadas com FastAPI, Pydantic e SQLAlchemy. Leituras
+preservam processo/corpus e fontes; escritas validam evidências e requisitos,
+usam transação/idempotência e devolvem recibos confirmados.
 
-```sh
+[PRD](../../docs/02-arquitetura/backend-prd.md) ·
+[TDD](../../docs/02-arquitetura/backend-tdd.md) ·
+[Contratos](../../contracts/README.md) ·
+[Executar localmente](../../docs/04-operacoes/chat.md)
+
+A lógica está em tools.py, a fronteira RAG em corpus.py e a execução/memória em
+execution.py. app.py fornece transporte HTTP. A ingestão e a qualidade da
+recuperação continuam com Documentos/RAG; busca atual é literal, não vetorial.
+
+Migrações Alembic precedem o uso do banco. Tools exigem worker autenticado e
+reserva ativa; operador consulta conversas e artefatos. O participante do chat
+não precisa de login no piloto local, mas seu marcador não é autorização.
+
+```powershell
+uv sync --locked
 uv run --locked python -m scripts.dev demo
-uv run --locked python -m scripts.dev serve
+uv run --locked python -m scripts.dev test-backend
+uv run --locked python -m scripts.dev test-integration
+uv run --locked python -m scripts.dev check
 ```
 
-No navegador: http://127.0.0.1:8000/docs. Teste: `uv run --locked python -m scripts.dev test-backend` e `test-integration`.
-
-DATABASE_URL seleciona PostgreSQL ou SQLite. Sem variável, usa data/demo.db. Schema criado inicialmente no startup/seed, sem migrações automáticas. Consultas exigem run_id, processo e versões. Busca tem filtro antes do limite e curingas escapados.
-
-API local sem autenticação, para dados fictícios. Autorização, requisitos e escritas ainda precisam ser implementados. [Guia da equipe](../../docs/03-equipes/backend.md).
+SQLite é prévia. PostgreSQL é necessário para comprovar concorrência operacional.
+O simulador não é um agente real; integrações dependem das equipes.

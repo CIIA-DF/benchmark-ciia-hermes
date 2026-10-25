@@ -1,4 +1,4 @@
-"""Contratos v0.1: modelos compartilhados; mudanças exigem revisão das equipes."""
+"""Contratos compartilhados de ferramentas; versão de aplicação 0.2."""
 
 from datetime import datetime
 from typing import Annotated, Literal
@@ -70,8 +70,17 @@ class ToolContext(Contract):
     requirements_version: Identifier
 
 
+class InventoryItem(Contract):
+    document_id: Identifier
+    title: Text
+    source: Text
+    pages: int = Field(ge=1)
+    sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+
 class ProcessResult(ToolContext):
     process: Process
+    inventory: list[InventoryItem] = Field(default_factory=list)
 
 
 class SearchInput(ToolContext):
@@ -87,6 +96,13 @@ class SearchResult(ToolContext):
 
 class ReadInput(ToolContext):
     document_id: Identifier
+    pages: list[int] | None = Field(default=None, min_length=1)
+
+    @model_validator(mode="after")
+    def valid_pages(self):
+        if self.pages and (min(self.pages) < 1 or len(set(self.pages)) != len(self.pages)):
+            raise ValueError("Páginas devem ser positivas e únicas.")
+        return self
 
 
 class DocumentResult(ToolContext):
@@ -102,6 +118,10 @@ class ToolError(Contract):
         "storage_unavailable",
         "idempotency_conflict",
         "unauthorized",
+        "forbidden",
+        "conflict",
+        "context_limit",
+        "executor_unavailable",
     ]
     message: str
     run_id: UUID | None = None
@@ -124,11 +144,21 @@ class Evidence(Contract):
     page: int = Field(ge=1)
 
 
+class InventoryEvidence(Contract):
+    kind: Literal["inventory"] = "inventory"
+    process_id: Identifier
+    corpus_version: Identifier
+
+
 class WriteInput(ToolContext):
     idempotency_key: Identifier
     content: Text
-    evidence: list[Evidence]
+    evidence: list[Evidence | InventoryEvidence] = Field(min_length=1)
     evidence_note: Text
+
+
+class PendencyInput(WriteInput):
+    requirement_id: Identifier
 
 
 class WriteReceipt(ToolContext):
@@ -136,6 +166,13 @@ class WriteReceipt(ToolContext):
     persisted_at: datetime
     content_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
     replayed: bool
+
+
+class ArtifactResponse(Contract):
+    artifact_id: UUID
+    tool: Literal["registrar_pendencia", "salvar_minuta"]
+    payload: PendencyInput | WriteInput
+    receipt: WriteReceipt
 
 
 class ToolCallRecord(Contract):

@@ -1,12 +1,19 @@
-# Interfaces dos agentes
+# Integração compartilhada dos agentes
 
-[interface.py](interface.py) define AgentAdapter, ModelConfig e ToolClient compartilhados. [smoke.py](smoke.py) testa apenas comunicação HTTP com backend populado, sem modelo ou executor.
+Backend oferece [AgentAdapter e clientes HTTP](interface.py),
+[catálogo público](../contracts/catalog.py) e [worker](worker.py).
+O worker carrega uma fábrica local explicitamente fornecida pela equipe:
 
-```sh
-uv run --locked python -m agents.smoke --adapter hermes
-uv run --locked python -m agents.smoke --adapter langgraph
+```powershell
+uv run --locked python -m agents.worker --executor simulation
 ```
 
-Antes: execute demo e deixe serve rodando em outro terminal. BACKEND_URL permite escolher endpoint. LLM_BASE_URL, LLM_MODEL, LLM_API_KEY e LLM_TIMEOUT_SECONDS são configuração reservada à integração real; o smoke não lê chave. O cliente usa timeout explícito, allowlist de ferramentas e propaga erros HTTP; não faz retry de escrita automaticamente.
+Para Hermes/LangGraph, seguir o [handoff](../docs/04-operacoes/integracao-agentes.md).
+Não há adaptadores reais implementados neste diretório. O simulador é identificado
+como tal e não chama LLM. Smoke e dublês de teste validam HTTP/protocolo, não inferência.
 
-[Hermes](hermes/README.md) · [LangGraph](langgraph/README.md). Integração real e coleta de ExperimentRun estão pendentes; não apresentar smoke como agente funcionando.
+O cliente injeta o contexto autenticado, limita o catálogo e não repete escritas
+com chave nova. Modelo não recebe credenciais. Configuração privada de inferência:
+LLM_BASE_URL, LLM_MODEL, LLM_API_KEY e LLM_TIMEOUT_SECONDS.
+
+[Contratos](../contracts/README.md) · [Hermes](hermes/README.md) · [LangGraph](langgraph/README.md).

@@ -106,6 +106,10 @@ erros (já feita em 25/10); mais o que for aprovado de G1–G4. Todas as adiçõ
 - **Critérios de aceite**: commit identificável; `scripts.dev check` verde; resultado da
   suíte em PostgreSQL registrado.
 - **Riscos e esforço**: baixo. Risco: conflito com edições simultâneas da outra conversa.
+- **Situação em 25/10: concluído**, exceto a coordenação com a outra conversa da worktree.
+  Commit `cb8cc8d` na `team/backend`, local e sem push; `.codex-remote-attachments/` ficou
+  fora. `scripts.dev check` passou com 50 testes em SQLite. A suíte completa também passou
+  com 50 testes em PostgreSQL 17.11, no contêiner de validação isolado, que foi parado depois.
 
 ## 6. Bloco 1 — Execução e acompanhamento consistentes
 

@@ -83,7 +83,7 @@ conta os registros da mesma tabela de tentativas.
 | I2 | Registro `tool_calls` | Tabela nova (migração 0004): `run_id`, `tool_call_id`, `attempt`, `tool`, `started_at`, `duration_ms`, `http_status`, `code`, `replayed`, `artifact_id`, `args_sha256`; chave `(run_id, tool_call_id, attempt)`. Sucesso gravado na transação do efeito; falha gravada depois do rollback, em transação própria. Argumentos nunca em claro. | Bloco 2 | 2, 3, 5 |
 | I3 | Orçamento | Número de `tool_call_id` distintos por run, verificado em `ExecutionService.tool_context` sob a trava do run que `worker_run` já obtém. Configuração `RUN_MAX_TOOL_CALLS`. Ao exceder: 409 `budget_exceeded`, também registrado em I2. Retentativas não consomem orçamento. | Bloco 2 | 3 (manifesto) |
 | I4 | Histórico | Função única `tool_call_history(conn, run_id)` em módulo novo do backend. É a única leitura de I2, usada pela validação do resultado (A05), pela exportação e pelo manifesto. | Bloco 2 | 3, 5 |
-| I5 | Snapshot de leitura | `ExecutionService.snapshot()`: SQLite com `BEGIN IMMEDIATE`; PostgreSQL com `REPEATABLE READ`. Usado por `get_run`, `get_conversation` e `read_events`. A exportação mantém a transação que já tem em `scripts/export_chat.py`. | Bloco 1 | 1 (3 opcional) |
+| I5 | Leituras limitadas pela sequência | Implementado no bloco 1 sem helper nem nível de isolamento novo. `public_run` lê a linha do run uma vez e limita `partial_answer` à sequência lida. `get_conversation` lê os runs antes das mensagens e só inclui a resposta de run `succeeded` no snapshot. `read_events` não precisou mudar. Substituiu o `snapshot()` com `BEGIN IMMEDIATE`/`REPEATABLE READ` previsto antes. | Bloco 1 | 1, 3 |
 
 **Pacote contratual v0.3** (proposta até 28/10, publicação única): `budget_exceeded` em
 `ToolError.code`; cabeçalho `X-Tool-Call-Id`; campos `tool_call_id`, `code` e `replayed` no
@@ -142,6 +142,12 @@ erros (já feita em 25/10); mais o que for aprovado de G1–G4. Todas as adiçõ
   portal com lint, `tsc` e build aprovados.
 - **Riscos e esforço**: médio. `BEGIN IMMEDIATE` em leituras serializa com o worker no SQLite,
   o que afeta só a prévia; o PostgreSQL não é afetado.
+- **Situação em 25/10: concluído.** A01 e A02 foram corrigidos com leituras limitadas pela
+  sequência (I5), sem travas. A06 e a reconexão limitada foram resolvidos no portal. Durante
+  a verificação apareceu uma corrida no worker: um heartbeat enviado depois do resultado
+  final recebia 409 e derrubava uma execução já concluída. Foi corrigida serializando o
+  heartbeat com o resultado. Evidências em
+  [validação do bloco 1](../04-operacoes/validacao-bloco1-2026-10-25.md).
 
 ## 7. Bloco 2 — Chamadas de tools rastreáveis e com orçamento
 
@@ -351,7 +357,7 @@ erros (já feita em 25/10); mais o que for aprovado de G1–G4. Todas as adiçõ
 | Guia p. 14 | Erro temporário: tentativas limitadas e registradas (G6) | Falta | 2 |
 | Guia p. 14 | Limite atingido: status específico e registros preservados | Parcial (`timed_out`) | 2 (`budget_exceeded`) |
 | Guia p. 14 | Gravação afirmada só com confirmação | Parcial | 3 (A05) |
-| Guia p. 14 | Impedimento visível ao usuário | Falta no chat | 1 (A06) |
+| Guia p. 14 | Impedimento visível ao usuário | Coberto em 25/10 | 1 (A06) |
 | Guia p. 15 | Healthcheck, volumes, backup e restauração | Parcial | 5 |
 | Guia p. 15 | Logs correlacionados por `run_id`, retenção definida | Parcial | 2 (correlação), 5 e Infra (retenção) |
 | Guia p. 17 | Ordem aleatória, repetições isoladas (G7) | Falta | 3 |
@@ -360,15 +366,15 @@ erros (já feita em 25/10); mais o que for aprovado de G1–G4. Todas as adiçõ
 | Guia p. 18 | Exportação e conferência para Avaliação (G8) | Parcial (só chat) | 3 |
 | Guia p. 18 | Tokens indisponíveis registrados como ausentes | Coberto | — |
 | PRD B06 | Persistência e recuperação | Parcial | 5 |
-| PRD B07/B08 | Memória, acompanhamento e reconexão | Parcial | 1 |
+| PRD B07/B08 | Memória, acompanhamento e reconexão | Coberto em 25/10 | 1 |
 | PRD B09 | Exportação para Avaliação | Parcial | 3 |
 | PRD B10 | Agentes reais | Depende de outras equipes | 5 (apoio) |
-| A01 | Snapshot de reconexão no SQLite | Aberto | 1 |
-| A02 | Agregado da conversa inconsistente | Aberto | 1 |
+| A01 | Snapshot de reconexão no SQLite | Corrigido em 25/10, com teste | 1 |
+| A02 | Agregado da conversa inconsistente | Corrigido em 25/10, com teste | 1 |
 | A03 | Histórico de tentativas incompleto | Aberto | 2 |
 | A04 | 503 no claim | Corrigido em 25/10, com teste | — |
 | A05 | `tool_calls` sem validação | Aberto | 3 |
-| A06 | Impedimento oculto no chat | Aberto | 1 |
+| A06 | Impedimento oculto no chat | Corrigido em 25/10, com jornada Chromium | 1 |
 | A07 | OpenAPI de erros | Corrigido em 25/10, com teste | — |
 | A08 | Instruções desatualizadas | Aberto | 5 |
 

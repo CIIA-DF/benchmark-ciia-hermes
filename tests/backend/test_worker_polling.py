@@ -101,3 +101,46 @@ def test_once_worker_reports_503_without_retry(polling):
     assert calls == 1
     sleep.assert_not_awaited()
     execute.assert_not_awaited()
+
+
+def test_heartbeat_never_follows_final_result():
+    # Confirmação lenta do resultado cruza o timer do heartbeat; a reserva já foi encerrada.
+    from contracts.execution import AgentResult, ClaimedRun
+
+    run_id = str(uuid4())
+    execution = ClaimedRun(
+        run_id=run_id,
+        context={"run_id": run_id},
+        history=[{"role": "user", "content": "Pergunta sintética"}],
+        task="Pergunta sintética",
+        task_metadata={"task_id": "HEARTBEAT"},
+        kind="chat",
+        executor="simulation",
+        run_token="synthetic-lease",
+        lease_seconds=60,
+        heartbeat_seconds=1,
+    )
+    log = []
+
+    async def respond(request):
+        name = request.url.path.rsplit("/", 1)[-1]
+        log.append(name)
+        if name == "result":
+            await asyncio.sleep(1)
+            return httpx.Response(200, json={})
+        if name == "heartbeat" and "result" in log:
+            return httpx.Response(409, json={"code": "conflict", "message": "Execução encerrada."})
+        return httpx.Response(200, json={"status": "running"})
+
+    class SlowAdapter:
+        async def stream(self, execution, tools):
+            await asyncio.sleep(0.5)
+            yield AgentResult(status="succeeded", answer="Resposta sintética")
+
+    async def run():
+        transport = httpx.MockTransport(respond)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            await worker.execute(client, execution, SlowAdapter())
+
+    asyncio.run(run())
+    assert log == ["result"]

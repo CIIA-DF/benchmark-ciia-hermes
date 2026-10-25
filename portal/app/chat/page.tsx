@@ -88,6 +88,16 @@ const toolProgress: Record<string, string> = {
   salvar_minuta: "Salvando a minuta",
 };
 
+const failureReason: Record<string, string> = {
+  adapter_error: "O agente encontrou um erro e encerrou a execução.",
+  context_limit: "A conversa atingiu o limite de contexto. Inicie uma nova conversa.",
+  model_timeout: "O modelo não respondeu dentro do tempo limite.",
+  worker_timeout: "O agente parou de responder e a reserva da execução expirou.",
+};
+
+// Reconexões seguidas sem receber evento: espera 1 s, 2 s, 4 s e 8 s antes de desistir.
+const MAX_RECONNECTS = 4;
+
 export default function ChatPage() {
   const [participant, setParticipant] = useState("");
   const [processes, setProcesses] = useState<Process[]>([]);
@@ -112,6 +122,7 @@ export default function ChatPage() {
   const selectionVersion = useRef(0);
   const streamSnapshot = useRef<Run | null>(null);
   const followResponse = useRef(true);
+  const reconnects = useRef(0);
 
   const loadConversation = useCallback(async (id: string) => {
     const version = ++selectionVersion.current;
@@ -119,6 +130,7 @@ export default function ChatPage() {
     try {
       const value = await api<Conversation>(`conversations/${id}`);
       if (version !== selectionVersion.current) return;
+      reconnects.current = 0;
       setConversation(value);
       const currentRun = value.runs.find(active);
       setStreamRun(currentRun || null);
@@ -194,6 +206,7 @@ export default function ChatPage() {
       const id = Number(event.lastEventId);
       if (id <= latest) return false;
       latest = id;
+      reconnects.current = 0;
       return true;
     };
     source.addEventListener("text_delta", (event) => {
@@ -232,6 +245,16 @@ export default function ChatPage() {
     const reconnect = () => {
       source.close();
       if (closed) return;
+      if (reconnects.current >= MAX_RECONNECTS) {
+        closed = true;
+        setProgress("Conexão com a execução perdida");
+        setError(
+          "Conexão com a execução perdida. Selecione a conversa novamente para retomar o acompanhamento.",
+        );
+        return;
+      }
+      const delay = 1000 * 2 ** reconnects.current;
+      reconnects.current += 1;
       setProgress("Reconectando à execução…");
       // Reabre a partir de um snapshot consistente de texto + cursor no backend.
       retry = setTimeout(
@@ -253,7 +276,7 @@ export default function ChatPage() {
                 setConnectionAttempt((n) => n + 1);
               }
             }),
-        1500,
+        delay,
       );
     };
     source.onerror = reconnect;
@@ -493,25 +516,40 @@ export default function ChatPage() {
                     </span>
                     <div>{message.content}</div>
                     {message.role === "assistant" && (
-                      <Sources
-                        sources={
-                          conversation.runs.find(
-                            (r) => r.run_id === message.run_id,
-                          )?.result?.sources || []
-                        }
-                      />
+                      <Sources sources={run.result?.sources || []} />
                     )}
                   </article>
                 ))}
+              {run.status === "succeeded" &&
+                !conversation.messages.some(
+                  (m) => m.run_id === run.run_id && m.role === "assistant",
+                ) && (
+                  // Snapshot anterior à mensagem persistida: o resultado já traz a resposta.
+                  <article className={`${styles.message} ${styles.assistant}`}>
+                    <span className={styles.messageLabel}>Assistente</span>
+                    <div>{run.result?.answer}</div>
+                    <Sources sources={run.result?.sources || []} />
+                  </article>
+                )}
               {!active(run) && run.status !== "succeeded" && (
                 <article className={`${styles.message} ${styles.failed}`}>
                   <span className={styles.messageLabel}>
                     Resposta interrompida · {run.status}
                   </span>
                   <div>
-                    {run.partial_answer ||
+                    {run.result?.answer ||
+                      run.partial_answer ||
                       "O agente não concluiu esta execução. Você pode enviar uma nova pergunta."}
                   </div>
+                  {run.result?.error_code && (
+                    <p>
+                      <small>
+                        {failureReason[run.result.error_code] ||
+                          `Código do erro: ${run.result.error_code}`}
+                      </small>
+                    </p>
+                  )}
+                  <Sources sources={run.result?.sources || []} />
                 </article>
               )}
               <Artifacts items={run.artifacts || []} />

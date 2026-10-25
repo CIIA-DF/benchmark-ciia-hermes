@@ -145,14 +145,6 @@ class ExecutionService:
         self.expire()
         with self.engine.connect() as conn:
             row = self.conversation(conn, actor, conversation_id)
-            row["messages"] = [
-                dict(r)
-                for r in conn.execute(
-                    select(messages)
-                    .where(messages.c.conversation_id == conversation_id)
-                    .order_by(messages.c.created_at, messages.c.message_id)
-                ).mappings()
-            ]
             row["runs"] = [
                 self.public_run(conn, dict(r))
                 for r in conn.execute(
@@ -160,6 +152,19 @@ class ExecutionService:
                     .where(runs.c.conversation_id == conversation_id)
                     .order_by(runs.c.created_at)
                 ).mappings()
+            ]
+            # Runs são lidos antes das mensagens; a resposta só aparece se o snapshot do run
+            # já estiver concluído, pois ambos são gravados na mesma transação de finish.
+            status = {run["run_id"]: run["status"] for run in row["runs"]}
+            row["messages"] = [
+                dict(r)
+                for r in conn.execute(
+                    select(messages)
+                    .where(messages.c.conversation_id == conversation_id)
+                    .order_by(messages.c.created_at, messages.c.message_id)
+                ).mappings()
+                if r["run_id"] in status
+                and (r["role"] != "assistant" or status[r["run_id"]] == "succeeded")
             ]
         return row
 
@@ -454,14 +459,14 @@ class ExecutionService:
             seq = self.event(conn, str(run_id), value.kind, payload, raw["event_id"])
         return {"sequence": seq}
 
-    def partial(self, conn, run_id):
+    def partial(self, conn, run_id, upto=None):
+        statement = select(events.c.payload).where(
+            events.c.run_id == str(run_id), events.c.kind == "text_delta"
+        )
+        if upto is not None:
+            statement = statement.where(events.c.sequence <= upto)
         return "".join(
-            row["text"]
-            for row in conn.execute(
-                select(events.c.payload)
-                .where(events.c.run_id == str(run_id), events.c.kind == "text_delta")
-                .order_by(events.c.sequence)
-            ).scalars()
+            row["text"] for row in conn.execute(statement.order_by(events.c.sequence)).scalars()
         )
 
     def validate_sources(self, conn, context, sources):
@@ -525,12 +530,13 @@ class ExecutionService:
             return self.public_run(conn, row)
 
     def public_run(self, conn, row):
-        # Texto e cursor devem ser lidos sob a mesma trava, evitando saltar deltas na reconexão.
+        # Cursor, status e resultado vêm de uma única leitura da linha; o texto parcial é
+        # limitado a essa sequência. Deltas confirmados depois chegam pelo SSE após o cursor,
+        # sem perda nem duplicação e sem travar o worker.
         row = dict(
-            conn.execute(select(runs).where(runs.c.run_id == row["run_id"]).with_for_update())
-            .mappings()
-            .one()
+            conn.execute(select(runs).where(runs.c.run_id == row["run_id"])).mappings().one()
         )
+        cursor = row["event_sequence"]
         return {
             k: row.get(k)
             for k in (
@@ -554,10 +560,8 @@ class ExecutionService:
                     .order_by(artifacts.c.artifact_id)
                 ).mappings()
             ],
-            "partial_answer": self.partial(conn, row["run_id"]),
-            "last_event_id": conn.execute(
-                select(runs.c.event_sequence).where(runs.c.run_id == row["run_id"])
-            ).scalar_one(),
+            "partial_answer": self.partial(conn, row["run_id"], upto=cursor),
+            "last_event_id": cursor,
         }
 
     def owned_run(self, conn, actor, run_id):

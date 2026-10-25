@@ -31,13 +31,24 @@ async def execute(client, execution, adapter):
     headers = {"X-Run-Token": execution.run_token}
     base = f"/runs/{execution.run_id}"
     stopped = asyncio.Event()
+    # Heartbeat e resultado final não se cruzam: depois do resultado a reserva já terminou.
+    finishing = asyncio.Lock()
 
     async def heartbeat():
         while not stopped.is_set():
             try:
                 await asyncio.wait_for(stopped.wait(), timeout=execution.heartbeat_seconds)
             except TimeoutError:
-                await post(client, base + "/heartbeat", {}, headers)
+                async with finishing:
+                    if not stopped.is_set():
+                        await post(client, base + "/heartbeat", {}, headers)
+
+    async def finish(result):
+        async with finishing:
+            try:
+                await post(client, base + "/result", result.model_dump(mode="json"), headers)
+            finally:
+                stopped.set()
 
     async def consume():
         try:
@@ -48,15 +59,14 @@ async def execute(client, execution, adapter):
                 if isinstance(item, AgentEvent):
                     await post(client, base + "/events", item.model_dump(mode="json"), headers)
                 elif isinstance(item, AgentResult):
-                    await post(client, base + "/result", item.model_dump(mode="json"), headers)
+                    await finish(item)
                     finished = True
                 else:
                     raise ValueError("Evento fora do contrato.")
             if not finished:
                 raise ValueError("Adaptador encerrou sem resultado.")
         except Exception:
-            failure = AgentResult(status="failed", error_code="adapter_error")
-            await post(client, base + "/result", failure.model_dump(mode="json"), headers)
+            await finish(AgentResult(status="failed", error_code="adapter_error"))
             raise
         finally:
             stopped.set()

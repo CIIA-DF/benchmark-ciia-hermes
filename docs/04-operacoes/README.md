@@ -1,5 +1,7 @@
 # Runbooks
 
+- [Validação do bloco 1 em 25/10/2026](validacao-bloco1-2026-10-25.md): snapshots coerentes, falhas no chat, reconexão limitada e heartbeat.
+
 - [Correções de streaming e polling em 25/10/2026](correcoes-streaming-worker-2026-10-25.md): comportamento e validação dos dois apontamentos.
 
 - [Validação do backend em 24/10/2026](validacao-backend-2026-10-24.md): evidências locais e limites.

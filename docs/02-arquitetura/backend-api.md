@@ -95,11 +95,21 @@ nos demais casos; ver [integração dos agentes](../04-operacoes/integracao-agen
 persistidas. Em reconexão, `GET /runs/{id}` devolve `partial_answer` e
 `last_event_id` consistentes; o SSE recomeça de `after=last_event_id`.
 
+Garantias dos snapshots, sem travar o worker:
+
+- `RunResponse`: status, resultado e `last_event_id` vêm de uma única leitura do run, e
+  `partial_answer` contém exatamente os `text_delta` de sequência ≤ `last_event_id`.
+  `partial_answer` + os deltas do SSE com `after=last_event_id` reproduzem a resposta sem
+  perda nem duplicação.
+- `ConversationDetail`: cada mensagem pertence a um run listado, e a mensagem do assistente
+  aparece se e somente se o run está `succeeded` no mesmo snapshot.
+
 **Worker (`agents.worker`).** `POST /runs/claim` → `ClaimedRun` com `run_token`,
 `lease_seconds` (60 por padrão) e `heartbeat_seconds` (lease/4) → tools e
 `POST /events` durante a execução → heartbeat periódico → `POST /result`.
 Sem heartbeat, a reserva expira, o run vira `timed_out` (`worker_timeout`) e
-as tools seguintes recebem 409.
+as tools seguintes recebem 409. O worker nunca envia heartbeat depois do resultado
+final, porque os dois são serializados.
 
 **Benchmark.** `POST /runs` com `task_id`, `split` e `repetition`; não usa
 memória de chat. Resultado `succeeded` exige `experiment` (`ExperimentRun`)

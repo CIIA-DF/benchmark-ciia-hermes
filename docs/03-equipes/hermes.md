@@ -30,13 +30,13 @@ Pastas: agents/hermes/; agents/interface.py é compartilhado e exige revisão da
 
 Documentação oficial do Hermes confirmado, tool calling, HTTP, timeouts, estado, encerramento e instrumentação.
 
-Primeiro siga [instalação](../00-comece-aqui/01-inicio-rapido.md) e execute a demo. Comando da frente:
+Primeiro siga [instalação](../00-comece-aqui/01-inicio-rapido.md) e execute a demo para popular a base sintética. Em outro terminal, inicie a API com `uv run --locked python -m scripts.dev serve`. Com a API local ativa em `http://127.0.0.1:8000`, configure `LLM_BASE_URL`, `LLM_MODEL` e `LLM_API_KEY` no terminal do agente e execute uma tarefa de avaliação:
 
 ```sh
-uv run --locked python -m agents.smoke --adapter hermes
+uv run --locked python -m agents.hermes.run --task-id DEV-001
 ```
 
-Pré-requisito: demo executada e API em outro terminal com `uv run --locked python -m scripts.dev serve`. O comando testa só HTTP; não executa o agente real.
+O comando lê a tarefa de `evaluation/tasks.json`, chama `HermesAdapter` com o contexto dessa tarefa e imprime a resposta final e o `ExperimentRun` em JSON. O adapter usa `http://127.0.0.1:8000` para as ferramentas. A chamada à LLM usa o endpoint e as credenciais configurados no ambiente; o smoke `uv run --locked python -m agents.smoke --adapter hermes` continua testando apenas a interface HTTP, sem executar o agente real.
 
 ## Primeiras tarefas
 

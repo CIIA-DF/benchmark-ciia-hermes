@@ -2,8 +2,19 @@ from uuid import uuid4
 
 import httpx
 
-from agents.hermes.adapter import HermesAdapter
+from agents.hermes.adapter import SYSTEM_PROMPT, HermesAdapter
 from contracts.models import ExperimentRun, ToolContext
+
+
+def test_hermes_system_prompt_requires_sei_evidence_rules():
+    assert "ler_documento" in SYSTEM_PROMPT
+    assert "fato, data ou avaliação de conformidade" in SYSTEM_PROMPT
+    assert "ID exato" in SYSTEM_PROMPT
+    assert "página física" in SYSTEM_PROMPT
+    assert "[DOC-DEMO-001, página 2]" in SYSTEM_PROMPT
+    assert "items vazia" in SYSTEM_PROMPT
+    assert "não prova" in SYSTEM_PROMPT
+    assert "não conclua pela ausência no SEI original" in SYSTEM_PROMPT
 
 
 def test_hermes_adapter_exposes_required_run_signature():
@@ -50,6 +61,7 @@ def test_hermes_adapter_runs_tool_calls_and_records_usage(monkeypatch):
     ]
     requests = []
     tool_requests = []
+    llm_headers = []
 
     class MockClient:
         def __init__(self, *args, **kwargs):
@@ -67,6 +79,7 @@ def test_hermes_adapter_runs_tool_calls_and_records_usage(monkeypatch):
                 payload = {"process": {"title": "Processo sintético"}}
             else:
                 requests.append(kwargs["json"])
+                llm_headers.append(kwargs["headers"])
                 payload = responses.pop(0)
             request = httpx.Request("POST", f"http://test{url}")
             return httpx.Response(200, json=payload, request=request)
@@ -86,7 +99,8 @@ def test_hermes_adapter_runs_tool_calls_and_records_usage(monkeypatch):
         )(),
     )
 
-    result = HermesAdapter().run("Consulte o processo.", context)
+    adapter = HermesAdapter()
+    result = adapter.run("Consulte o processo.", context)
 
     assert isinstance(result, ExperimentRun)
     assert result.executor == "hermes"
@@ -94,6 +108,8 @@ def test_hermes_adapter_runs_tool_calls_and_records_usage(monkeypatch):
     assert result.input_tokens == 32
     assert result.output_tokens == 11
     assert result.agent_declared_success is True
+    assert adapter.final_response == "Consulta concluída."
+    assert llm_headers[0]["Authorization"] == "Bearer test-key"
     assert len(result.tool_calls) == 1
     assert result.tool_calls[0].tool == "consultar_processo"
     assert result.tool_calls[0].status == "ok"

@@ -13,15 +13,28 @@ from agents.interface import AgentAdapter, ModelConfig, ToolClient
 from contracts.models import ExperimentRun, ToolCallRecord, ToolContext
 
 SYSTEM_PROMPT = (
-    "Responda à tarefa usando as ferramentas disponíveis quando necessário. "
-    "Baseie a resposta somente nas evidências retornadas e explicite limitações."
+    "Responda às tarefas sobre processos SEI usando as ferramentas disponíveis. "
+    "Antes de apresentar qualquer fato, data ou avaliação de conformidade sobre o processo, "
+    "leia o documento relevante na íntegra com ler_documento; resultados de busca servem "
+    "apenas para localizar documentos e não bastam como evidência. "
+    "Fundamente toda afirmação factual extraída de um documento com seu ID exato e o número "
+    "da página física retornado pela leitura, por exemplo: [DOC-DEMO-001, página 2]. "
+    "Não invente fatos, datas ou conformidades. Se não leu o documento ou não encontrou "
+    "nele evidência suficiente, não apresente a afirmação como fato e explicite a limitação. "
+    "Se buscar_documentos retornar uma lista items vazia, informe que nenhum trecho "
+    "correspondente foi localizado na base consultada e que isso não prova que o documento "
+    "não exista no processo SEI original; não conclua pela ausência no SEI original."
 )
 MAX_TOOL_ROUNDS = 10
 PROJECT_VERSION = "0.1.0"
 
 
 class HermesAdapter(AgentAdapter):
+    def __init__(self):
+        self.final_response = ""
+
     def run(self, task: str, context: ToolContext) -> ExperimentRun:
+        self.final_response = ""
         config = ModelConfig.from_environment()
         started_at = datetime.now(UTC)
         started = time.perf_counter()
@@ -111,6 +124,7 @@ class HermesAdapter(AgentAdapter):
             else:
                 raise RuntimeError("Loop ReAct do Hermes terminou sem resposta final.")
 
+        self.final_response = final_content
         prompt_hash = hashlib.sha256(
             json.dumps(
                 {"system": SYSTEM_PROMPT, "task": task, "tools": TOOLS},

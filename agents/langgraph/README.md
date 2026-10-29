@@ -7,24 +7,56 @@ modelo, com contexto experimental repassado ao Backend e testes do fluxo
 principal. A integração com modelo real, checkpoints, limites operacionais e
 `ExperimentRun` permanece pendente.
 
-## Workflow
+## Arquitetura visual
 
-1. A tarefa e o `ToolContext` entram no estado do grafo.
-2. O nó do modelo analisa as mensagens e decide se precisa de uma ferramenta.
-3. O `ToolNode` encaminha a chamada selecionada ao Backend, que valida e
-   executa a operação.
-4. O resultado retorna ao estado e ao modelo, que pode solicitar outra
-   ferramenta ou encerrar a execução.
+```mermaid
+flowchart LR
+    T["Tarefa + ToolContext"] --> S["Estado do grafo<br/>MessagesState"]
+    S --> M["Nó do modelo<br/>decisão dinâmica"]
+    M -->|"solicita ferramenta"| TN["ToolNode"]
+    TN --> TC["ToolClient"]
+    TC --> B["Backend / API<br/>validação e execução"]
+    B -->|"resultado ou erro"| TN
+    TN -->|"ToolMessage"| M
+    M -->|"sem tool_calls"| E(["Encerramento"])
 
-## Arquitetura feita e planejada
+    subgraph FEITO["Implementado"]
+        S
+        M
+        TN
+        TC
+        B
+    end
 
-Já implementado: `StateGraph`, `MessagesState`, nó de modelo, `ToolNode`,
-arestas condicionais, seis ferramentas encaminhadas pelo `ToolClient`,
-propagação do contexto e testes do ciclo principal.
+    subgraph PLANEJADO["Planejado"]
+        L["LLM / endpoint real"]
+        CP["Checkpoints"]
+        LIM["Limites de tempo,<br/>chamadas e recursão"]
+        ER["ExperimentRun persistente"]
+    end
+
+    L -.-> M
+    CP -.-> S
+    LIM -.-> M
+    ER -.-> E
+
+    classDef feito fill:#d9ead3,stroke:#38761d,color:#274e13
+    classDef planejado fill:#fff2cc,stroke:#bf9000,color:#7f6000
+    class S,M,TN,TC,B feito
+    class L,CP,LIM,ER planejado
+```
+
+O fluxo entra pelo estado, passa pelo modelo e só executa ferramentas quando
+o modelo as solicita. O resultado volta ao estado para uma nova decisão ou
+encerra o grafo quando não há `tool_calls`.
+
+Implementado: `StateGraph`, `MessagesState`, nó de modelo, `ToolNode`, arestas
+condicionais, seis ferramentas via `ToolClient`, propagação do contexto e
+testes do ciclo principal.
 
 Planejado: modelo/endpoint real, `AgentAdapter`, cliente HTTP assíncrono,
-checkpoints, limites de tempo/chamadas/recursão, tratamento estruturado de
-exceções e geração persistente de `ExperimentRun`.
+checkpoints, limites operacionais, tratamento estruturado de exceções e
+persistência de `ExperimentRun`.
 
 O projeto fixa `langgraph>=1.2,<2` no lockfile. A integração usa a Graph API
 (`StateGraph`, `MessagesState`, `ToolNode` e arestas condicionais); a versão do

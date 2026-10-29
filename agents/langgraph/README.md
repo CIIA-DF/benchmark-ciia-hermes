@@ -1,5 +1,12 @@
 # LangGraph — grafo inicial
 
+## Resumo
+
+A base do agente LangGraph já possui um ciclo dinâmico modelo → ferramenta →
+modelo, com contexto experimental repassado ao Backend e testes do fluxo
+principal. A integração com modelo real, checkpoints, limites operacionais e
+`ExperimentRun` permanece pendente.
+
 O projeto fixa `langgraph>=1.2,<2` no lockfile. A integração usa a Graph API
 (`StateGraph`, `MessagesState`, `ToolNode` e arestas condicionais); a versão do
 provedor/modelo de inferência continua pendente. A interface comum está em

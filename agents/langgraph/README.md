@@ -1,9 +1,20 @@
-# LangGraph — integração planejada
+# LangGraph — grafo inicial
 
-LangGraph ainda não é dependência instalada. Versão será escolhida/registrada antes da implementação real. A interface comum está em [AgentAdapter/ToolClient](../interface.py).
+O projeto fixa `langgraph>=1.2,<2` no lockfile. A integração usa a Graph API
+(`StateGraph`, `MessagesState`, `ToolNode` e arestas condicionais); a versão do
+provedor/modelo de inferência continua pendente. A interface comum está em
+[AgentAdapter/ToolClient](../interface.py).
 
 Ciclo previsto: tarefa e estado chegam ao modelo; o modelo pode solicitar uma ou mais ferramentas; o adaptador valida o nome e envia a chamada ao backend; o resultado/erro retorna ao estado e ao modelo; o próximo passo pode ser outra chamada ou encerramento. Limites de chamadas, tempo e tokens devem interromper execução com motivo registrado.
 
-Nós/arestas controlam transições; não fixam uma sequência de ferramentas que já solucione o benchmark. Estado, mensagens, tratamento de erro e checkpoints precisam ser definidos para permitir comparação com Hermes. Não há inferência, persistência de checkpoint ou agente completo hoje.
+O grafo está em [`graph.py`](graph.py). O estado registra tarefa, mensagens,
+contagem de chamadas ao modelo e ferramentas. O modelo decide dinamicamente se
+solicita uma ferramenta; o `ToolNode` encaminha a chamada ao backend; a aresta
+condicional encerra quando não há `tool_calls`. O grafo não acessa banco nem
+implementa regras de negócio.
+
+Ainda não estão incluídos checkpoints, limites operacionais, cliente HTTP
+assíncrono, `AgentAdapter` real, inferência externa ou persistência de
+`ExperimentRun`; são etapas posteriores.
 
 Com API populada em execução: `uv run --locked python -m agents.smoke --adapter langgraph`. Isso testa apenas HTTP. [Guia da equipe](../../docs/03-equipes/langgraph.md) e [quickstart oficial consultado](https://docs.langchain.com/oss/python/langgraph/quickstart).

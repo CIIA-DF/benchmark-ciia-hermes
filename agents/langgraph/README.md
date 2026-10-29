@@ -7,6 +7,25 @@ modelo, com contexto experimental repassado ao Backend e testes do fluxo
 principal. A integração com modelo real, checkpoints, limites operacionais e
 `ExperimentRun` permanece pendente.
 
+## Workflow
+
+1. A tarefa e o `ToolContext` entram no estado do grafo.
+2. O nó do modelo analisa as mensagens e decide se precisa de uma ferramenta.
+3. O `ToolNode` encaminha a chamada selecionada ao Backend, que valida e
+   executa a operação.
+4. O resultado retorna ao estado e ao modelo, que pode solicitar outra
+   ferramenta ou encerrar a execução.
+
+## Arquitetura feita e planejada
+
+Já implementado: `StateGraph`, `MessagesState`, nó de modelo, `ToolNode`,
+arestas condicionais, seis ferramentas encaminhadas pelo `ToolClient`,
+propagação do contexto e testes do ciclo principal.
+
+Planejado: modelo/endpoint real, `AgentAdapter`, cliente HTTP assíncrono,
+checkpoints, limites de tempo/chamadas/recursão, tratamento estruturado de
+exceções e geração persistente de `ExperimentRun`.
+
 O projeto fixa `langgraph>=1.2,<2` no lockfile. A integração usa a Graph API
 (`StateGraph`, `MessagesState`, `ToolNode` e arestas condicionais); a versão do
 provedor/modelo de inferência continua pendente. A interface comum está em

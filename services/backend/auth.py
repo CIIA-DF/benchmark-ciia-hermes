@@ -2,18 +2,41 @@
 
 import hashlib
 import os
+from collections.abc import Iterable
+from typing import Literal, TypedDict
 
 from sqlalchemy import delete, insert, select, update
+from sqlalchemy.engine import Connection, Engine
 
+from contracts.execution import Executor
 from services.backend.errors import fail
 from services.backend.schema import permissions, principals
+
+Role = Literal["operator", "worker"]
+
+
+class Principal(TypedDict):
+    principal_id: str
+    token_sha256: str
+    role: Role
+    executor: Executor | None
+    can_write: bool
 
 
 def token_hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def provision(engine, principal_id, token, role, grants, *, can_write=False, executor=None):
+def provision(
+    engine: Engine,
+    principal_id: str,
+    token: str,
+    role: Role,
+    grants: Iterable[tuple[str, str]],
+    *,
+    can_write: bool = False,
+    executor: Executor | None = None,
+) -> None:
     if len(token) < 32 or role not in {"operator", "worker"}:
         raise ValueError("Credencial deve ter 32 caracteres e perfil conhecido.")
     values = dict(token_sha256=token_hash(token), role=role, executor=executor, can_write=can_write)
@@ -36,7 +59,7 @@ def provision(engine, principal_id, token, role, grants, *, can_write=False, exe
             )
 
 
-def bootstrap(engine):
+def bootstrap(engine: Engine) -> None:
     # Configuração inicial local é limitada ao corpus fictício, sem curingas de acesso.
     grants = [("PROC-DEMO-001", "synthetic-v1")]
     for env, name, role in [
@@ -56,7 +79,7 @@ def bootstrap(engine):
             )
 
 
-def authenticate(engine, authorization: str | None):
+def authenticate(engine: Engine, authorization: str | None) -> Principal:
     if not authorization or not authorization.startswith("Bearer "):
         fail(401, "unauthorized", "Credencial necessária.")
     with engine.connect() as conn:
@@ -69,10 +92,16 @@ def authenticate(engine, authorization: str | None):
         )
     if row is None:
         fail(401, "unauthorized", "Credencial inválida.")
-    return dict(row)
+    return Principal(
+        principal_id=row["principal_id"],
+        token_sha256=row["token_sha256"],
+        role=row["role"],
+        executor=row["executor"],
+        can_write=row["can_write"],
+    )
 
 
-def authorize(conn, principal_id, process_id, corpus_version):
+def authorize(conn: Connection, principal_id: str, process_id: str, corpus_version: str) -> None:
     found = conn.execute(
         select(permissions).where(
             permissions.c.principal_id == principal_id,

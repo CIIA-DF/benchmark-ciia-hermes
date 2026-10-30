@@ -51,7 +51,7 @@ class SimulationAdapter:
                 parameters={},
                 started_at=started,
                 latency_ms=(datetime.now(UTC) - started).total_seconds() * 1000,
-                tool_calls=[],
+                tool_calls=list(tools.calls),
                 agent_declared_success=False,
                 persisted_artifact_ids=[],
                 verified_success=None,

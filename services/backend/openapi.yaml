@@ -1,13 +1,16 @@
 openapi: 3.1.0
 info:
   title: CIIA — tools e conversas experimentais
-  version: 0.2.0
+  version: 0.3.0
 paths:
   /health:
     get:
       tags:
       - Saúde
       summary: Verifica API e banco
+      description: Executa SELECT 1 no banco configurado. 200 confirma essa consulta; falha SQL retorna
+        503 storage_unavailable. Não verifica schema completo, fila, workers, modelos ou inferência de
+        LLM.
       operationId: health
       responses:
         '200':
@@ -15,29 +18,45 @@ paths:
           content:
             application/json:
               schema:
-                properties:
-                  status:
-                    const: ok
-                  contract_version:
-                    type: string
-                    examples:
-                    - '0.2'
-                type: object
-                required:
-                - status
-                - contract_version
+                $ref: '#/components/schemas/HealthResponse'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security: []
   /capabilities:
     get:
       tags:
       - Operador
-      summary: Executores disponíveis e permissão de escrita do operador
+      summary: Configuração dos executores, presença observada e permissão de escrita
+      description: available mantém o significado legado de configuração habilitada, igual a enabled.
+        worker_recent indica polling/heartbeat autorizado nos últimos 60 s, em escopo concedido ao operador.
+        Não comprova inferência. Modelo remoto desconhecido é null e configuration_known é false; não
+        são inferidos do ambiente da API.
       operationId: capabilities
       responses:
         '200':
@@ -52,6 +71,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -64,6 +88,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /processos:
@@ -71,6 +117,9 @@ paths:
       tags:
       - Operador
       summary: Processos e corpus concedidos ao operador
+      description: Lista vazia autorizada retorna 200. Payload persistido deve ser válido e corresponder
+        à identidade da linha concedida; inconsistência retorna 500 invalid_response seguro, sem lista
+        parcial.
       operationId: listProcesses
       responses:
         '200':
@@ -88,8 +137,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
           content:
             application/json:
               schema:
@@ -100,6 +160,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /conversations:
@@ -127,6 +203,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -140,8 +221,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -152,12 +233,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
     get:
@@ -191,6 +294,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -209,6 +317,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /conversations/{conversation_id}:
@@ -238,6 +368,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -262,6 +397,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /conversations/{conversation_id}/messages:
@@ -269,8 +426,11 @@ paths:
       tags:
       - Conversas
       summary: Envia mensagem e enfileira execução de chat
-      description: Repetir a mesma `idempotency_key` com a mesma entrada devolve o run existente. Só um
-        run ativo por conversa; outro envio recebe 409 `conflict`.
+      description: Repetir a mesma `idempotency_key` com a mesma entrada devolve o run existente antes
+        da quota. Só um run ativo por conversa; outro envio recebe 409 `conflict`. Compartilha com POST
+        /runs o limite de queued por operador, padrão 20, configurável por RUN_MAX_QUEUED_PER_OPERATOR.
+        Fila cheia retorna 429 `resource_limit`, sem gravar mensagem, run ou evento. Gravação dos três
+        é atômica.
       operationId: sendMessage
       parameters:
       - name: conversation_id
@@ -299,6 +459,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -312,8 +477,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -324,12 +489,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /runs:
@@ -337,6 +530,10 @@ paths:
       tags:
       - Execuções
       summary: Enfileira execução de benchmark, sem memória de chat
+      description: Limite padrão de 20 runs queued por operador, contando todos os seus processos, corpus
+        e executores. Configurável por RUN_MAX_QUEUED_PER_OPERATOR. Replay da mesma chave/entrada precede
+        a quota; entrada diferente mantém 409. Fila cheia retorna 429 resource_limit, sem criar run ou
+        evento. Queued vencido é expirado antes da quota, sem exigir GET prévio.
       operationId: createRun
       requestBody:
         content:
@@ -357,6 +554,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -370,8 +572,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -382,12 +584,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /runs/claim:
@@ -396,7 +626,8 @@ paths:
       - Worker
       summary: Reserva a próxima execução do executor
       description: Devolve `run_token`, que deve ir no cabeçalho `X-Run-Token` das tools, eventos, heartbeat
-        e resultado.
+        e resultado. Queued vencido não é entregue; a expiração é revalidada sob a trava antes de atribuir
+        o worker. Polling autorizado registra presença observada, inclusive quando retorna 204 sem trabalho.
       operationId: claimRun
       requestBody:
         content:
@@ -419,6 +650,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -431,12 +667,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /runs/{run_id}:
@@ -444,6 +708,9 @@ paths:
       tags:
       - Execuções
       summary: Snapshot consistente de status, texto parcial e cursor
+      description: Queued expira após 300 s desde created_at, configuráveis por RUN_QUEUE_TIMEOUT_SECONDS.
+        Retorna timed_out com result.error_code queue_timeout, preservando histórico, parciais e artefatos.
+        A regra também vale em criação e claim.
       operationId: getRun
       parameters:
       - name: run_id
@@ -466,6 +733,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -490,6 +762,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /runs/{run_id}/heartbeat:
@@ -497,6 +791,8 @@ paths:
       tags:
       - Worker
       summary: Renova a reserva da execução
+      description: Renova lease e presença observada atomicamente para o worker atual autorizado, com
+        executor compatível. Lease vencido ou execução terminal não renova.
       operationId: heartbeat
       parameters:
       - name: run_id
@@ -519,6 +815,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -526,8 +827,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -544,6 +845,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
         RunToken: []
@@ -552,6 +875,10 @@ paths:
       tags:
       - Worker
       summary: Publica status ou trecho de resposta; idempotente por event_id
+      description: Teto de 20.000 eventos por run, incluindo eventos do servidor e tools. A última vaga
+        é reservada ao done. Novo evento sem capacidade retorna 429 resource_limit e encerra o run com
+        result.error_code event_limit; consulte o snapshot. Replay idêntico de evento já aceito não consome
+        vaga enquanto o run estiver ativo.
       operationId: publishEvent
       parameters:
       - name: run_id
@@ -580,6 +907,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -587,8 +919,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -599,12 +931,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
         RunToken: []
@@ -614,7 +974,9 @@ paths:
       summary: Fluxo SSE de eventos persistidos
       description: Eventos `status`, `text_delta`, `tool` e `done`, cada um com `id` igual à sequência.
         O cabeçalho `Last-Event-ID` tem precedência sobre `after`. Falhas após o início do fluxo chegam
-        como evento `stream_error` com `message` e `code`. O fluxo termina após o evento `done`.
+        como evento `stream_error` com `message` e `code`. O fluxo termina após o evento `done`. Até 5
+        conexões por operador, com leases duráveis de 30 s renovados durante o fluxo; sem capacidade retorna
+        429 resource_limit. Leases abandonados são recuperados após o prazo, sem reiniciar a API.
       operationId: streamEvents
       parameters:
       - name: run_id
@@ -666,6 +1028,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -684,12 +1051,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /runs/{run_id}/result:
@@ -698,7 +1093,9 @@ paths:
       - Worker
       summary: Encerra a execução com resultado final
       description: Com sucesso, `answer` deve coincidir com a concatenação dos `text_delta`. Benchmark
-        bem-sucedido exige `experiment`. Repetir o mesmo resultado é idempotente.
+        bem-sucedido exige `experiment`. As chamadas declaradas devem corresponder ao histórico observado,
+        e artefatos ao efeito da chamada. Erro no cliente pode coexistir com efeito confirmado. Duração
+        não é comparada. Repetir o mesmo resultado é idempotente.
       operationId: finishRun
       parameters:
       - name: run_id
@@ -727,6 +1124,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -734,8 +1136,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -746,12 +1148,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
         RunToken: []
@@ -760,6 +1184,9 @@ paths:
       tags:
       - Artefatos
       summary: Artefato gravado e recibo, para conferência pelo operador
+      description: Após conferir propriedade e concessões, valida ferramenta, payload, recibo, contexto
+        do run, identificadores e hashes. Corrupção retorna 500 `invalid_response`. A leitura não exige
+        lease ativo nem permissão de escrita.
       operationId: getArtifact
       parameters:
       - name: artifact_id
@@ -782,6 +1209,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -800,12 +1232,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
   /tools/consultar_processo:
@@ -833,6 +1287,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -846,8 +1305,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -858,21 +1317,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
         RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
+          o histórico de tentativas com `ExperimentRun.tool_calls`.
+      description: ' Teto de 1.000 requisições físicas atribuíveis à lease por run, incluindo erros e
+        retries. Excesso retorna 429 resource_limit, retryable false, antes do corpo/efeito; recusas permanecem
+        auditadas.'
   /tools/buscar_documentos:
     post:
       tags:
       - Tools
       summary: Busca literal de trechos com fonte
-      description: Lista vazia não prova ausência no processo original.
+      description: Lista vazia não prova ausência no processo original. Teto de 1.000 requisições físicas
+        atribuíveis à lease por run, incluindo erros e retries. Excesso retorna 429 resource_limit, retryable
+        false, antes do corpo/efeito; recusas permanecem auditadas.
       operationId: buscarDocumentos
       requestBody:
         content:
@@ -893,6 +1394,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -906,8 +1412,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -918,15 +1424,52 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
         RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
+          o histórico de tentativas com `ExperimentRun.tool_calls`.
   /tools/ler_documento:
     post:
       tags:
@@ -952,6 +1495,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -965,8 +1513,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -977,15 +1525,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
         RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
+          o histórico de tentativas com `ExperimentRun.tool_calls`.
+      description: ' Teto de 1.000 requisições físicas atribuíveis à lease por run, incluindo erros e
+        retries. Excesso retorna 429 resource_limit, retryable false, antes do corpo/efeito; recusas permanecem
+        auditadas.'
   /tools/consultar_requisitos:
     post:
       tags:
@@ -1011,6 +1599,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -1024,8 +1617,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -1036,22 +1629,64 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
         RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
+          o histórico de tentativas com `ExperimentRun.tool_calls`.
+      description: ' Teto de 1.000 requisições físicas atribuíveis à lease por run, incluindo erros e
+        retries. Excesso retorna 429 resource_limit, retryable false, antes do corpo/efeito; recusas permanecem
+        auditadas.'
   /tools/registrar_pendencia:
     post:
       tags:
       - Tools
       summary: Registra pendência de requisito com evidências
       description: 'Replay com a mesma `idempotency_key` e entrada devolve o recibo com `replayed: true`;
-        entrada diferente recebe 409 `idempotency_conflict`.'
+        entrada diferente recebe 409 `idempotency_conflict`. Teto de 1.000 requisições físicas atribuíveis
+        à lease por run, incluindo erros e retries. Excesso retorna 429 resource_limit, retryable false,
+        antes do corpo/efeito; recusas permanecem auditadas.'
       operationId: registrarPendencia
       requestBody:
         content:
@@ -1072,6 +1707,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -1085,8 +1725,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -1097,21 +1737,60 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
         RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
+          o histórico de tentativas com `ExperimentRun.tool_calls`.
   /tools/salvar_minuta:
     post:
       tags:
       - Tools
       summary: Persiste minuta fundamentada e devolve recibo
-      description: Mesma regra de idempotência de `registrar_pendencia`.
+      description: Mesma regra de idempotência de `registrar_pendencia`. Teto de 1.000 requisições físicas
+        atribuíveis à lease por run, incluindo erros e retries. Excesso retorna 429 resource_limit, retryable
+        false, antes do corpo/efeito; recusas permanecem auditadas.
       operationId: salvarMinuta
       requestBody:
         content:
@@ -1132,6 +1811,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
@@ -1145,8 +1829,8 @@ paths:
               schema:
                 $ref: '#/components/schemas/ToolError'
         '409':
-          description: Conflito de estado, idempotência ou versão (`conflict`, `idempotency_conflict`,
-            `version_mismatch`).
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
           content:
             application/json:
               schema:
@@ -1157,15 +1841,52 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
       security:
       - BearerAuth: []
         RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
+          o histórico de tentativas com `ExperimentRun.tool_calls`.
 components:
   schemas:
     AgentEvent:
@@ -1385,15 +2106,10 @@ components:
           format: uuid
           title: Run Id
         context:
-          additionalProperties:
-            type: string
-          type: object
-          title: Context
+          $ref: '#/components/schemas/RunContext'
         history:
           items:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/components/schemas/HistoryMessage'
           type: array
           title: History
         task:
@@ -1402,12 +2118,7 @@ components:
           minLength: 1
           title: Task
         task_metadata:
-          additionalProperties:
-            anyOf:
-            - type: string
-            - type: integer
-          type: object
-          title: Task Metadata
+          $ref: '#/components/schemas/TaskMetadata'
         kind:
           type: string
           enum:
@@ -1744,12 +2455,36 @@ components:
         simulation:
           type: boolean
           title: Simulation
+        enabled:
+          type: boolean
+          title: Enabled
+        worker_recent:
+          type: boolean
+          title: Worker Recent
+        last_seen_at:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Last Seen At
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model
+        configuration_known:
+          type: boolean
+          title: Configuration Known
       additionalProperties: false
       type: object
       required:
       - name
       - available
       - simulation
+      - enabled
+      - worker_recent
+      - last_seen_at
+      - model
+      - configuration_known
       title: ExecutorCapability
     ExperimentRun:
       properties:
@@ -1920,6 +2655,21 @@ components:
       - verified_success
       - evaluator
       title: ExperimentRun
+    HealthResponse:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+        contract_version:
+          type: string
+          const: '0.3'
+          title: Contract Version
+          default: '0.3'
+      additionalProperties: false
+      type: object
+      title: HealthResponse
     HeartbeatResponse:
       properties:
         status:
@@ -1931,6 +2681,23 @@ components:
       required:
       - status
       title: HeartbeatResponse
+    HistoryMessage:
+      properties:
+        role:
+          type: string
+          enum:
+          - user
+          - assistant
+          title: Role
+        content:
+          type: string
+          title: Content
+      additionalProperties: false
+      type: object
+      required:
+      - role
+      - content
+      title: HistoryMessage
     InventoryEvidence:
       properties:
         kind:
@@ -2317,6 +3084,7 @@ components:
           items:
             $ref: '#/components/schemas/Requirement'
           type: array
+          minItems: 1
           title: Items
       additionalProperties: false
       type: object
@@ -2327,6 +3095,38 @@ components:
       - requirements_version
       - items
       title: RequirementsResult
+    RunContext:
+      properties:
+        run_id:
+          type: string
+          pattern: ^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$
+          title: Run Id
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      title: RunContext
     RunInput:
       properties:
         process_id:
@@ -2429,10 +3229,7 @@ components:
           - timed_out
           title: Status
         context:
-          additionalProperties:
-            type: string
-          type: object
-          title: Context
+          $ref: '#/components/schemas/RunContext'
         created_at:
           type: number
           title: Created At
@@ -2506,7 +3303,9 @@ components:
           type: string
           maxLength: 200
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Query
+          description: Busca literal; U+0000 não é permitido.
         limit:
           type: integer
           maximum: 20.0
@@ -2557,6 +3356,7 @@ components:
           items:
             $ref: '#/components/schemas/Chunk'
           type: array
+          maxItems: 20
           title: Items
         warning:
           type: string
@@ -2602,6 +3402,8 @@ components:
             - context_limit
             - model_timeout
             - worker_timeout
+            - queue_timeout
+            - event_limit
           - type: 'null'
           title: Error Code
         experiment:
@@ -2613,6 +3415,31 @@ components:
       required:
       - status
       title: StoredResult
+    TaskMetadata:
+      properties:
+        task_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Task Id
+        split:
+          type: string
+          enum:
+          - development
+          - final
+          title: Split
+        repetition:
+          type: integer
+          minimum: 1.0
+          title: Repetition
+      additionalProperties: false
+      type: object
+      required:
+      - task_id
+      - split
+      - repetition
+      title: TaskMetadata
     ToolCallRecord:
       properties:
         tool_call_id:
@@ -2623,9 +3450,13 @@ components:
           title: Tool Call Id
         tool:
           type: string
-          maxLength: 120
-          minLength: 1
-          pattern: ^[A-Za-z0-9_.:-]+$
+          enum:
+          - consultar_processo
+          - buscar_documentos
+          - ler_documento
+          - consultar_requisitos
+          - registrar_pendencia
+          - salvar_minuta
           title: Tool
         duration_ms:
           type: number
@@ -2701,6 +3532,13 @@ components:
           - conflict
           - context_limit
           - executor_unavailable
+          - budget_exceeded
+          - invalid_response
+          - internal_error
+          - http_error
+          - method_not_allowed
+          - payload_too_large
+          - resource_limit
           title: Code
         message:
           type: string
@@ -2807,9 +3645,7 @@ components:
           title: Requirements Version
         artifact_id:
           type: string
-          maxLength: 120
-          minLength: 1
-          pattern: ^[A-Za-z0-9_.:-]+$
+          format: uuid
           title: Artifact Id
         persisted_at:
           type: string

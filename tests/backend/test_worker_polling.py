@@ -35,10 +35,15 @@ def test_worker_recovers_after_claim_503(polling, failures):
     run_id = str(uuid4())
     claimed = {
         "run_id": run_id,
-        "context": {"run_id": run_id},
+        "context": {
+            "run_id": run_id,
+            "process_id": "PROC-SYNTHETIC",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "v1",
+        },
         "history": [{"role": "user", "content": "Pergunta sintética"}],
         "task": "Pergunta sintética",
-        "task_metadata": {"task_id": "POLLING"},
+        "task_metadata": {"task_id": "POLLING", "split": "development", "repetition": 1},
         "kind": "chat",
         "executor": "simulation",
         "run_token": "synthetic-lease",
@@ -110,10 +115,15 @@ def test_heartbeat_never_follows_final_result():
     run_id = str(uuid4())
     execution = ClaimedRun(
         run_id=run_id,
-        context={"run_id": run_id},
+        context={
+            "run_id": run_id,
+            "process_id": "PROC-SYNTHETIC",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "v1",
+        },
         history=[{"role": "user", "content": "Pergunta sintética"}],
         task="Pergunta sintética",
-        task_metadata={"task_id": "HEARTBEAT"},
+        task_metadata={"task_id": "HEARTBEAT", "split": "development", "repetition": 1},
         kind="chat",
         executor="simulation",
         run_token="synthetic-lease",

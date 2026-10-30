@@ -111,3 +111,81 @@ artifacts = Table(
     Column("receipt", JSON, nullable=False),
     UniqueConstraint("run_id", "tool", "idempotency_key", name="uq_artifact_operation"),
 )
+# Cada tentativa de tool, inclusive falhas e replays; argumentos só como hash.
+tool_calls = Table(
+    "tool_calls",
+    metadata,
+    Column("run_id", String, ForeignKey("runs.run_id"), primary_key=True),
+    Column("tool_call_id", String, primary_key=True),
+    Column("attempt", Integer, primary_key=True),
+    Column("tool", String, nullable=False),
+    Column("started_at", Float, nullable=False),
+    Column("duration_ms", Float, nullable=False),
+    Column("http_status", Integer, nullable=False),
+    Column("code", String),
+    Column("replayed", Boolean, nullable=False),
+    Column("artifact_id", String),
+    Column("args_sha256", String, nullable=False),
+)
+
+
+logical_tool_calls = Table(
+    "logical_tool_calls",
+    metadata,
+    Column("run_id", String, ForeignKey("runs.run_id"), primary_key=True),
+    Column("tool_call_id", String, primary_key=True),
+    Column("tool", String, nullable=False),
+    Column("args_sha256", String, nullable=False),
+)
+
+
+# Canonical physical HTTP attempts. Pre-0006 tool_calls remain a compatibility ledger.
+physical_tool_attempts = Table(
+    "physical_tool_attempts",
+    metadata,
+    Column("attempt_id", String(36), primary_key=True),
+    Column("tool", String, nullable=False),
+    Column("method", String, nullable=False),
+    Column("run_id", String, ForeignKey("runs.run_id"), nullable=True, index=True),
+    Column("tool_call_id", String, nullable=True),
+    Column("args_sha256", String, nullable=True),
+    Column("started_at", Float, nullable=False),
+    Column("finished_at", Float, nullable=True),
+    Column("response_state", String, nullable=False),
+    Column("http_status", Integer, nullable=True),
+    Column("code", String, nullable=True),
+    Column("client_received", Boolean, nullable=True),
+)
+physical_tool_phases = Table(
+    "physical_tool_phases",
+    metadata,
+    Column(
+        "attempt_id", String(36), ForeignKey("physical_tool_attempts.attempt_id"), primary_key=True
+    ),
+    Column("phase", String, primary_key=True),
+    Column("recorded_at", Float, nullable=False),
+    Column("artifact_id", String, ForeignKey("artifacts.artifact_id"), nullable=True),
+    Column("replayed", Boolean, nullable=True),
+)
+
+# Successful worker polling/heartbeats, not proof of inference connectivity.
+worker_presence = Table(
+    "worker_presence",
+    metadata,
+    Column("principal_id", String, ForeignKey("principals.principal_id"), primary_key=True),
+    Column("executor", String, nullable=False),
+    Column("observed_at", Float, nullable=False),
+    Column("source", String, nullable=False),
+)
+
+# Active SSE admission; abandoned responses expire without an in-memory owner.
+stream_leases = Table(
+    "stream_leases",
+    metadata,
+    Column("lease_id", String(36), primary_key=True),
+    Column(
+        "principal_id", String, ForeignKey("principals.principal_id"), nullable=False, index=True
+    ),
+    Column("run_id", String, ForeignKey("runs.run_id"), nullable=False),
+    Column("lease_until", Float, nullable=False),
+)

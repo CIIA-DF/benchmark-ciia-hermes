@@ -1,15 +1,39 @@
 """Contratos v0.2 de conversa, execução e streaming para ambos os adaptadores."""
 
-from typing import Literal
+from typing import Annotated, Literal, TypedDict
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, StrictBool, StrictFloat, StrictInt
 
 from contracts.models import Contract, Evidence, ExperimentRun, Identifier, InventoryEvidence, Text
 
 Executor = Literal["simulation", "hermes", "langgraph"]
 RunStatus = Literal["queued", "running", "succeeded", "failed", "timed_out"]
 Reference = Evidence | InventoryEvidence
+
+
+class RunContext(TypedDict):
+    # Keep dictionaries for existing adapters, with a closed schema in OpenAPI/Pydantic.
+    run_id: Annotated[str, Field(pattern=r"^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$")]
+    process_id: Identifier
+    corpus_version: Identifier
+    requirements_version: Identifier
+
+
+class HistoryMessage(TypedDict):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class TaskMetadata(TypedDict):
+    task_id: Identifier
+    split: Literal["development", "final"]
+    repetition: Annotated[StrictInt, Field(ge=1)]
+
+
+class HealthResponse(Contract):
+    status: Literal["ok"] = "ok"
+    contract_version: Literal["0.3"] = "0.3"
 
 
 class ExecutionScope(Contract):
@@ -33,7 +57,7 @@ class RunInput(ExecutionScope):
     idempotency_key: Identifier
     task_id: Identifier
     split: Literal["development", "final"] = "development"
-    repetition: int = Field(default=1, ge=1)
+    repetition: StrictInt = Field(default=1, ge=1)
 
 
 class ClaimInput(Contract):
@@ -61,20 +85,28 @@ class AgentResult(Contract):
 
 class ClaimedRun(Contract):
     run_id: UUID
-    context: dict[str, str]
-    history: list[dict[str, str]]
+    context: RunContext
+    history: list[HistoryMessage]
     task: Text
-    task_metadata: dict[str, str | int]
+    task_metadata: TaskMetadata
     kind: Literal["chat", "benchmark"]
     executor: Executor
     run_token: str = Field(repr=False)
-    lease_seconds: int = Field(gt=0)
-    heartbeat_seconds: int = Field(gt=0)
+    lease_seconds: StrictInt = Field(gt=0)
+    heartbeat_seconds: StrictInt = Field(gt=0)
 
 
 class StoredResult(AgentResult):
     error_code: (
-        Literal["adapter_error", "context_limit", "model_timeout", "worker_timeout"] | None
+        Literal[
+            "adapter_error",
+            "context_limit",
+            "model_timeout",
+            "worker_timeout",
+            "queue_timeout",
+            "event_limit",
+        ]
+        | None
     ) = None
 
 
@@ -90,20 +122,20 @@ class RunResponse(Contract):
     kind: Literal["chat", "benchmark"]
     executor: Executor
     status: RunStatus
-    context: dict[str, str]
-    created_at: float
-    started_at: float | None
-    finished_at: float | None
+    context: RunContext
+    created_at: StrictFloat
+    started_at: StrictFloat | None
+    finished_at: StrictFloat | None
     result: StoredResult | None
     partial_answer: str
-    last_event_id: int = Field(ge=0)
+    last_event_id: StrictInt = Field(ge=0)
     artifacts: list[ArtifactSummary] = Field(default_factory=list)
 
 
 class ConversationResponse(ConversationInput):
     conversation_id: UUID
     owner_id: str
-    created_at: float
+    created_at: StrictFloat
 
 
 class MessageResponse(Contract):
@@ -113,7 +145,7 @@ class MessageResponse(Contract):
     run_id: UUID
     role: Literal["user", "assistant"]
     content: str
-    created_at: float
+    created_at: StrictFloat
 
 
 class ConversationDetail(ConversationResponse):
@@ -123,13 +155,18 @@ class ConversationDetail(ConversationResponse):
 
 class ExecutorCapability(Contract):
     name: Executor
-    available: bool
-    simulation: bool
+    available: StrictBool
+    simulation: StrictBool
+    enabled: StrictBool
+    worker_recent: StrictBool
+    last_seen_at: StrictFloat | None
+    model: str | None
+    configuration_known: StrictBool
 
 
 class CapabilitiesResponse(Contract):
     executors: list[ExecutorCapability]
-    can_write: bool
+    can_write: StrictBool
     profile: str
 
 
@@ -138,4 +175,4 @@ class HeartbeatResponse(Contract):
 
 
 class EventReceipt(Contract):
-    sequence: int = Field(gt=0)
+    sequence: StrictInt = Field(gt=0)

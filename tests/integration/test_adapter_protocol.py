@@ -118,3 +118,91 @@ def test_tool_outcome_without_contract_body_is_definitive():
     with pytest.raises(ToolCallError) as retry:
         tool_outcome(httpx.Response(503, json=unavailable, request=request))
     assert retry.value.error.retryable
+
+
+def synthetic_execution():
+    run_id = str(uuid4())
+    return ClaimedRun(
+        run_id=run_id,
+        context={
+            "run_id": run_id,
+            "process_id": "PROC-SYNTHETIC",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "v1",
+        },
+        history=[{"role": "user", "content": "Pergunta sintética"}],
+        task="Pergunta sintética",
+        task_metadata={"task_id": "RETRY", "split": "development", "repetition": 1},
+        kind="chat",
+        executor="simulation",
+        run_token="synthetic-lease",
+        lease_seconds=60,
+        heartbeat_seconds=15,
+    )
+
+
+@pytest.mark.parametrize(
+    ("failures", "status", "attempts", "outcome"),
+    [
+        (["503", "transport"], 200, 3, "ok"),
+        (["403"], None, 1, "raises"),
+        (["503", "503", "503"], None, 3, "raises"),
+    ],
+)
+def test_async_client_retries_only_transient_failures(
+    monkeypatch, failures, status, attempts, outcome
+):
+    import agents.interface as interface
+
+    async def no_wait(_seconds):
+        return None
+
+    monkeypatch.setattr(interface.asyncio, "sleep", no_wait)
+    execution = synthetic_execution()
+    seen = []
+    script = list(failures)
+
+    def respond(request):
+        seen.append((request.headers["X-Tool-Call-Id"], request.content))
+        step = script.pop(0) if script else "ok"
+        if step == "transport":
+            raise httpx.ConnectError("queda sintética", request=request)
+        if step == "503":
+            error = {"code": "storage_unavailable", "message": "Banco.", "retryable": True}
+            return httpx.Response(503, json=error)
+        if step == "403":
+            return httpx.Response(403, json={"code": "forbidden", "message": "Recusado."})
+        return httpx.Response(
+            200,
+            json={
+                **execution.context,
+                "process": {
+                    "process_id": "PROC-SYNTHETIC",
+                    "corpus_version": "synthetic-v1",
+                    "requirements_version": "v1",
+                    "title": "Processo sintético",
+                    "export_completeness": "partial",
+                    "export_note": "Synthetic",
+                },
+                "inventory": [],
+            },
+        )
+
+    async def run():
+        transport = httpx.MockTransport(respond)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+            tools = AsyncToolClient(http, execution)
+            if outcome == "ok":
+                result = await tools.call("consultar_processo", {})
+                assert result["process"]["title"] == "Processo sintético"
+            else:
+                with pytest.raises(ToolCallError):
+                    await tools.call("consultar_processo", {})
+            return tools.calls
+
+    calls = asyncio.run(run())
+    assert len(seen) == attempts
+    assert len({call_id for call_id, _ in seen}) == 1
+    assert len({body for _, body in seen}) == 1
+    assert len(calls) == 1 and calls[0].tool_call_id == seen[0][0]
+    assert calls[0].status == ("ok" if outcome == "ok" else "error")

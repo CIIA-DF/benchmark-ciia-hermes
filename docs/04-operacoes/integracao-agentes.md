@@ -21,14 +21,28 @@ não entram no prompt.
   devolve `{"error": {"code", "message", "run_id", "retryable"}}` sem lançar exceção.
   Entregue esse dict ao modelo como resultado da tool para que ele corrija os
   argumentos ou declare o impedimento. Não trate como evidência de ausência.
-- Definitivo (401, 403, reserva expirada, `version_mismatch`, 5xx ou corpo fora do
-  contrato): lança `agents.interface.ToolCallError`, subclasse de
+- Definitivo (401, 403, reserva expirada, `version_mismatch`, `budget_exceeded`, 5xx ou
+  corpo fora do contrato): lança `agents.interface.ToolCallError`, subclasse de
   `httpx.HTTPStatusError`, com `.error` (`ToolError` ou `None`). O modelo não
-  resolve esses casos; encerre a execução ou aplique a política de retentativa
-  da equipe quando `error.retryable` for verdadeiro, repetindo escritas com a
-  mesma `idempotency_key`.
+  resolve esses casos; encerre a execução. Para `budget_exceeded`, termine com
+  `AgentResult(status="failed")` e declare o limite.
 
 Antes dessa data, qualquer status 4xx/5xx lançava `HTTPStatusError`.
+
+### Rastreio, novas tentativas e orçamento (v0.3)
+
+- O cliente gera um `tool_call_id` por chamada lógica e o envia em `X-Tool-Call-Id`.
+  O backend registra cada tentativa sob esse ID.
+- Falhas transitórias (`retryable: true`, como 503 `storage_unavailable`, ou erro de
+  transporte) são repetidas pelo próprio cliente até 3 vezes, com o mesmo corpo e o mesmo
+  ID; escritas repetem a mesma `idempotency_key`. Não reimplemente essa política no
+  adaptador, para que os dois executores tenham o mesmo comportamento.
+- `tools.calls` acumula um `ToolCallRecord` por chamada lógica (ID, tool, duração total,
+  `ok`/`error`, `artifact_id`). Use `list(tools.calls)` em `ExperimentRun.tool_calls`; o
+  simulador já faz isso. Esse é o registro declarado pelo adaptador; o histórico do
+  servidor é a referência para conferência.
+- `RUN_MAX_TOOL_CALLS` limita as chamadas lógicas por execução no servidor, igual para
+  Hermes e LangGraph. Novas tentativas do mesmo ID não consomem orçamento.
 
 ## Inicialização
 

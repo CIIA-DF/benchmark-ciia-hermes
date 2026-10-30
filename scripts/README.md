@@ -21,3 +21,5 @@ Scripts não publicam branches nem implantam como parte do check. A incorporaç�
 - export_openapi: grava services/backend/openapi.yaml a partir da aplicação; --check só confere.
 
 Consulte [operação do chat](../docs/04-operacoes/chat.md) para os comandos completos.
+
+- audit_backend: diagnóstico da [auditoria de 28/10/2026](../docs/04-operacoes/auditoria-backend-2026-10-28.md), apenas com SQLite temporário/dados fictícios; saída zero indica execução, não aceite de segurança.

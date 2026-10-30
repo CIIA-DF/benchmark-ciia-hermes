@@ -1,34 +1,56 @@
 """Catálogo comum; argumentos do modelo nunca incluem contexto privilegiado."""
 
 from copy import deepcopy
+from typing import NamedTuple
+
+from pydantic import BaseModel
 
 from contracts.models import (
+    DocumentResult,
     PendencyInput,
+    ProcessResult,
     ReadInput,
+    RequirementsResult,
     SearchInput,
+    SearchResult,
     ToolContext,
     WriteInput,
+    WriteReceipt,
 )
 
+
+class ToolSpec(NamedTuple):
+    input_model: type[BaseModel]
+    description: str
+    output_model: type[BaseModel]
+
+
 TOOLS = {
-    "consultar_processo": (ToolContext, "Consulta metadados, inventário e cobertura do processo."),
-    "buscar_documentos": (
-        SearchInput,
-        "Busca trechos com fontes no processo e corpus autorizados.",
+    "consultar_processo": ToolSpec(
+        ToolContext, "Consulta metadados, inventário e cobertura do processo.", ProcessResult
     ),
-    "ler_documento": (ReadInput, "Lê um documento ou páginas específicas com sua origem."),
-    "consultar_requisitos": (ToolContext, "Consulta o checklist versionado do processo."),
-    "registrar_pendencia": (
-        PendencyInput,
-        "Registra pendência com requisito e evidências válidos.",
+    "buscar_documentos": ToolSpec(
+        SearchInput, "Busca trechos com fontes no processo e corpus autorizados.", SearchResult
     ),
-    "salvar_minuta": (WriteInput, "Persiste uma minuta fundamentada e devolve recibo confirmado."),
+    "ler_documento": ToolSpec(
+        ReadInput, "Lê um documento ou páginas específicas com sua origem.", DocumentResult
+    ),
+    "consultar_requisitos": ToolSpec(
+        ToolContext, "Consulta o checklist versionado do processo.", RequirementsResult
+    ),
+    "registrar_pendencia": ToolSpec(
+        PendencyInput, "Registra pendência com requisito e evidências válidos.", WriteReceipt
+    ),
+    "salvar_minuta": ToolSpec(
+        WriteInput, "Persiste uma minuta fundamentada e devolve recibo confirmado.", WriteReceipt
+    ),
 }
 
 
 def tool_catalog():
     result = []
-    for name, (model, description) in TOOLS.items():
+    for name, spec in TOOLS.items():
+        model, description = spec.input_model, spec.description
         schema = deepcopy(model.model_json_schema())
         for field in ToolContext.model_fields:
             schema["properties"].pop(field, None)

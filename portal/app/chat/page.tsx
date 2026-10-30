@@ -54,7 +54,15 @@ type Conversation = {
 };
 type Capabilities = {
   can_write: boolean;
-  executors: { name: string; available: boolean }[];
+  executors: {
+    name: string;
+    available: boolean;
+    enabled: boolean;
+    worker_recent: boolean;
+    last_seen_at: number | null;
+    model: string | null;
+    configuration_known: boolean;
+  }[];
 };
 
 async function api<T>(path: string, body?: unknown): Promise<T> {
@@ -93,6 +101,8 @@ const failureReason: Record<string, string> = {
   context_limit: "A conversa atingiu o limite de contexto. Inicie uma nova conversa.",
   model_timeout: "O modelo não respondeu dentro do tempo limite.",
   worker_timeout: "O agente parou de responder e a reserva da execução expirou.",
+  queue_timeout: "O tempo de espera na fila expirou antes de um agente iniciar a execução.",
+  event_limit: "A execução atingiu o limite de eventos e foi encerrada.",
 };
 
 // Reconexões seguidas sem receber evento: espera 1 s, 2 s, 4 s e 8 s antes de desistir.
@@ -443,12 +453,13 @@ export default function ChatPage() {
             >
               {(
                 capabilities?.executors || [
-                  { name: "simulation", available: true },
+                  { name: "simulation", available: true, enabled: true, worker_recent: false },
                 ]
               ).map((e) => (
-                <option key={e.name} value={e.name} disabled={!e.available}>
+                <option key={e.name} value={e.name} disabled={!e.enabled}>
                   {e.name === "simulation" ? "Simulador" : e.name}
-                  {!e.available ? " · não conectado" : ""}
+                  {!capabilities ? " · carregando estado" : !e.enabled ? " · desabilitado" :
+                    e.worker_recent ? " · worker recente" : " · sem presença recente"}
                 </option>
               ))}
             </select>

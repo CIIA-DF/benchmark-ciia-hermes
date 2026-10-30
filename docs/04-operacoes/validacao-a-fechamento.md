@@ -138,3 +138,11 @@ Não houve delegação, revisão automática Astra, commit, push, PR, merge de m
 Arquivos/testes executam na worktree do C:, com SQLite temporário em C:/Users/roger/AppData/Local/Temp/pytest-of-roger.
 O arquivo .git da worktree ainda referencia metadados no D:; esses metadados ficaram acessíveis para as conferências Git atuais.
 Relatórios antigos registram sua indisponibilidade histórica sem serem reescritos como se ela nunca tivesse ocorrido.
+
+## Plano ainda pendente na entrega da branch
+
+O envio autorizado à branch team/backend preserva o aceite **local** F/A em SQLite.
+Permanecem pendentes **I (integrações), D (documentação formal), E (exportação canônica), O (observabilidade) e H (homologação PostgreSQL/recuperação)**.
+Os relatórios e as atualizações incrementais existentes não equivalem ao encerramento desses blocos.
+[Resumo e critérios do plano restante](../02-arquitetura/backend-plano-blocos.md#blocos-pendentes).
+A revisão CTO/Astra continua manual; publicação na branch não autoriza deploy ou exposição compartilhada.

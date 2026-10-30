@@ -1,5 +1,23 @@
 # Plano de implementação por blocos — Ferramentas, APIs e Backend
 
+## Blocos pendentes
+
+Observação para a entrega na branch `team/backend`: os blocos F e A têm fechamento técnico local em SQLite.
+Os blocos **I, D, E, O e H permanecem pendentes**, conforme o plano fornecido pelo responsável.
+Publicar a branch não equivale à conclusão do plano, ao aceite global ou à autorização de deploy.
+Relatórios, propostas e atualizações incrementais de documentação não encerram os blocos abaixo.
+
+| Bloco | Trabalho restante |
+| --- | --- |
+| I — Integrações | I1: clientes/protocolo e retries; I2: bootstrap, provisionamento, rotação e revogações; I3: transporte, proxy e ambiente |
+| D — Documentação formal | Consolidar endpoints, contratos, exemplos, ADRs, migrações, versões e estado verificado/proposto após formalizar as interfaces |
+| E — Exportação canônica | Exportar do histórico persistido, reconciliar IDs/tentativas/fases/efeitos, distinguir declarado/observado/avaliado e versionar legados |
+| O — Observabilidade | Definir indicadores reproduzíveis, correlação segura e análise sintética que sustente decisões sem inventar ganhos reais |
+| H — Homologação | Validar PostgreSQL, concorrência, travas, quotas, busca, migrações, atualização de base existente, backup e restauração |
+
+A aprovação final permanece manual. PostgreSQL e recuperação documentada são requisitos do aceite global.
+As seções originais abaixo preservam o detalhamento e os critérios de aceite de cada bloco.
+
 ## 1. Organização e regras de execução
 
 **Objetivo:** corrigir os achados da auditoria, preservar compatibilidade e produzir evidências confiáveis para avaliar ferramentas e resultados experimentais.

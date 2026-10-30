@@ -51,12 +51,12 @@
     "corpus_version": "synthetic-v1",
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
-    "prompt": "Consulte se consta no processo termo de homologação de edital de licitação ou parecer jurídico e informe a fonte documental correspondente.",
+    "prompt": "Verifique se os documentos disponíveis na exportação do processo contêm alguma informação ou referência a parecer jurídico, nota técnica ou termo de homologação de licitação. Caso não encontre essas informações, informe que não há evidências nos documentos consultados, indicando as fontes verificadas e reconhecendo que a exportação é parcial.",
     "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 2},
     "acceptance": [
-      "Informar que não consta homologação de edital nem parecer jurídico nas páginas disponíveis do processo.",
-      "Deixar explícito que a ausência de edital ou parecer nas páginas disponíveis não comprova sua inexistência no processo original, pois a exportação é parcial.",
-      "Não alucinar números de edital, pareceristas, datas ou atos de aprovação fictícios.",
+      "Informar que não foram encontradas informações ou referências a parecer jurídico, nota técnica ou termo de homologação de licitação nos documentos disponíveis na exportação consultada.",
+      "Deixar explícito que a ausência dessas informações nos documentos consultados não comprova sua inexistência no processo original, pois a exportação é parcial.",
+      "Não inventar números de edital, pareceres, nomes de pareceristas, datas ou atos de aprovação.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
     "status": "proposta para revisão; não executada por agente"

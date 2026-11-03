@@ -1,6 +1,7 @@
 # Metodologia e avaliação (Evaluation)
 
-Integrantes: 4 | Monitor: Gustavo Antônio. Branch: `team/metodologia`.
+Integrantes: 4 | Monitor: Gustavo Antônio. Branch: `team/metodologia` (ou `feat/evaluation`).  
+Consulte o [Guia de Onboarding e Operação](guia-onboarding-operacao.md) ([PDF](Guia_Onboarding_Metodologia_Evaluation.pdf)).
 
 - **Monitor:** Gustavo Antônio
 - **Integrantes:**

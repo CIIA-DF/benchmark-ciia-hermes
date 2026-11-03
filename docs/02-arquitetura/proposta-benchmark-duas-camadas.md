@@ -30,7 +30,7 @@ flowchart TD
     subgraph C2["Camada 2: Benchmark de Modelos no Domínio SEI"]
         O_FIX["Orquestrador Padronizado Fixo"]
         O_FIX --> M_OPEN["Open-Weights Locais (Qwen 2.5 72B / Llama 3.1 70B via vLLM)"]
-        O_FIX --> M_PROP["Proprietários Nuvem (Claude 3.5 Sonnet / GPT-4o)"]
+        O_FIX --> M_PROP["Proprietários Nuvem (Claude Sonnet 4.6 / 4.5 / GPT-4o)"]
         O_FIX --> M_REAS["Modelos de Raciocínio (DeepSeek-R1 / o1 / o3-mini)"]
     end
 ```
@@ -63,7 +63,7 @@ Essa comparação é imperativa devido às exigências de **conformidade com a L
 | :--- | :--- | :--- | :--- |
 | **Open-Weights (Grande)** | Qwen 2.5 72B Instruct / Llama 3.1 70B | Servidor Local com GPU (`vLLM` / `Ollama`) | Aferir se o teto de raciocínio aberto atinge paridade com modelos fechados sem envio de dados externos. |
 | **Open-Weights (Médio)** | Qwen 2.5 32B / 14B / Llama 3.1 8B | Instância On-Premises Econômica | Identificar o limiar mínimo de parâmetros viável para tarefas rotineiras de consulta e extração. |
-| **Proprietários (Ponta)** | Claude 3.5 Sonnet / GPT-4o | API em Nuvem (HTTPS Criptografado) | Estabelecer o padrão-ouro (*Gold Standard*) de acurácia em citação de páginas e redação de minutas. |
+| **Proprietários (Ponta)** | Claude Sonnet 4.6 / 4.5 (`anthropic/claude-sonnet-4.6` ou `claude-sonnet-4.5`) / GPT-4o | API em Nuvem OpenRouter (HTTPS Criptografado, $3,00 / $15,00 por milhão) | Estabelecer o padrão-ouro (*Gold Standard*) de acurácia em citação de páginas e redação de minutas, substituindo o antigo Sonnet 3.5 pelo mesmo patamar de preço. |
 | **Modelos Raciocinadores** | DeepSeek-R1 / o1 / o3-mini | API ou Self-Hosted | Verificar se modelos com Chain-of-Thought (CoT) explícito mitigam o erro de assumir completude em exportações parciais. |
 
 ---

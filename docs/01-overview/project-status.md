@@ -65,4 +65,4 @@ PDF/OCR, recuperação semântica, requisitos institucionais validados, autentic
 | Até 27/11 | Rascunho completo do artigo | Proposto nos PDFs; confirmar |
 | Até 10/12 | Revisão final, reprodução e entrega | Prazo final planejado |
 
-Veja [backlog](backlog.md), [decisão inicial](../05-decisoes/001-base-inicial.md) e [decisão vigente do fluxo Git](../05-decisoes/002-atualizacao-manual-equipes.md).
+Veja [backlog](backlog.md), [decisão inicial](../05-decisoes/001-base-inicial.md), [decisão vigente do fluxo Git](../05-decisoes/002-atualizacao-manual-equipes.md) e [decisão de inferência e duas camadas](../05-decisoes/003-provedor-inferencia-openrouter.md).

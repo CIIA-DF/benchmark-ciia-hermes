@@ -1,4 +1,4 @@
-"""Executa tarefas de desenvolvimento em modo de simulação, sem chamar agentes."""
+"""Executa tarefas de desenvolvimento em modo de simulação ou pareado entre adaptadores."""
 
 import argparse
 import hashlib
@@ -6,9 +6,10 @@ import json
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
-from uuid import uuid4
+from uuid import UUID, uuid4
 
-from contracts.models import ExperimentRun
+from agents.interface import AgentAdapter
+from contracts.models import ExperimentRun, ToolContext
 
 ROOT = Path(__file__).resolve().parents[1]
 TASKS_PATH = ROOT / "evaluation" / "tasks.json"
@@ -42,6 +43,16 @@ def load_tasks(path: Path, split: str) -> list[dict]:
     return selected
 
 
+def build_tool_context(task: dict, run_id: UUID | None = None) -> ToolContext:
+    """Cria ToolContext isolado com run_id exclusivo para cada execução."""
+    return ToolContext(
+        run_id=run_id or uuid4(),
+        process_id=task["process_id"],
+        corpus_version=task["corpus_version"],
+        requirements_version=task["requirements_version"],
+    )
+
+
 def repository_state() -> tuple[str, bool]:
     commit = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -63,12 +74,9 @@ def repository_state() -> tuple[str, bool]:
 
 
 def simulate(task: dict, repetition: int, commit: str, working_tree_dirty: bool) -> ExperimentRun:
-    run_id = uuid4()
+    context = build_tool_context(task)
     return ExperimentRun(
-        run_id=run_id,
-        process_id=task["process_id"],
-        corpus_version=task["corpus_version"],
-        requirements_version=task["requirements_version"],
+        **context.model_dump(),
         task_id=task["task_id"],
         split=task["split"],
         executor="simulation",
@@ -108,6 +116,37 @@ def run_simulation(split: str, repetitions: int, results_dir: Path) -> list[Path
                 encoding="utf-8",
             )
             paths.append(path)
+    return paths
+
+
+def run_paired_adapters(
+    tasks: list[dict],
+    adapters: dict[str, AgentAdapter],
+    repetitions: int,
+    results_dir: Path,
+) -> list[Path]:
+    """Executa adaptadores em pareamento contrabalanceado (ordem alternada por repetição)."""
+    if repetitions < 1:
+        raise ValueError("O número de repetições deve ser pelo menos 1.")
+    if len(adapters) < 2:
+        raise ValueError("Execução pareada exige pelo menos dois adaptadores.")
+
+    names = list(adapters.keys())
+    results_dir.mkdir(parents=True, exist_ok=True)
+    paths: list[Path] = []
+
+    for task in tasks:
+        for repetition in range(1, repetitions + 1):
+            ordered_names = names if repetition % 2 == 1 else list(reversed(names))
+            for name in ordered_names:
+                context = build_tool_context(task)
+                record = adapters[name].run(task["prompt"], context)
+                path = results_dir / f"{record.run_id}.json"
+                path.write_text(
+                    record.model_dump_json(indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                paths.append(path)
     return paths
 
 

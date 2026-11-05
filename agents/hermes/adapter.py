@@ -3,6 +3,7 @@
 import hashlib
 import json
 import os
+import re
 import time
 from datetime import UTC, datetime
 
@@ -27,6 +28,7 @@ SYSTEM_PROMPT = (
 )
 MAX_TOOL_ROUNDS = 10
 PROJECT_VERSION = "0.1.0"
+_IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,120}$")
 
 
 class HermesAdapter(AgentAdapter):
@@ -35,14 +37,14 @@ class HermesAdapter(AgentAdapter):
 
     def run(self, task: str, context: ToolContext) -> ExperimentRun:
         self.final_response = ""
-        config = ModelConfig.from_environment()
+        config = _model_config_from_environment()
         started_at = datetime.now(UTC)
         started = time.perf_counter()
         messages: list[dict] = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": task},
         ]
-        tool_client = ToolClient("http://127.0.0.1:8000")
+        tool_client = ToolClient(os.getenv("BACKEND_URL", "http://127.0.0.1:8000"))
         tool_calls: list[ToolCallRecord] = []
         input_tokens = 0
         output_tokens = 0
@@ -50,7 +52,10 @@ class HermesAdapter(AgentAdapter):
         output_tokens_known = True
         final_content = ""
 
-        with httpx.Client(timeout=config.timeout_seconds) as client:
+        with httpx.Client(
+            timeout=config.timeout_seconds,
+            headers=_model_headers(config),
+        ) as client:
             for round_number in range(MAX_TOOL_ROUNDS + 1):
                 response = client.post(
                     f"{config.base_url.rstrip('/')}/chat/completions",
@@ -85,9 +90,12 @@ class HermesAdapter(AgentAdapter):
                     input_tokens_known = False
                     output_tokens_known = False
 
-                calls = message.get("tool_calls") or []
+                calls = message.get("tool_calls", [])
+                if calls is None:
+                    calls = []
                 if not isinstance(calls, list):
-                    raise ValueError("Resposta da LLM contém tool_calls inválido.")
+                    _request_valid_tool_calls(messages, round_number)
+                    continue
                 if not calls:
                     content = message.get("content")
                     final_content = content if isinstance(content, str) else ""
@@ -95,16 +103,37 @@ class HermesAdapter(AgentAdapter):
                 if round_number == MAX_TOOL_ROUNDS:
                     raise RuntimeError("Limite de rodadas de ferramentas do Hermes excedido.")
 
-                messages.append(message)
+                identities: list[tuple[str, str]] = []
                 for call in calls:
-                    tool_call_id, name, arguments = _parse_tool_call(call)
+                    identity = _tool_call_identity(call)
+                    if identity is None:
+                        break
+                    identities.append(identity)
+                if len(identities) != len(calls):
+                    _request_valid_tool_calls(messages, round_number)
+                    continue
+
+                messages.append(message)
+                for call, identity in zip(calls, identities, strict=True):
+                    tool_call_id, name = identity
                     tool_started = time.perf_counter()
                     try:
-                        result = tool_client.call(name, arguments)
-                        status = "ok"
-                    except (httpx.HTTPError, ValueError):
-                        result = {"error": "A chamada da ferramenta falhou."}
+                        _, _, arguments = _parse_tool_call(call)
+                    except ValueError:
+                        result = {
+                            "error": (
+                                "Argumentos inválidos: envie um objeto JSON válido "
+                                "para a ferramenta."
+                            )
+                        }
                         status = "error"
+                    else:
+                        try:
+                            result = tool_client.call(name, arguments)
+                            status = "ok"
+                        except (httpx.HTTPError, ValueError):
+                            result = {"error": "A chamada da ferramenta falhou."}
+                            status = "error"
                     duration_ms = (time.perf_counter() - tool_started) * 1000
                     tool_calls.append(
                         ToolCallRecord(
@@ -159,6 +188,36 @@ class HermesAdapter(AgentAdapter):
         )
 
 
+def _model_config_from_environment() -> ModelConfig:
+    if os.getenv("LLM_API_KEY"):
+        return ModelConfig.from_environment()
+
+    base_url = os.getenv("LLM_BASE_URL", "")
+    model = os.getenv("LLM_MODEL", "")
+    api_key = os.getenv("OPENROUTER_API_KEY", "")
+    if not all((base_url, model, api_key)):
+        raise ValueError("Configure LLM_BASE_URL, LLM_MODEL e LLM_API_KEY ou OPENROUTER_API_KEY.")
+    timeout = float(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
+    if timeout <= 0:
+        raise ValueError("LLM_TIMEOUT_SECONDS deve ser positivo.")
+    return ModelConfig(
+        base_url=base_url,
+        model=model,
+        api_key=api_key,
+        timeout_seconds=timeout,
+    )
+
+
+def _model_headers(config: ModelConfig) -> dict[str, str]:
+    headers = {"Authorization": f"Bearer {config.api_key}"}
+    optional_headers = {
+        "HTTP-Referer": os.getenv("OPENROUTER_HTTP_REFERER"),
+        "X-OpenRouter-Title": os.getenv("OPENROUTER_TITLE"),
+    }
+    headers.update({name: value for name, value in optional_headers.items() if value})
+    return headers
+
+
 def _first_choice(payload: object) -> dict:
     if not isinstance(payload, dict):
         raise ValueError("Resposta da LLM deve ser um objeto JSON.")
@@ -166,6 +225,39 @@ def _first_choice(payload: object) -> dict:
     if not isinstance(choices, list) or not choices or not isinstance(choices[0], dict):
         raise ValueError("Resposta da LLM sem choices válidas.")
     return choices[0]
+
+
+def _tool_call_identity(call: object) -> tuple[str, str] | None:
+    if not isinstance(call, dict) or call.get("type") != "function":
+        return None
+    function = call.get("function")
+    if not isinstance(function, dict):
+        return None
+    call_id = call.get("id")
+    name = function.get("name")
+    if (
+        not isinstance(call_id, str)
+        or not _IDENTIFIER_PATTERN.fullmatch(call_id)
+        or not isinstance(name, str)
+        or not _IDENTIFIER_PATTERN.fullmatch(name)
+    ):
+        return None
+    return call_id, name
+
+
+def _request_valid_tool_calls(messages: list[dict], round_number: int) -> None:
+    if round_number == MAX_TOOL_ROUNDS:
+        raise RuntimeError("Limite de rodadas de ferramentas do Hermes excedido.")
+    messages.append(
+        {
+            "role": "user",
+            "content": (
+                "A resposta anterior continha chamadas de ferramenta malformadas. "
+                "Envie novamente as chamadas com ID, nome e formato válidos, sem "
+                "apresentar um resultado como concluído."
+            ),
+        }
+    )
 
 
 def _parse_tool_call(call: object) -> tuple[str, str, dict]:

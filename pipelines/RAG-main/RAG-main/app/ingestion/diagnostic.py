@@ -1,6 +1,7 @@
 # ingestion/diagnostico.py
-from pathlib import Path
 import re
+from pathlib import Path
+
 import pymupdf
 
 PDF = Path("data/raw/SEI_04030_00001179_2025_55 (2).pdf")

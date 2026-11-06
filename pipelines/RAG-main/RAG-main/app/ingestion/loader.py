@@ -1,16 +1,17 @@
 import json
 import re
-from pathlib import Path 
+from pathlib import Path
 
 import pymupdf as fitz
 
 PADRONIZAR_PROCESSO = PADRAO_PROCESSO = re.compile(
     r"(?:[A-ZÀ-Ú][\wÀ-ÿ]*\s+){1,3}[Nn][º°o.]?\s*(\d+/\d{4})\s*-\s*([A-Z][A-Z/]+)"
-) #expressão regular para padronizar o número do processo
+)  # expressão regular para padronizar o número do processo
 
 PASTA_APP = Path(__file__).resolve().parent.parent
 PASTA_RAW = PASTA_APP / "data" / "raw"
 PASTA_PROCESSED = PASTA_APP / "data" / "processed"
+
 
 def extrair_processo(texto: str) -> str | None:
     """
@@ -20,6 +21,7 @@ def extrair_processo(texto: str) -> str | None:
     if encontrado:
         return f"{encontrado.group(1)} - {encontrado.group(2)}"
     return None
+
 
 def carregar_pdf(caminho_pdf: Path) -> list[dict]:
     """Lê um PDF  e devolve um registro por página."""
@@ -35,17 +37,20 @@ def carregar_pdf(caminho_pdf: Path) -> list[dict]:
             processo = extrair_processo(texto_pagina)
             if processo:
                 processo_atual = processo
-                
-            registros.append({
-                "processo": processo_atual,
-                "arquivo_origem": caminho_pdf.name,
-                "pagina": num_pag,
-                "texto": texto_pagina,
-            })
-        
+
+            registros.append(
+                {
+                    "processo": processo_atual,
+                    "arquivo_origem": caminho_pdf.name,
+                    "pagina": num_pag,
+                    "texto": texto_pagina,
+                }
+            )
+
     return registros
-        
-def salvar_json(registros: list[dict], nome_saida: Path) -> Path: 
+
+
+def salvar_json(registros: list[dict], nome_saida: Path) -> Path:
     # salva os  registros em data/processed/ e devolve o caminho do arquivo
 
     PASTA_PROCESSED.mkdir(parents=True, exist_ok=True)
@@ -53,6 +58,7 @@ def salvar_json(registros: list[dict], nome_saida: Path) -> Path:
     with open(caminho_saida, "w", encoding="utf-8") as arquivo:
         json.dump(registros, arquivo, ensure_ascii=False, indent=2)
     return caminho_saida
+
 
 if __name__ == "__main__":
     pdfs = sorted(PASTA_RAW.glob("*.pdf"))

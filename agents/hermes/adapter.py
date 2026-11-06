@@ -48,7 +48,8 @@ class HermesAdapter(AgentAdapter):
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": task},
         ]
-        tool_client = ToolClient(os.getenv("BACKEND_URL", "http://127.0.0.1:8000"))
+        backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+        tool_client = ToolClient(backend_url)
         tool_calls: list[ToolCallRecord] = []
         input_tokens = 0
         output_tokens = 0
@@ -119,6 +120,7 @@ class HermesAdapter(AgentAdapter):
                     continue
 
                 messages.append(message)
+                context_fields = context.model_dump(mode="json")
                 for call, identity in zip(calls, identities, strict=True):
                     tool_call_id, name = identity
                     tool_started = time.perf_counter()
@@ -133,8 +135,9 @@ class HermesAdapter(AgentAdapter):
                         }
                         status = "error"
                     else:
+                        merged_arguments = {**context_fields, **arguments}
                         try:
-                            result = tool_client.call(name, arguments)
+                            result = tool_client.call(name, merged_arguments)
                             status = "ok"
                         except (httpx.HTTPError, ValueError):
                             result = {"error": "A chamada da ferramenta falhou."}

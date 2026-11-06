@@ -48,6 +48,14 @@ Docker/Compose não está instalado nesta máquina. PostgreSQL, build dos contai
 
 PDF/OCR, recuperação semântica, requisitos institucionais validados, autenticação/autorização para uso compartilhado, escritas idempotentes, migrações de schema, instrumentação completa e persistência de ExperimentRun. Hermes/LangGraph reais e inferência externa ainda não integrados. Não foram produzidos resultados comparativos.
 
+## Andamento das frentes e branches de desenvolvimento (Novembro/2026)
+
+- **Backend (`team/backend`)**: Linha de base v0.2 desenvolvida com implementação e auditoria das 6 tools HTTP (`consultar_processo`, `buscar_documentos`, `ler_documento`, `consultar_requisitos`, `registrar_pendencia`, `salvar_minuta`), orquestrador de execuções, streaming de chat via SSE e especificação OpenAPI 3.0 (`services/backend/openapi.yaml`).
+- **Metodologia / Avaliação (`team/evaluation`)**: Conclusão do conjunto de 6 tarefas piloto DEV-001 a DEV-006 em `evaluation/tasks.json`, runner de avaliação (`runner.py`), métricas, rubricas e protocolo formal de avaliação cega (`blind_review.md`).
+- **LangGraph (`task/langgraph-grafo`)**: Implementação do grafo executável com `StateGraph` em `agents/langgraph/graph.py` e documentação de arquitetura visual.
+- **Hermes (`feat/hermes` e `team/hermes`)**: Implementação do adaptador do agente Hermes com injeção de `ToolContext` e testes unitários.
+- **Portal de Documentação (`portal/`)**: Interface editorial atualizada com suporte a Admonitions/Callouts (`[!NOTE]`, `[!WARNING]`, etc.), cópia de código em um clique, renderização dinâmica de diagramas Mermaid, agrupamento colapsável de relatórios de validação técnica e correção do documento inicial para `01-inicio-rapido.md`.
+
 ## Ativações e decisões
 
 - GitHub: publicar branches ausentes após aprovação, preencher CODEOWNERS e configurar rulesets/checks/revisores. Conferir eventuais configurações antigas conforme a [governança](../04-operacoes/github-governance.md); não é necessária credencial de bot para a atualização manual das equipes.

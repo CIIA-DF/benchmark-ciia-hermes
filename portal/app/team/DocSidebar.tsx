@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Search, FileText, ChevronRight, ChevronDown, X, Menu, FileSpreadsheet } from 'lucide-react';
+import { Search, FileText, ChevronRight, ChevronDown, X, Menu, FileSpreadsheet, ShieldCheck } from 'lucide-react';
 
 export interface MarkdownFile {
   path: string;
@@ -27,12 +27,18 @@ const CATEGORY_NAMES: Record<string, string> = {
   'outros': 'Outros Documentos',
 };
 
+const isValidationDoc = (filePath: string) => {
+  const name = filePath.split('/').pop() || '';
+  return name.startsWith('validacao-') || name.startsWith('auditoria-');
+};
+
 export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [showValidationGroup, setShowValidationGroup] = useState(isValidationDoc(currentPath));
 
   const activeFileObj = files.find(f => f.path === currentPath);
-  const initialCategory = activeFileObj ? activeFileObj.category : '01-overview';
+  const initialCategory = activeFileObj ? activeFileObj.category : '00-comece-aqui';
 
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     [initialCategory]: true,
@@ -68,6 +74,38 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
   });
 
   const categoryKeys = Object.keys(CATEGORY_NAMES).filter(key => categoriesMap[key] && categoriesMap[key].length > 0);
+
+  const renderFileLink = (file: MarkdownFile) => {
+    const isActive = currentPath === file.path;
+    return (
+      <Link
+        key={file.path}
+        href={`?doc=${encodeURIComponent(file.path)}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+        className={`flex items-start justify-between py-1.5 px-2.5 rounded-r-md text-[13px] transition-colors group ${
+          isActive
+            ? 'bg-sky-500/[0.09] text-slate-50 font-medium border-l-2 border-sky-400 -ml-[11px] pl-[19px]'
+            : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-200 font-normal'
+        }`}
+      >
+        <div className="flex items-start gap-2 min-w-0 pr-1">
+          {file.isPdf ? (
+            <FileSpreadsheet size={14} className={`mt-0.5 flex-shrink-0 ${isActive ? 'text-rose-400' : 'text-slate-500 group-hover:text-slate-400'}`} />
+          ) : (
+            <FileText size={14} className={`mt-0.5 flex-shrink-0 ${isActive ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-400'}`} />
+          )}
+          <span className="leading-snug truncate" title={file.title}>
+            {file.title}
+          </span>
+        </div>
+        {file.isPdf && (
+          <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-rose-950/60 text-rose-300 border border-rose-800/50 uppercase flex-shrink-0 mt-0.5">
+            PDF
+          </span>
+        )}
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -151,6 +189,10 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
                 const catFiles = categoriesMap[catKey] || [];
                 const isOpen = searchQuery.trim() !== '' || !!openCategories[catKey];
 
+                const isOps = catKey === '04-operacoes';
+                const mainDocs = isOps ? catFiles.filter(f => !isValidationDoc(f.path)) : catFiles;
+                const validationDocs = isOps ? catFiles.filter(f => isValidationDoc(f.path)) : [];
+
                 return (
                   <div key={catKey} className="flex flex-col gap-1">
                     <button
@@ -172,37 +214,39 @@ export default function DocSidebar({ files, currentPath }: DocSidebarProps) {
 
                     {isOpen && (
                       <div className="flex flex-col gap-0.5 pl-2.5 ml-2 border-l border-slate-800/80">
-                        {catFiles.map(file => {
-                          const isActive = currentPath === file.path;
-                          return (
-                            <Link
-                              key={file.path}
-                              href={`?doc=${encodeURIComponent(file.path)}`}
-                              onClick={() => setIsMobileMenuOpen(false)}
-                              className={`flex items-start justify-between py-1.5 px-2.5 rounded-r-md text-[13px] transition-colors group ${
-                                isActive
-                                  ? 'bg-sky-500/[0.09] text-slate-50 font-medium border-l-2 border-sky-400 -ml-[11px] pl-[19px]'
-                                  : 'text-slate-400 hover:bg-slate-800/30 hover:text-slate-200 font-normal'
-                              }`}
+                        {mainDocs.map(renderFileLink)}
+
+                        {/* Subgrupo colapsável para relatórios de validação técnica em Operações */}
+                        {validationDocs.length > 0 && (
+                          <div className="mt-1 pt-1 border-t border-slate-800/60 flex flex-col gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setShowValidationGroup(prev => !prev)}
+                              className="flex items-center justify-between py-1 px-1.5 rounded hover:bg-slate-800/30 text-[11px] font-mono text-slate-400 hover:text-slate-200 transition-colors"
                             >
-                              <div className="flex items-start gap-2 min-w-0 pr-1">
-                                {file.isPdf ? (
-                                  <FileSpreadsheet size={14} className={`mt-0.5 flex-shrink-0 ${isActive ? 'text-rose-400' : 'text-slate-500 group-hover:text-slate-400'}`} />
+                              <span className="flex items-center gap-1.5 truncate">
+                                <ShieldCheck size={12} className="text-emerald-400" />
+                                <span>Relatórios de Validação</span>
+                              </span>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <span className="text-[9px] bg-slate-800/80 px-1 rounded text-slate-400">
+                                  {validationDocs.length}
+                                </span>
+                                {showValidationGroup || searchQuery.trim() !== '' ? (
+                                  <ChevronDown size={11} />
                                 ) : (
-                                  <FileText size={14} className={`mt-0.5 flex-shrink-0 ${isActive ? 'text-sky-400' : 'text-slate-500 group-hover:text-slate-400'}`} />
+                                  <ChevronRight size={11} />
                                 )}
-                                <span className="leading-snug truncate" title={file.title}>
-                                  {file.title}
-                                </span>
                               </div>
-                              {file.isPdf && (
-                                <span className="text-[9px] font-mono font-semibold px-1.5 py-0.5 rounded bg-rose-950/60 text-rose-300 border border-rose-800/50 uppercase flex-shrink-0 mt-0.5">
-                                  PDF
-                                </span>
-                              )}
-                            </Link>
-                          );
-                        })}
+                            </button>
+
+                            {(showValidationGroup || searchQuery.trim() !== '') && (
+                              <div className="flex flex-col gap-0.5 pl-2 border-l border-slate-800/60">
+                                {validationDocs.map(renderFileLink)}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

@@ -6,7 +6,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from agents.hermes.adapter import HermesAdapter
-from contracts.models import ExperimentRun, ToolContext
+from contracts.models import ToolContext
 
 ROOT = Path(__file__).resolve().parents[2]
 TASKS_PATH = ROOT / "evaluation" / "tasks.json"
@@ -46,10 +46,7 @@ def main():
         requirements_version=task["requirements_version"],
     )
     adapter = HermesAdapter()
-    run = adapter.run(task["prompt"], context)
-    run_data = run.model_dump(mode="python")
-    run_data["task_id"] = task["task_id"]
-    run = ExperimentRun.model_validate(run_data)
+    run = adapter.run(task["prompt"], context, task_id=task["task_id"])
 
     print(f"Tarefa: {task['task_id']}")
     print("Resposta final do agente:")

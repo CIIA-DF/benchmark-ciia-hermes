@@ -25,7 +25,7 @@ def test_main_prints_answer_and_experiment_run(monkeypatch, capsys):
     )
     experiment_run = ExperimentRun(
         **context.model_dump(),
-        task_id="temporary-task-id",
+        task_id="DEV-001",
         split="development",
         executor="hermes",
         repetition=1,
@@ -57,9 +57,10 @@ def test_main_prints_answer_and_experiment_run(monkeypatch, capsys):
     class MockAdapter:
         final_response = "Resposta sintética do agente."
 
-        def run(self, task, supplied_context):
+        def run(self, task, supplied_context, *, task_id=None):
             assert task.startswith("Consulte a previsão")
             assert supplied_context.process_id == context.process_id
+            assert task_id == "DEV-001"
             return experiment_run
 
     monkeypatch.setattr(sys, "argv", ["run.py", "--task-id", "DEV-001"])

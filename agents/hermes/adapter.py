@@ -4,8 +4,10 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 import time
 from datetime import UTC, datetime
+from pathlib import Path
 
 import httpx
 
@@ -28,6 +30,8 @@ SYSTEM_PROMPT = (
 )
 MAX_TOOL_ROUNDS = 10
 PROJECT_VERSION = "0.1.0"
+MODEL_TEMPERATURE = 0.0
+MODEL_SEED = 42
 _IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,120}$")
 
 
@@ -35,7 +39,7 @@ class HermesAdapter(AgentAdapter):
     def __init__(self):
         self.final_response = ""
 
-    def run(self, task: str, context: ToolContext) -> ExperimentRun:
+    def run(self, task: str, context: ToolContext, *, task_id: str | None = None) -> ExperimentRun:
         self.final_response = ""
         config = _model_config_from_environment()
         started_at = datetime.now(UTC)
@@ -59,12 +63,13 @@ class HermesAdapter(AgentAdapter):
             for round_number in range(MAX_TOOL_ROUNDS + 1):
                 response = client.post(
                     f"{config.base_url.rstrip('/')}/chat/completions",
-                    headers={"Authorization": f"Bearer {config.api_key}"},
                     json={
                         "model": config.model,
                         "messages": messages,
                         "tools": TOOLS,
                         "tool_choice": "auto",
+                        "temperature": MODEL_TEMPERATURE,
+                        "seed": MODEL_SEED,
                     },
                 )
                 response.raise_for_status()
@@ -161,7 +166,8 @@ class HermesAdapter(AgentAdapter):
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest()
-        task_id = f"task-{hashlib.sha256(task.encode('utf-8')).hexdigest()[:16]}"
+        if task_id is None:
+            task_id = f"task-{hashlib.sha256(task.encode('utf-8')).hexdigest()[:16]}"
         endpoint_id = f"endpoint-{hashlib.sha256(config.base_url.encode()).hexdigest()[:16]}"
         return ExperimentRun(
             **context.model_dump(),
@@ -169,13 +175,17 @@ class HermesAdapter(AgentAdapter):
             split="development",
             executor="hermes",
             repetition=1,
-            code_commit=os.getenv("GIT_COMMIT", "unknown"),
+            code_commit=_git_commit(),
             harness_version=PROJECT_VERSION,
             adapter_version=PROJECT_VERSION,
             model=config.model,
             endpoint_id=endpoint_id,
             prompt_sha256=prompt_hash,
-            parameters={"max_tool_rounds": MAX_TOOL_ROUNDS},
+            parameters={
+                "max_tool_rounds": MAX_TOOL_ROUNDS,
+                "temperature": MODEL_TEMPERATURE,
+                "seed": MODEL_SEED,
+            },
             started_at=started_at,
             latency_ms=(time.perf_counter() - started) * 1000,
             tool_calls=tool_calls,
@@ -186,6 +196,20 @@ class HermesAdapter(AgentAdapter):
             verified_success=None,
             evaluator=None,
         )
+
+
+def _git_commit() -> str:
+    commit = os.getenv("GIT_COMMIT")
+    if commit:
+        return commit
+    result = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
 
 
 def _model_config_from_environment() -> ModelConfig:

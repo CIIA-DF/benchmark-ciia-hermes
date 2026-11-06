@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 from uuid import uuid4
 
 import httpx
@@ -32,8 +33,9 @@ def _mock_openai_client(monkeypatch, responses, mock_model_config=True):
                 tool_requests.append((url, kwargs["json"]))
                 payload = {"process": {"title": "Processo sintético"}}
             else:
+                assert "headers" not in kwargs
                 requests.append(kwargs["json"])
-                llm_headers.append({**self.default_headers, **kwargs["headers"]})
+                llm_headers.append(self.default_headers)
                 payload = responses.pop(0)
             request = httpx.Request("POST", f"http://test{url}")
             return httpx.Response(200, json=payload, request=request)
@@ -82,6 +84,7 @@ def test_hermes_adapter_exposes_required_run_signature():
     assert HermesAdapter.run.__annotations__ == {
         "task": str,
         "context": ToolContext,
+        "task_id": str | None,
         "return": ExperimentRun,
     }
 
@@ -129,6 +132,11 @@ def test_hermes_adapter_runs_tool_calls_and_records_usage(monkeypatch):
     assert result.latency_ms >= 0
     assert result.input_tokens == 32
     assert result.output_tokens == 11
+    assert result.parameters == {
+        "max_tool_rounds": 10,
+        "temperature": 0.0,
+        "seed": 42,
+    }
     assert result.agent_declared_success is True
     assert adapter.final_response == "Consulta concluída."
     assert llm_headers[0]["Authorization"] == "Bearer test-key"
@@ -141,6 +149,31 @@ def test_hermes_adapter_runs_tool_calls_and_records_usage(monkeypatch):
     assert requests[1]["messages"][-1]["role"] == "tool"
     assert requests[1]["messages"][-1]["tool_call_id"] == "call-1"
     assert tool_client_urls == ["http://127.0.0.1:8000"]
+    assert requests[0]["temperature"] == 0.0
+    assert requests[0]["seed"] == 42
+
+
+def test_hermes_adapter_uses_supplied_task_id(monkeypatch):
+    responses = [{"choices": [{"message": {"role": "assistant", "content": "Concluído."}}]}]
+    _mock_openai_client(monkeypatch, responses)
+
+    result = HermesAdapter().run("Tarefa sintética.", _context(), task_id="DEV-001")
+
+    assert result.task_id == "DEV-001"
+
+
+def test_hermes_adapter_uses_git_commit_when_environment_is_unset(monkeypatch):
+    monkeypatch.delenv("GIT_COMMIT", raising=False)
+    monkeypatch.setattr(
+        "agents.hermes.adapter.subprocess.run",
+        lambda *args, **kwargs: SimpleNamespace(stdout="abc123\n"),
+    )
+    responses = [{"choices": [{"message": {"role": "assistant", "content": "Concluído."}}]}]
+    _mock_openai_client(monkeypatch, responses)
+
+    result = HermesAdapter().run("Tarefa sintética.", _context())
+
+    assert result.code_commit == "abc123"
 
 
 def test_hermes_adapter_reports_invalid_tool_arguments_and_continues(monkeypatch):

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CIIA / UnDF — Benchmark Científico: Hermes vs. LangGraph no SEI</title>
+  <title>CIIA: Benchmark Científico: Hermes vs. LangGraph no SEI</title>
   <!-- Google Fonts: Plus Jakarta Sans (UI/Display), Cormorant Garamond (Editorial Glass Slide Accents), JetBrains Mono (Telemetry/Code) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1538,15 +1538,14 @@
   <header class="navbar">
     <div class="navbar-inner">
       <a href="#top" class="logo">
-        <img src="ciia_logo.png" alt="CIIA / UnDF" class="logo-img" />
-        <span>CIIA / UnDF</span>
+        <img src="ciia_logo.png" alt="" class="logo-img" />
         <span class="logo-sub">SEI BENCHMARK</span>
       </a>
       <ul class="nav-menu">
-        <li><a href="#projeto">1. O Projeto</a></li>
-        <li><a href="#problema">2. Problema &amp; Fases</a></li>
-        <li><a href="#paridade">3. Paridade Estrita</a></li>
-        <li><a href="#equipes">4. Equipes</a></li>
+        <li><a href="#problema">1. O Problema</a></li>
+        <li><a href="#paridade">2. Paridade Estrita</a></li>
+        <li><a href="#equipes">3. Equipes</a></li>
+        <li><a href="#telemetria">4. Telemetria</a></li>
       </ul>
       <div class="nav-actions">
         <a href="resultados.html" class="btn-pill-white">Resultados &amp; Protocolo</a>
@@ -1572,146 +1571,29 @@
         </div>
 
         <h1 class="hero-title">
-          Benchmark CIIA/UnDF:<br>
+          Benchmark:<br>
           Hermes vs. LangGraph no SEI
         </h1>
 
         <p class="hero-subtitle">
           Um benchmark científico experimental conduzido pelo <strong>Centro de Inovação em Inteligência Artificial
             (CIIA / UnDF)</strong> para avaliar agentes autônomos de IA no setor público sobre processos administrativos
-          exportados do <strong>SEI</strong> — sem conexão com o sistema real e com rastreabilidade rigorosa de página e
+          exportados do <strong>SEI</strong> sem conexão com o sistema real e com rastreabilidade rigorosa de página e
           documento.
         </p>
 
         <div class="hero-cta-group">
-          <a href="#problema" class="btn-lumine-primary">Explorar as 2 Fases </a>
-          <a href="#equipes" class="btn-lumine-ghost">Estrutura das 6 Equipes</a>
-        </div>
-      </div>
-
-      <!-- Interactive Harness Preview Window (Ref Image 1 Bottom UI) -->
-      <div id="projeto" class="dashboard-preview-wrap">
-        <div class="dashboard-window">
-          <div class="dash-topbar">
-            <div class="dash-breadcrumbs">
-              <span>✦ CIIA/UnDF</span>
-              <span>/</span>
-              <span>runner.py</span>
-              <span>/</span>
-              <strong>Execuções Controladas (Air-Gapped SEI Corpus)</strong>
-            </div>
-            <div class="dash-search">
-              <span>🔍 Filtrar por ToolContext(run_id)</span>
-            </div>
-          </div>
-
-          <div class="dash-body">
-            <!-- Left Sidebar -->
-            <aside class="dash-sidebar">
-              <div>
-                <div class="dash-nav-group-title">Escopo do Projeto</div>
-                <ul class="dash-nav-list">
-                  <li class="dash-nav-item active"><span class="dot"></span> Visão Geral (SEI)</li>
-                  <li class="dash-nav-item">Fase 1 · 360 Runs</li>
-                  <li class="dash-nav-item">Fase 2 · 1.080 Runs</li>
-                  <li class="dash-nav-item">ToolClient (6 REST)</li>
-                </ul>
-              </div>
-              <div>
-                <div class="dash-nav-group-title">Salvaguardas</div>
-                <ul class="dash-nav-list">
-                  <li class="dash-nav-item">Zero Conexão SEI Real</li>
-                  <li class="dash-nav-item">Dados Sintéticos / LGPD</li>
-                  <li class="dash-nav-item">Prazo: 10/12/2026</li>
-                </ul>
-              </div>
-            </aside>
-
-            <!-- Center Execution Table -->
-            <div class="dash-main">
-              <div class="dash-main-header">
-                <span class="dash-main-title">Amostra de Telemetria do Harness (tasks.json → runner.py)</span>
-                <div class="dash-filter-tabs">
-                  <button class="dash-tab active" onclick="filterRuns('all', this)">Todas as Fases</button>
-                  <button class="dash-tab" onclick="filterRuns('fase1', this)">Fase 1 (Orquestração)</button>
-                  <button class="dash-tab" onclick="filterRuns('fase2', this)">Fase 2 (Soberania LLM)</button>
-                </div>
-              </div>
-
-              <table class="dash-table" id="telemetryTable">
-                <thead>
-                  <tr>
-                    <th>Run ID (UUID)</th>
-                    <th>Executor / Orquestrador</th>
-                    <th>Modelo Base</th>
-                    <th>Endpoint ToolClient</th>
-                    <th>Evidência Auditada</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr data-phase="fase1">
-                    <td>#run-8f92a1</td>
-                    <td><span class="badge-agent">Hermes (ReAct Loop)</span></td>
-                    <td>Mesmo Modelo (Fixo)</td>
-                    <td>ler_documento()</td>
-                    <td>SEI Doc #412 · Pág. 14, off:820</td>
-                    <td><span class="status-verified">Verificado ≠ Declarado</span></td>
-                  </tr>
-                  <tr data-phase="fase1">
-                    <td>#run-3c41e9</td>
-                    <td><span class="badge-agent langgraph">LangGraph (State DAG)</span></td>
-                    <td>Mesmo Modelo (Fixo)</td>
-                    <td>consultar_requisitos()</td>
-                    <td>SEI Doc #108 · Pág. 03, off:112</td>
-                    <td><span class="status-verified">Verificado ≠ Declarado</span></td>
-                  </tr>
-                  <tr data-phase="fase2">
-                    <td>#run-7d19b4</td>
-                    <td><span class="badge-agent">Hermes (ReAct Loop)</span></td>
-                    <td>Qwen 2.5 / Llama 3.1 (Local)</td>
-                    <td>buscar_documentos()</td>
-                    <td>SEI Doc #904 · Pág. 27, off:450</td>
-                    <td><span class="status-verified">Soberania GDF / LGPD</span></td>
-                  </tr>
-                  <tr data-phase="fase2">
-                    <td>#run-5a08f2</td>
-                    <td><span class="badge-agent langgraph">LangGraph (State DAG)</span></td>
-                    <td>GPT-4o / Claude 3.5 (Nuvem)</td>
-                    <td>consultar_processo()</td>
-                    <td>SEI Doc #219 · Pág. 09, off:305</td>
-                    <td><span class="status-verified">Baseline CTCE Auditado</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <!-- Right Notifications Column -->
-            <aside class="dash-notifications">
-              <div class="dash-nav-group-title">Diretrizes de Execução</div>
-              <div class="notif-card">
-                <strong>1. O que é o Projeto?</strong>
-                <span>Avaliação de agentes autônomos no setor público sobre exportações manuais do SEI.</span>
-              </div>
-              <div class="notif-card">
-                <strong>Isolamento por Sessão</strong>
-                <span>Cada rodada recebe UUID único e containers reiniciados via Docker + pgvector.</span>
-              </div>
-              <div class="notif-card">
-                <strong>Prazo Planejado</strong>
-                <span>Entrega final do experimento e artigo em 10/12/2026.</span>
-              </div>
-            </aside>
-          </div>
+          <a href="#problema" class="btn-lumine-primary">Explorar as Fases</a>
+          <a href="#telemetria" class="btn-lumine-ghost">Ver Telemetria do Harness</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SECTION 02: O PROBLEMA & A PERGUNTA CIENTÍFICA (Ref Image 2 + Ref Image 4) -->
+  <!-- SECTION 01: O PROBLEMA & A PERGUNTA CIENTÍFICA (Ref Image 2 + Ref Image 4) -->
   <section id="problema" class="section-wrap">
     <div class="container">
-      <span class="section-eyebrow">2. O Problema &amp; A Pergunta Científica</span>
+      <span class="section-eyebrow">1. O Problema &amp; A Pergunta Científica</span>
       <h2 class="section-title">Isolando a Orquestração da Capacidade do Modelo</h2>
 
       <!-- Editorial Slide Pair (Inspired by Ref Image 2: Frosted Venn & Crystal Monolith) -->
@@ -1880,10 +1762,10 @@
     </div>
   </section>
 
-  <!-- SECTION 03: A REGRA DE OURO — PARIDADE EXPERIMENTAL ESTRITA (Ref Image 4) -->
+  <!-- SECTION 02: A REGRA DE OURO — PARIDADE EXPERIMENTAL ESTRITA (Ref Image 4) -->
   <section id="paridade" class="section-wrap">
     <div class="container">
-      <span class="section-eyebrow">3. A Regra de Ouro</span>
+      <span class="section-eyebrow">2. A Regra de Ouro</span>
       <h2 class="section-title">Paridade Experimental Estrita</h2>
 
       <!-- Central Circular HUD Core flanked by the 4 Golden Rules -->
@@ -1977,10 +1859,11 @@
   </section>
 
   <!-- SECTION 04: COMO O PROJETO SE DIVIDE — 6 EQUIPES (Ref Image 3 Cobalt Bento) -->
+  <!-- SECTION 03: ESTRUTURA DE EQUIPES DO BENCHMARK -->
   <section id="equipes" class="section-wrap">
     <div class="container">
       <div class="stepped-pills-banner">
-        <span class="section-eyebrow" style="margin-bottom: 8px;">4. Como o Projeto se Divide</span>
+        <span class="section-eyebrow" style="margin-bottom: 8px;">3. Como o Projeto se Divide</span>
         <h2 class="section-title" style="margin-bottom: 6px;">Estrutura de Equipes do Benchmark</h2>
         <p style="color: var(--ice-blue); font-size: 14px; max-width: 620px;">
           Da extração OCR sobre exportações do SEI até a execução automatizada das 1.080 rodadas e redação do artigo
@@ -2108,6 +1991,136 @@
             <span class="bento-chip">Artigo Científico</span>
           </div>
         </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 04: TELEMETRIA & EXECUÇÕES CONTROLADAS DO HARNESS (Parte Final do Benchmark) -->
+  <section id="telemetria" class="section-wrap" style="padding-top: 20px;">
+    <div class="container">
+      <div style="text-align: center; margin-bottom: 38px;">
+        <span class="section-eyebrow" style="justify-content: center;">4. Telemetria &amp; Execuções Controladas</span>
+        <h2 class="section-title" style="margin-top: 10px;">Amostra de Execução do Harness (runner.py)</h2>
+        <p style="color: var(--text-secondary); font-size: 14.5px; max-width: 660px; margin: 10px auto 0; line-height: 1.6;">
+          Visão dos registros de telemetria produzidos pelo harness determinístico. Auditoria cega de evidências com validação de <code>document_id</code>, página física e offsets antes da consolidação de resultados.
+        </p>
+      </div>
+
+      <!-- Interactive Harness Preview Window (Ref Image 1 Bottom UI) -->
+      <div class="dashboard-preview-wrap">
+        <div class="dashboard-window">
+          <div class="dash-topbar">
+            <div class="dash-breadcrumbs">
+              <span>✦ CIIA/UnDF</span>
+              <span>/</span>
+              <span>runner.py</span>
+              <span>/</span>
+              <strong>Execuções Controladas (Air-Gapped SEI Corpus)</strong>
+            </div>
+            <div class="dash-search">
+              <span>🔍 Filtrar por ToolContext(run_id)</span>
+            </div>
+          </div>
+
+          <div class="dash-body">
+            <!-- Left Sidebar -->
+            <aside class="dash-sidebar">
+              <div>
+                <div class="dash-nav-group-title">Escopo do Projeto</div>
+                <ul class="dash-nav-list">
+                  <li class="dash-nav-item active"><span class="dot"></span> Visão Geral (SEI)</li>
+                  <li class="dash-nav-item">Fase 1 · 360 Runs</li>
+                  <li class="dash-nav-item">Fase 2 · 1.080 Runs</li>
+                  <li class="dash-nav-item">ToolClient (6 REST)</li>
+                </ul>
+              </div>
+              <div>
+                <div class="dash-nav-group-title">Salvaguardas</div>
+                <ul class="dash-nav-list">
+                  <li class="dash-nav-item">Zero Conexão SEI Real</li>
+                  <li class="dash-nav-item">Dados Sintéticos / LGPD</li>
+                  <li class="dash-nav-item">Prazo: 10/12/2026</li>
+                </ul>
+              </div>
+            </aside>
+
+            <!-- Center Execution Table -->
+            <div class="dash-main">
+              <div class="dash-main-header">
+                <span class="dash-main-title">Amostra de Telemetria do Harness (tasks.json → runner.py)</span>
+                <div class="dash-filter-tabs">
+                  <button class="dash-tab active" onclick="filterRuns('all', this)">Todas as Fases</button>
+                  <button class="dash-tab" onclick="filterRuns('fase1', this)">Fase 1 (Orquestração)</button>
+                  <button class="dash-tab" onclick="filterRuns('fase2', this)">Fase 2 (Soberania LLM)</button>
+                </div>
+              </div>
+
+              <table class="dash-table" id="telemetryTable">
+                <thead>
+                  <tr>
+                    <th>Run ID (UUID)</th>
+                    <th>Executor / Orquestrador</th>
+                    <th>Modelo Base</th>
+                    <th>Endpoint ToolClient</th>
+                    <th>Evidência Auditada</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-phase="fase1">
+                    <td>#run-8f92a1</td>
+                    <td><span class="badge-agent">Hermes (ReAct Loop)</span></td>
+                    <td>Mesmo Modelo (Fixo)</td>
+                    <td>ler_documento()</td>
+                    <td>SEI Doc #412 · Pág. 14, off:820</td>
+                    <td><span class="status-verified">Verificado ≠ Declarado</span></td>
+                  </tr>
+                  <tr data-phase="fase1">
+                    <td>#run-3c41e9</td>
+                    <td><span class="badge-agent langgraph">LangGraph (State DAG)</span></td>
+                    <td>Mesmo Modelo (Fixo)</td>
+                    <td>consultar_requisitos()</td>
+                    <td>SEI Doc #108 · Pág. 03, off:112</td>
+                    <td><span class="status-verified">Verificado ≠ Declarado</span></td>
+                  </tr>
+                  <tr data-phase="fase2">
+                    <td>#run-7d19b4</td>
+                    <td><span class="badge-agent">Hermes (ReAct Loop)</span></td>
+                    <td>Qwen 2.5 / Llama 3.1 (Local)</td>
+                    <td>buscar_documentos()</td>
+                    <td>SEI Doc #904 · Pág. 27, off:450</td>
+                    <td><span class="status-verified">Soberania GDF / LGPD</span></td>
+                  </tr>
+                  <tr data-phase="fase2">
+                    <td>#run-5a08f2</td>
+                    <td><span class="badge-agent langgraph">LangGraph (State DAG)</span></td>
+                    <td>GPT-4o / Claude 3.5 (Nuvem)</td>
+                    <td>consultar_processo()</td>
+                    <td>SEI Doc #219 · Pág. 09, off:305</td>
+                    <td><span class="status-verified">Baseline CTCE Auditado</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Right Notifications Column -->
+            <aside class="dash-notifications">
+              <div class="dash-nav-group-title">Diretrizes de Execução</div>
+              <div class="notif-card">
+                <strong>1. O que é o Projeto?</strong>
+                <span>Avaliação de agentes autônomos no setor público sobre exportações manuais do SEI.</span>
+              </div>
+              <div class="notif-card">
+                <strong>Isolamento por Sessão</strong>
+                <span>Cada rodada recebe UUID único e containers reiniciados via Docker + pgvector.</span>
+              </div>
+              <div class="notif-card">
+                <strong>Prazo Planejado</strong>
+                <span>Entrega final do experimento e artigo em 10/12/2026.</span>
+              </div>
+            </aside>
+          </div>
+        </div>
       </div>
     </div>
   </section>

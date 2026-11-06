@@ -5,14 +5,31 @@ from uuid import UUID
 import pytest
 
 from contracts.models import ExperimentRun, ToolCallRecord, ToolContext
-from evaluation.metrics import load_runs, paired_comparison, summarize
+from evaluation.metrics import (
+    generate_preliminary_report,
+    load_runs,
+    paired_comparison,
+    save_preliminary_report,
+    summarize,
+    summarize_by_executor,
+)
 from evaluation.rubric import (
     TextQualityScore,
     compute_blind_agreement,
     evaluate_rubric,
     prepare_blind_packet,
 )
-from evaluation.runner import build_tool_context, load_tasks, run_paired_adapters, run_simulation
+from evaluation.runner import (
+    SimulationAdapter,
+    build_tool_context,
+    load_tasks,
+    resolve_adapter,
+    run_paired_adapters,
+    run_simulation,
+)
+from evaluation.runner import (
+    main as runner_main,
+)
 
 
 def _make_run(
@@ -288,3 +305,163 @@ def test_text_quality_score_validation():
 
     with pytest.raises(ValueError, match="Dimensão structure"):
         TextQualityScore(clarity=5, terminology=4, grounding=5, structure=0)
+
+
+def test_summarize_by_executor_and_report_generation(tmp_path):
+    call_ok = ToolCallRecord(
+        tool_call_id="c1", tool="consultar_processo", duration_ms=12, status="ok"
+    )
+    call_err = ToolCallRecord(
+        tool_call_id="c2", tool="buscar_documentos", duration_ms=20, status="error"
+    )
+
+    r_hermes = [
+        _make_run(
+            task_id="DEV-001",
+            executor="hermes",
+            latency_ms=100,
+            verified_success=True,
+            tool_calls=[call_ok],
+        ),
+        _make_run(
+            task_id="DEV-002",
+            executor="hermes",
+            latency_ms=150,
+            verified_success=True,
+            tool_calls=[call_ok, call_err],
+        ),
+    ]
+    r_lg = [
+        _make_run(
+            task_id="DEV-001",
+            executor="langgraph",
+            latency_ms=200,
+            verified_success=False,
+            tool_calls=[call_ok],
+        ),
+        _make_run(
+            task_id="DEV-002",
+            executor="langgraph",
+            latency_ms=250,
+            verified_success=True,
+            tool_calls=[call_ok],
+        ),
+    ]
+    all_runs = r_hermes + r_lg
+
+    summary = summarize_by_executor(all_runs)
+    assert "hermes" in summary
+    assert "langgraph" in summary
+    assert summary["hermes"]["run_count"] == 2
+    assert summary["hermes"]["success_rate"] == 1.0
+    assert summary["hermes"]["mean_latency_ms"] == 125.0
+    assert summary["hermes"]["std_latency_ms"] == pytest.approx(35.355, rel=1e-2)
+    assert summary["hermes"]["compliance_rate"] == 1.0
+    assert summary["hermes"]["input_tokens"]["total"] == 200
+
+    assert summary["langgraph"]["success_rate"] == 0.5
+    assert summary["langgraph"]["mean_latency_ms"] == 225.0
+
+    report_dict, md_text = generate_preliminary_report(all_runs)
+    assert report_dict["total_runs"] == 4
+    assert "Taxa de Sucesso Verificado (SR)" in md_text
+    assert "Comparação pareada" in md_text
+    assert "hermes" in md_text and "langgraph" in md_text
+
+    json_path, md_path = save_preliminary_report(all_runs, tmp_path)
+    assert json_path.exists()
+    assert md_path.exists()
+    loaded_report = json.loads(json_path.read_text(encoding="utf-8"))
+    assert loaded_report["total_runs"] == 4
+
+
+def test_runner_filter_task_ids_and_repeats(tmp_path, monkeypatch):
+    tasks = [
+        {
+            "task_id": "DEV-001",
+            "split": "development",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+            "process_id": "PROC-DEMO-001",
+            "prompt": "Tarefa 1",
+        },
+        {
+            "task_id": "DEV-002",
+            "split": "development",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+            "process_id": "PROC-DEMO-001",
+            "prompt": "Tarefa 2",
+        },
+        {
+            "task_id": "DEV-003",
+            "split": "development",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+            "process_id": "PROC-DEMO-001",
+            "prompt": "Tarefa 3",
+        },
+    ]
+    tasks_path = tmp_path / "tasks.json"
+    tasks_path.write_text(json.dumps(tasks), encoding="utf-8")
+    monkeypatch.setattr("evaluation.runner.TASKS_PATH", tasks_path)
+    monkeypatch.setattr("evaluation.runner.repository_state", lambda: ("hash-commit", False))
+
+    paths = run_simulation(
+        "development",
+        repetitions=2,
+        results_dir=tmp_path / "filtered",
+        task_ids=["DEV-001", "DEV-002"],
+    )
+    # 2 tarefas x 2 repetições = 4 arquivos
+    assert len(paths) == 4
+    records = [ExperimentRun.model_validate_json(p.read_text(encoding="utf-8")) for p in paths]
+    task_ids = {r.task_id for r in records}
+    assert task_ids == {"DEV-001", "DEV-002"}
+
+
+def test_resolve_adapter_simulation_and_missing_real_adapters():
+    sim_adapter = resolve_adapter("simulation")
+    assert isinstance(sim_adapter, SimulationAdapter)
+
+    ctx = build_tool_context(
+        {
+            "process_id": "PROC-DEMO-001",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+        }
+    )
+    run = sim_adapter.run("Prompt simulado", ctx)
+    assert run.executor == "simulation"
+    assert run.run_id == ctx.run_id
+
+    with pytest.raises(NotImplementedError, match="hermes"):
+        resolve_adapter("hermes")
+
+    with pytest.raises(NotImplementedError, match="langgraph"):
+        resolve_adapter("langgraph")
+
+    with pytest.raises(ValueError, match="desconhecido"):
+        resolve_adapter("inexistente")
+
+
+def test_runner_main_cli_simulation_and_adapter_handling(tmp_path, capsys, monkeypatch):
+    monkeypatch.setattr("evaluation.runner.RESULTS_PATH", tmp_path / "cli_results")
+    runner_main(
+        [
+            "--adapter",
+            "simulation",
+            "--repeats",
+            "1",
+            "--task-ids",
+            "DEV-001",
+            "--results-dir",
+            str(tmp_path / "cli_results"),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert "Registro simulado" in captured.out
+
+    runner_main(["--adapter", "hermes"])
+    captured_hermes = capsys.readouterr()
+    assert "AVISO" in captured_hermes.out or "BLOQUEIO" in captured_hermes.out

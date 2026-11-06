@@ -16,7 +16,7 @@ TASKS_PATH = ROOT / "evaluation" / "tasks.json"
 RESULTS_PATH = ROOT / "evaluation" / "results"
 
 
-def load_tasks(path: Path, split: str) -> list[dict]:
+def load_tasks(path: Path, split: str, task_ids: list[str] | None = None) -> list[dict]:
     tasks = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(tasks, list):
         raise ValueError(f"O catálogo deve conter uma lista JSON: {path}")
@@ -36,7 +36,8 @@ def load_tasks(path: Path, split: str) -> list[dict]:
         if not all(isinstance(task[field], str) and task[field] for field in required):
             raise ValueError(f"Campos obrigatórios inválidos na tarefa {index}: {path}")
         if task["split"] == split:
-            selected.append(task)
+            if task_ids is None or task["task_id"] in task_ids:
+                selected.append(task)
 
     if not selected:
         raise ValueError(f"Nenhuma tarefa encontrada para split={split!r} em {path}")
@@ -98,11 +99,92 @@ def simulate(task: dict, repetition: int, commit: str, working_tree_dirty: bool)
     )
 
 
-def run_simulation(split: str, repetitions: int, results_dir: Path) -> list[Path]:
+class SimulationAdapter:
+    """Adaptador de simulação para validação determinística de harness e pipeline."""
+
+    def __init__(
+        self,
+        executor_name: str = "simulation",
+        commit: str | None = None,
+        working_tree_dirty: bool | None = None,
+        latency_ms: float = 0.0,
+    ):
+        self.executor_name = executor_name
+        self.commit = commit
+        self.working_tree_dirty = working_tree_dirty
+        self.latency_ms = latency_ms
+
+    def run(self, task: str, context: ToolContext) -> ExperimentRun:
+        c = self.commit
+        d = self.working_tree_dirty
+        if c is None or d is None:
+            c_head, d_head = repository_state()
+            c = c or c_head
+            d = d if d is not None else d_head
+
+        prompt_hash = hashlib.sha256(task.encode("utf-8")).hexdigest()
+        return ExperimentRun(
+            **context.model_dump(),
+            task_id=getattr(context, "task_id", "DEV-001"),
+            split="development",
+            executor="simulation",
+            repetition=1,
+            code_commit=c,
+            harness_version="0.1.0",
+            adapter_version=f"{self.executor_name}-0.1.0",
+            model="not-called",
+            endpoint_id=f"local-{self.executor_name}",
+            prompt_sha256=prompt_hash,
+            parameters={"simulation": True, "working_tree_dirty": d},
+            started_at=datetime.now(UTC),
+            latency_ms=self.latency_ms,
+            tool_calls=[],
+            agent_declared_success=False,
+            persisted_artifact_ids=[],
+            verified_success=None,
+            evaluator=None,
+        )
+
+
+def resolve_adapter(name: str) -> AgentAdapter:
+    """Retorna adaptador registrado ou levanta NotImplementedError quando pendente."""
+    if name == "simulation":
+        return SimulationAdapter()
+    if name == "hermes":
+        try:
+            from agents.hermes.adapter import HermesAdapter  # type: ignore
+
+            return HermesAdapter()
+        except (ImportError, ModuleNotFoundError, AttributeError) as exc:
+            raise NotImplementedError(
+                "Adaptador 'hermes' ainda não está implementado/instalado nesta branch "
+                "(identidade, versão e endpoint pendentes conforme agents/hermes/README.md). "
+                "Conforme regras (AGENTS.md), não inventamos dependências ou resultados."
+            ) from exc
+    if name == "langgraph":
+        try:
+            from agents.langgraph.adapter import LangGraphAdapter  # type: ignore
+
+            return LangGraphAdapter()
+        except (ImportError, ModuleNotFoundError, AttributeError) as exc:
+            raise NotImplementedError(
+                "Adaptador 'langgraph' ainda não está implementado/instalado nesta branch "
+                "(conforme agents/langgraph/README.md). Conforme regras operacionais (AGENTS.md), "
+                "não inventamos dependências ou resultados."
+            ) from exc
+    raise ValueError(f"Adaptador desconhecido: {name!r}")
+
+
+def run_simulation(
+    split: str,
+    repetitions: int,
+    results_dir: Path,
+    task_ids: list[str] | None = None,
+) -> list[Path]:
     if repetitions < 1:
         raise ValueError("O número de repetições deve ser pelo menos 1.")
 
-    tasks = load_tasks(TASKS_PATH, split)
+    tasks = load_tasks(TASKS_PATH, split, task_ids=task_ids)
     commit, working_tree_dirty = repository_state()
     results_dir.mkdir(parents=True, exist_ok=True)
 
@@ -152,15 +234,94 @@ def run_paired_adapters(
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--adapter", choices=["simulation"], default="simulation")
-    parser.add_argument("--split", choices=["development", "final"], default="development")
-    parser.add_argument("--repetitions", type=int, default=1)
-    parser.add_argument("--results-dir", type=Path, default=RESULTS_PATH)
+    parser.add_argument(
+        "--adapter",
+        choices=["simulation", "hermes", "langgraph", "paired"],
+        default="simulation",
+        help="Executor alvo ou 'paired' para execução pareada",
+    )
+    parser.add_argument(
+        "--split",
+        choices=["development", "final"],
+        default="development",
+        help="Subconjunto de tarefas no catálogo",
+    )
+    parser.add_argument(
+        "--repetitions",
+        type=int,
+        default=None,
+        help="Número de repetições por tarefa",
+    )
+    parser.add_argument(
+        "--repeats",
+        type=int,
+        default=None,
+        help="Sinônimo de --repetitions",
+    )
+    parser.add_argument(
+        "--task-ids",
+        type=str,
+        default=None,
+        help="Lista opcional de tarefas separadas por vírgula (ex: DEV-001,DEV-002)",
+    )
+    parser.add_argument(
+        "--results-dir",
+        type=Path,
+        default=RESULTS_PATH,
+        help="Diretório onde salvar os registros JSON de ExperimentRun",
+    )
     args = parser.parse_args(argv)
 
-    paths = run_simulation(args.split, args.repetitions, args.results_dir)
-    for path in paths:
-        print(f"Registro simulado (não é resultado de agente): {path}")
+    repetitions = args.repeats if args.repeats is not None else (args.repetitions or 1)
+    if repetitions < 1:
+        parser.error("O número de repetições deve ser pelo menos 1.")
+
+    task_id_list = (
+        [t.strip() for t in args.task_ids.split(",") if t.strip()] if args.task_ids else None
+    )
+    tasks = load_tasks(TASKS_PATH, args.split, task_ids=task_id_list)
+
+    if args.adapter == "simulation":
+        paths = run_simulation(
+            args.split,
+            repetitions=repetitions,
+            results_dir=args.results_dir,
+            task_ids=task_id_list,
+        )
+        for path in paths:
+            print(f"Registro simulado (não é resultado de agente): {path}")
+        print(f"Sucesso: {len(paths)} execuções salvas em {args.results_dir}")
+    elif args.adapter in ("hermes", "langgraph"):
+        try:
+            adapter = resolve_adapter(args.adapter)
+        except NotImplementedError as exc:
+            print(f"AVISO: {exc}")
+            print("Para testar o pipeline e a coleta, use '--adapter simulation'.")
+            return
+        paths: list[Path] = []
+        for task in tasks:
+            for _repetition in range(1, repetitions + 1):
+                context = build_tool_context(task)
+                record = adapter.run(task["prompt"], context)
+                path = args.results_dir / f"{record.run_id}.json"
+                path.write_text(record.model_dump_json(indent=2) + "\n", encoding="utf-8")
+                paths.append(path)
+        print(f"Sucesso: {len(paths)} execuções de {args.adapter} salvas em {args.results_dir}")
+    elif args.adapter == "paired":
+        try:
+            adapters = {
+                "hermes": resolve_adapter("hermes"),
+                "langgraph": resolve_adapter("langgraph"),
+            }
+        except NotImplementedError as exc:
+            print(f"BLOQUEIO NA EXECUÇÃO PAREADA: {exc}")
+            print(
+                "Ambos os adaptadores reais precisam estar implementados para a rodada pareada. "
+                "Conforme protocolo (AGENTS.md), não inventamos resultados de agentes."
+            )
+            return
+        paths = run_paired_adapters(tasks, adapters, repetitions, args.results_dir)
+        print(f"Sucesso: {len(paths)} execuções pareadas salvas em {args.results_dir}")
 
 
 if __name__ == "__main__":

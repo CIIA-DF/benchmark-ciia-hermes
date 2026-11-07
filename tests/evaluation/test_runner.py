@@ -6,11 +6,14 @@ import pytest
 
 from contracts.models import ExperimentRun, ToolCallRecord, ToolContext
 from evaluation.metrics import (
+    COMPOSITE_PROFILES,
+    compute_composite_score,
     generate_preliminary_report,
     load_runs,
     paired_comparison,
     save_preliminary_report,
     summarize,
+    summarize_by_difficulty,
     summarize_by_executor,
 )
 from evaluation.rubric import (
@@ -366,7 +369,11 @@ def test_summarize_by_executor_and_report_generation(tmp_path):
     assert report_dict["total_runs"] == 4
     assert "Taxa de Sucesso Verificado (SR)" in md_text
     assert "Comparação pareada" in md_text
+    assert "Score Composto Ponderado por Perfil de Uso" in md_text
+    assert "Desempenho Estratificado por Dificuldade de Tarefa" in md_text
     assert "hermes" in md_text and "langgraph" in md_text
+    assert "composite_scores" in summary["hermes"]
+    assert "balanceado" in summary["hermes"]["composite_scores"]
 
     json_path, md_path = save_preliminary_report(all_runs, tmp_path)
     assert json_path.exists()
@@ -465,3 +472,139 @@ def test_runner_main_cli_simulation_and_adapter_handling(tmp_path, capsys, monke
     runner_main(["--adapter", "hermes"])
     captured_hermes = capsys.readouterr()
     assert "AVISO" in captured_hermes.out or "BLOQUEIO" in captured_hermes.out
+
+
+def test_tasks_schema_difficulty_and_category():
+    from evaluation.runner import TASKS_PATH
+
+    tasks = json.loads(TASKS_PATH.read_text(encoding="utf-8"))
+    valid_diffs = {"baixa", "media", "alta"}
+    valid_cats = {"extracao_direta", "busca_vazia", "sintese_cruzada"}
+
+    for t in tasks:
+        assert "difficulty" in t, f"Tarefa {t['task_id']} sem difficulty"
+        assert t["difficulty"] in valid_diffs, f"Dificuldade inválida em {t['task_id']}"
+        assert "category" in t, f"Tarefa {t['task_id']} sem category"
+        assert t["category"] in valid_cats, f"Categoria inválida em {t['task_id']}"
+
+
+def test_runner_filters_by_difficulty(tmp_path, monkeypatch):
+    tasks = [
+        {
+            "task_id": "DEV-001",
+            "split": "development",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+            "process_id": "PROC-DEMO-001",
+            "prompt": "Tarefa Baixa",
+            "difficulty": "baixa",
+            "category": "extracao_direta",
+        },
+        {
+            "task_id": "DEV-004",
+            "split": "development",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+            "process_id": "PROC-DEMO-001",
+            "prompt": "Tarefa Media",
+            "difficulty": "media",
+            "category": "busca_vazia",
+        },
+        {
+            "task_id": "DEV-010",
+            "split": "development",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+            "process_id": "PROC-DEMO-001",
+            "prompt": "Tarefa Alta",
+            "difficulty": "alta",
+            "category": "sintese_cruzada",
+        },
+    ]
+    tasks_path = tmp_path / "tasks.json"
+    tasks_path.write_text(json.dumps(tasks), encoding="utf-8")
+    monkeypatch.setattr("evaluation.runner.TASKS_PATH", tasks_path)
+    monkeypatch.setattr("evaluation.runner.repository_state", lambda: ("hash123", False))
+
+    loaded_baixa = load_tasks(tasks_path, "development", difficulty="baixa")
+    assert len(loaded_baixa) == 1
+    assert loaded_baixa[0]["task_id"] == "DEV-001"
+
+    loaded_multi = load_tasks(tasks_path, "development", difficulty=["baixa", "alta"])
+    assert len(loaded_multi) == 2
+    assert {t["task_id"] for t in loaded_multi} == {"DEV-001", "DEV-010"}
+
+    paths = run_simulation(
+        "development",
+        repetitions=1,
+        results_dir=tmp_path / "sim_diff",
+        difficulty="alta",
+    )
+    assert len(paths) == 1
+    run_rec = ExperimentRun.model_validate_json(paths[0].read_text(encoding="utf-8"))
+    assert run_rec.task_id == "DEV-010"
+
+
+def test_compute_composite_score_profiles():
+    # Sumário com bom desempenho
+    good_summary = {
+        "success_rate": 1.0,
+        "tool_usage_accuracy": 0.95,
+        "compliance_rate": 1.0,
+        "mean_latency_ms": 1500.0,
+        "mean_cost_usd": 0.01,
+    }
+
+    # Sumário lento e custoso
+    slow_expensive_summary = {
+        "success_rate": 1.0,
+        "tool_usage_accuracy": 0.95,
+        "compliance_rate": 1.0,
+        "mean_latency_ms": 25000.0,
+        "mean_cost_usd": 0.09,
+    }
+
+    score_good_triagem = compute_composite_score(good_summary, "triagem_operacional")
+    score_slow_triagem = compute_composite_score(slow_expensive_summary, "triagem_operacional")
+    assert 0.0 <= score_good_triagem <= 1.0
+    assert 0.0 <= score_slow_triagem <= 1.0
+    # No perfil operacional, o mais rápido/econômico deve superar o lento/custoso
+    assert score_good_triagem > score_slow_triagem
+
+    assert "triagem_operacional" in COMPOSITE_PROFILES
+
+    score_juridica = compute_composite_score(good_summary, "auditoria_juridica")
+    assert 0.0 <= score_juridica <= 1.0
+
+    score_custom = compute_composite_score(
+        good_summary,
+        profile_or_weights={"sr": 0.5, "compliance": 0.5},
+    )
+    assert score_custom == 1.0
+
+    with pytest.raises(ValueError, match="Perfil desconhecido"):
+        compute_composite_score(good_summary, "perfil_inexistente")
+
+    with pytest.raises(ValueError, match="A soma dos pesos deve ser 1.0"):
+        compute_composite_score(good_summary, {"sr": 0.5})
+
+
+def test_summarize_by_difficulty(tmp_path):
+    tasks = [
+        {"task_id": "DEV-001", "difficulty": "baixa"},
+        {"task_id": "DEV-004", "difficulty": "media"},
+    ]
+    tasks_path = tmp_path / "tasks.json"
+    tasks_path.write_text(json.dumps(tasks), encoding="utf-8")
+
+    runs = [
+        _make_run(task_id="DEV-001", executor="hermes", latency_ms=100.0, verified_success=True),
+        _make_run(task_id="DEV-004", executor="hermes", latency_ms=300.0, verified_success=False),
+    ]
+
+    diff_summary = summarize_by_difficulty(runs, tasks_path=tasks_path)
+    assert "hermes" in diff_summary
+    assert "baixa" in diff_summary["hermes"]
+    assert "media" in diff_summary["hermes"]
+    assert diff_summary["hermes"]["baixa"]["success_rate"] == 1.0
+    assert diff_summary["hermes"]["media"]["success_rate"] == 0.0

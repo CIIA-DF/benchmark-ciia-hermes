@@ -16,7 +16,12 @@ TASKS_PATH = ROOT / "evaluation" / "tasks.json"
 RESULTS_PATH = ROOT / "evaluation" / "results"
 
 
-def load_tasks(path: Path, split: str, task_ids: list[str] | None = None) -> list[dict]:
+def load_tasks(
+    path: Path,
+    split: str,
+    task_ids: list[str] | None = None,
+    difficulty: str | list[str] | None = None,
+) -> list[dict]:
     tasks = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(tasks, list):
         raise ValueError(f"O catálogo deve conter uma lista JSON: {path}")
@@ -30,14 +35,21 @@ def load_tasks(path: Path, split: str, task_ids: list[str] | None = None) -> lis
         "process_id",
         "prompt",
     }
+    diff_filter = [difficulty] if isinstance(difficulty, str) else difficulty
+    if diff_filter is not None:
+        diff_filter = set(diff_filter)
+
     for index, task in enumerate(tasks):
         if not isinstance(task, dict) or not required <= task.keys():
             raise ValueError(f"Tarefa inválida na posição {index} do catálogo: {path}")
         if not all(isinstance(task[field], str) and task[field] for field in required):
             raise ValueError(f"Campos obrigatórios inválidos na tarefa {index}: {path}")
         if task["split"] == split:
-            if task_ids is None or task["task_id"] in task_ids:
-                selected.append(task)
+            if task_ids is not None and task["task_id"] not in task_ids:
+                continue
+            if diff_filter is not None and task.get("difficulty") not in diff_filter:
+                continue
+            selected.append(task)
 
     if not selected:
         raise ValueError(f"Nenhuma tarefa encontrada para split={split!r} em {path}")
@@ -180,11 +192,12 @@ def run_simulation(
     repetitions: int,
     results_dir: Path,
     task_ids: list[str] | None = None,
+    difficulty: str | list[str] | None = None,
 ) -> list[Path]:
     if repetitions < 1:
         raise ValueError("O número de repetições deve ser pelo menos 1.")
 
-    tasks = load_tasks(TASKS_PATH, split, task_ids=task_ids)
+    tasks = load_tasks(TASKS_PATH, split, task_ids=task_ids, difficulty=difficulty)
     commit, working_tree_dirty = repository_state()
     results_dir.mkdir(parents=True, exist_ok=True)
 
@@ -265,6 +278,12 @@ def main(argv: list[str] | None = None) -> None:
         help="Lista opcional de tarefas separadas por vírgula (ex: DEV-001,DEV-002)",
     )
     parser.add_argument(
+        "--difficulty",
+        type=str,
+        default=None,
+        help="Filtrar por nível de dificuldade separado por vírgula (ex: baixa,media,alta)",
+    )
+    parser.add_argument(
         "--results-dir",
         type=Path,
         default=RESULTS_PATH,
@@ -279,7 +298,15 @@ def main(argv: list[str] | None = None) -> None:
     task_id_list = (
         [t.strip() for t in args.task_ids.split(",") if t.strip()] if args.task_ids else None
     )
-    tasks = load_tasks(TASKS_PATH, args.split, task_ids=task_id_list)
+    difficulty_list = (
+        [d.strip() for d in args.difficulty.split(",") if d.strip()] if args.difficulty else None
+    )
+    tasks = load_tasks(
+        TASKS_PATH,
+        args.split,
+        task_ids=task_id_list,
+        difficulty=difficulty_list,
+    )
 
     if args.adapter == "simulation":
         paths = run_simulation(
@@ -287,6 +314,7 @@ def main(argv: list[str] | None = None) -> None:
             repetitions=repetitions,
             results_dir=args.results_dir,
             task_ids=task_id_list,
+            difficulty=difficulty_list,
         )
         for path in paths:
             print(f"Registro simulado (não é resultado de agente): {path}")

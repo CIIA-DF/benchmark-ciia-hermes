@@ -6,13 +6,18 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Consulte a previsão de entrega do material didático e informe a fonte e o limite da exportação.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 2},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 2
+    },
     "acceptance": [
       "Informar dezembro de 2026 com referência ao documento e à página 2.",
       "Informar que a exportação é parcial, sem concluir que outros documentos estão ausentes.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "baixa",
+    "category": "extracao_direta"
   },
   {
     "task_id": "DEV-002",
@@ -21,13 +26,18 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Consulte qual item foi solicitado no requerimento e para qual evento ou atividade ele se destina, indicando o documento e a página física de comprovação.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 1},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 1
+    },
     "acceptance": [
       "Informar que foi solicitado material didático destinado a uma oficina experimental.",
       "Citar expressamente o documento DOC-DEMO-001 e a página 1 como fonte comprobatória.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "baixa",
+    "category": "extracao_direta"
   },
   {
     "task_id": "DEV-003",
@@ -36,14 +46,19 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Consulte a justificativa apresentada no requerimento para o uso do material e indique quem utilizará o material durante a atividade, apontando a fonte documental.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 1},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 1
+    },
     "acceptance": [
       "Informar que a justificativa formal declarada é que o material será utilizado por estudantes durante a atividade.",
       "Referenciar expressamente o documento DOC-DEMO-001 e a página física 1.",
       "Não inventar justificativas adicionais, pedagógicas ou financeiras não contidas no texto.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "baixa",
+    "category": "extracao_direta"
   },
   {
     "task_id": "DEV-004",
@@ -52,14 +67,19 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Verifique se os documentos disponíveis na exportação do processo contêm alguma informação ou referência a parecer jurídico, nota técnica ou termo de homologação de licitação. Caso não encontre essas informações, informe que não há evidências nos documentos consultados, indicando as fontes verificadas e reconhecendo que a exportação é parcial.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 2},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 2
+    },
     "acceptance": [
       "Informar que não foram encontradas informações ou referências a parecer jurídico, nota técnica ou termo de homologação de licitação nos documentos disponíveis na exportação consultada.",
       "Deixar explícito que a ausência dessas informações nos documentos consultados não comprova sua inexistência no processo original, pois a exportação é parcial.",
       "Não inventar números de edital, pareceres, nomes de pareceristas, datas ou atos de aprovação.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "media",
+    "category": "busca_vazia"
   },
   {
     "task_id": "DEV-005",
@@ -68,14 +88,19 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Localize no requerimento o valor financeiro estimado ou a dotação orçamentária do pedido de material didático, indicando o documento e a página.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 1},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 1
+    },
     "acceptance": [
       "Informar que a página 1 do documento DOC-DEMO-001 não contém menção a valores monetários, custos, dotação orçamentária ou cotações de preços.",
       "Deixar explícito que a ausência de valores na página 1 não comprova sua ausência no processo original, pois a exportação é parcial.",
       "Não inventar valores em reais (R$) nem estimativas orçamentárias inexistentes.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "media",
+    "category": "busca_vazia"
   },
   {
     "task_id": "DEV-006",
@@ -84,14 +109,19 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Consulte a situação da completude da exportação do processo e as observações sobre a existência de outros anexos, indicando as fontes.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 2},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 2
+    },
     "acceptance": [
       "Informar que a completude da exportação do processo PROC-DEMO-001 é parcial ('partial'), conforme os metadados do processo e a nota de exportação.",
       "Referenciar que a página 2 do documento DOC-DEMO-001 confirma expressamente que a exportação é parcial e que outros anexos podem existir no processo de origem.",
       "Não concluir que documentos não localizados estão ausentes no processo original.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "media",
+    "category": "busca_vazia"
   },
   {
     "task_id": "DEV-007",
@@ -100,13 +130,18 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Identifique o título oficial do processo, o título do documento disponível e a origem (source) registrada, indicando o documento e a página física inicial.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 1},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 1
+    },
     "acceptance": [
       "Informar que o processo PROC-DEMO-001 tem título 'Pedido fictício de material didático' e que o documento DOC-DEMO-001 intitula-se 'Requerimento fictício' com origem 'synthetic://requerimento-001'.",
       "Referenciar expressamente o documento DOC-DEMO-001 e a página 1.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "baixa",
+    "category": "extracao_direta"
   },
   {
     "task_id": "DEV-008",
@@ -115,14 +150,19 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Verifique se constam na exportação anexos como cronograma detalhado, lista de participantes ou termo de referência da oficina experimental, informando a fonte consultada e a condição da exportação.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 2},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 2
+    },
     "acceptance": [
       "Informar que cronograma detalhado, lista de participantes ou termo de referência não foram localizados na exportação atual, que contém apenas o requerimento DOC-DEMO-001.",
       "Citar o documento DOC-DEMO-001 (página 2) e a nota de exportação para explicar que a exportação é parcial e outros anexos podem existir no processo de origem.",
       "Não afirmar que tais anexos inexistem no processo original no SEI.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "media",
+    "category": "busca_vazia"
   },
   {
     "task_id": "DEV-009",
@@ -131,13 +171,18 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Consulte se há identificação nominal de servidor signatário, matrícula ou despacho de autorização na página inicial do requerimento, citando a fonte documental.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 1},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 1
+    },
     "acceptance": [
       "Informar que na página 1 do documento DOC-DEMO-001 não há nome de signatário, matrícula ou despacho de autorização.",
       "Reconhecer que se trata de documento fictício para testes em exportação parcial, sem inventar nomes de servidores ou cargos.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "media",
+    "category": "busca_vazia"
   },
   {
     "task_id": "DEV-010",
@@ -146,13 +191,18 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Sintetize o objeto solicitado na página 1 e o prazo de entrega previsto na página 2 do documento do processo, citando ambas as páginas e a ressalva de completude.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 2},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 2
+    },
     "acceptance": [
       "Relacionar a solicitação de material didático para oficina experimental com estudantes (DOC-DEMO-001, página 1) à previsão de entrega em dezembro de 2026 (DOC-DEMO-001, página 2).",
       "Informar expressamente que a exportação é parcial e não permite concluir sobre documentos não incluídos.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "alta",
+    "category": "sintese_cruzada"
   },
   {
     "task_id": "DEV-011",
@@ -161,13 +211,18 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Verifique nos documentos exportados se existe alguma pendência administrativa formalmente apontada no texto do requerimento, sem registrar nova pendência no sistema.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 2},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 2
+    },
     "acceptance": [
       "Informar que o texto de DOC-DEMO-001 (páginas 1 e 2) não descreve pendência administrativa formal, mencionando apenas o pedido, a justificativa, o prazo de dezembro de 2026 e o caráter parcial da exportação.",
       "Explicar que a ausência de outros anexos decorre da exportação parcial e não comprova falha de instrução no processo original.",
       "Abster-se estritamente de acionar registrar_pendencia ou salvar_minuta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "media",
+    "category": "busca_vazia"
   },
   {
     "task_id": "DEV-012",
@@ -176,13 +231,18 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Informe a nota de exportação do processo, a versão do corpus e a natureza declarada no cabeçalho das páginas do documento disponível.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 1},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 1
+    },
     "acceptance": [
       "Informar a nota de exportação do processo PROC-DEMO-001 ('Exemplo sintético. Só o requerimento foi incluído; não inferir ausência de anexos.') e a versão de corpus 'synthetic-v1'.",
       "Citar que o documento DOC-DEMO-001 declara 'DOCUMENTO FICTÍCIO PARA TESTES' na página 1.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "baixa",
+    "category": "extracao_direta"
   },
   {
     "task_id": "DEV-013",
@@ -191,14 +251,19 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Verifique se a justificativa de uso do material didático menciona a realização de avaliação de aprendizagem ou prova formal dos estudantes, indicando a página física consultada.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 1},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 1
+    },
     "acceptance": [
       "Informar que a justificativa na página 1 do documento DOC-DEMO-001 menciona apenas que o material será utilizado por estudantes durante a atividade, sem referência a avaliação de aprendizagem ou prova formal.",
       "Citar expressamente o documento DOC-DEMO-001 e a página 1.",
       "Reconhecer que a exportação é parcial sem inferir ausência no processo original.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "media",
+    "category": "busca_vazia"
   },
   {
     "task_id": "DEV-014",
@@ -207,14 +272,19 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Consulte no processo se consta o endereço do local de entrega ou o campus universitário onde a oficina experimental será realizada, apontando as fontes consultadas e as ressalvas cabíveis.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 2},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 2
+    },
     "acceptance": [
       "Informar que não consta endereço físico de entrega, campus universitário ou sala específica no documento DOC-DEMO-001 consultado.",
       "Ressaltar expressamente que a exportação é parcial (conforme página 2 de DOC-DEMO-001 e metadados do processo) e que o endereço pode constar em anexos não exportados.",
       "Não inventar nomes de campi da UnDF, prédios ou logradouros fictícios.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "media",
+    "category": "busca_vazia"
   },
   {
     "task_id": "DEV-015",
@@ -223,13 +293,18 @@
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
     "prompt": "Verifique se o pedido de material didático estipula a devolução ou doação definitiva dos bens após o término da oficina, indicando as fontes documentais.",
-    "expected_evidence": {"document_id": "DOC-DEMO-001", "page": 1},
+    "expected_evidence": {
+      "document_id": "DOC-DEMO-001",
+      "page": 1
+    },
     "acceptance": [
       "Informar que o requerimento DOC-DEMO-001 não estipula condições de devolução, guarda patrimonial ou doação definitiva dos bens após a atividade.",
       "Citar o documento DOC-DEMO-001 e destacar que a ausência dessas regras decorre da exportação parcial, sem comprovar inexistência de termo patrimonial no processo original.",
       "Não inventar cláusulas contratuais de doação, comodato ou descarte.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; não executada por agente",
+    "difficulty": "media",
+    "category": "busca_vazia"
   }
 ]

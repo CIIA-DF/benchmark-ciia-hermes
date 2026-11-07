@@ -11,6 +11,31 @@ from evaluation.rubric import check_write_policy
 
 ROOT = Path(__file__).resolve().parents[1]
 RESULTS_PATH = ROOT / "evaluation" / "results"
+TASKS_PATH = ROOT / "evaluation" / "tasks.json"
+
+COMPOSITE_PROFILES: dict[str, dict[str, float]] = {
+    "triagem_operacional": {
+        "sr": 0.25,
+        "compliance": 0.15,
+        "tua": 0.10,
+        "latency": 0.30,
+        "cost": 0.20,
+    },
+    "auditoria_juridica": {
+        "sr": 0.45,
+        "compliance": 0.25,
+        "tua": 0.15,
+        "latency": 0.10,
+        "cost": 0.05,
+    },
+    "balanceado": {
+        "sr": 0.35,
+        "compliance": 0.20,
+        "tua": 0.15,
+        "latency": 0.15,
+        "cost": 0.15,
+    },
+}
 
 
 def load_runs(results_dir: Path) -> list[ExperimentRun]:
@@ -118,6 +143,20 @@ def summarize_by_executor(runs: list[ExperimentRun]) -> dict[str, dict]:
 
         ctce = sum(costs) / len(successes) if (costs and successes) else None
 
+        composite_scores = {
+            profile: compute_composite_score(
+                {
+                    "success_rate": len(successes) / len(verified) if verified else None,
+                    "compliance_rate": compliance_rate,
+                    "tool_usage_accuracy": tua,
+                    "mean_latency_ms": mean_lat,
+                    "mean_cost_usd": sum(costs) / len(costs) if costs else None,
+                },
+                profile_or_weights=profile,
+            )
+            for profile in COMPOSITE_PROFILES
+        }
+
         result[executor] = {
             "run_count": len(exec_runs),
             "task_count": len({r.task_id for r in exec_runs}),
@@ -147,7 +186,84 @@ def summarize_by_executor(runs: list[ExperimentRun]) -> dict[str, dict]:
             },
             "mean_cost_usd": sum(costs) / len(costs) if costs else None,
             "ctce_usd": ctce,
+            "composite_scores": composite_scores,
         }
+    return result
+
+
+def compute_composite_score(
+    summary: dict,
+    profile_or_weights: str | dict[str, float] = "balanceado",
+    latency_ceiling_ms: float = 30000.0,
+    cost_ceiling_usd: float = 0.10,
+) -> float:
+    """Calcula score composto ponderado (0.0 a 1.0) conforme perfil de caso de uso."""
+    if isinstance(profile_or_weights, str):
+        if profile_or_weights not in COMPOSITE_PROFILES:
+            raise ValueError(
+                f"Perfil desconhecido: {profile_or_weights!r}. "
+                f"Perfis disponíveis: {list(COMPOSITE_PROFILES.keys())}"
+            )
+        weights = COMPOSITE_PROFILES[profile_or_weights]
+    else:
+        weights = profile_or_weights
+        total_w = sum(weights.values())
+        if not math.isclose(total_w, 1.0, rel_tol=1e-3):
+            raise ValueError(f"A soma dos pesos deve ser 1.0 (recebido {total_w:.4f})")
+
+    sr = summary.get("success_rate")
+    sr_val = float(sr) if sr is not None else 0.0
+
+    tua = summary.get("tool_usage_accuracy")
+    tua_val = float(tua) if tua is not None else 0.0
+
+    comp = summary.get("compliance_rate")
+    comp_val = float(comp) if comp is not None else 1.0
+
+    mean_lat = summary.get("mean_latency_ms")
+    lat_val = float(mean_lat) if mean_lat is not None else 0.0
+    norm_lat = max(0.0, min(1.0, 1.0 - (lat_val / latency_ceiling_ms)))
+
+    cost = summary.get("mean_cost_usd")
+    if cost is None:
+        norm_cost = 1.0
+    else:
+        norm_cost = max(0.0, min(1.0, 1.0 - (float(cost) / cost_ceiling_usd)))
+
+    score = (
+        weights.get("sr", 0.0) * sr_val
+        + weights.get("compliance", 0.0) * comp_val
+        + weights.get("tua", 0.0) * tua_val
+        + weights.get("latency", 0.0) * norm_lat
+        + weights.get("cost", 0.0) * norm_cost
+    )
+    return round(score, 4)
+
+
+def summarize_by_difficulty(
+    runs: list[ExperimentRun],
+    tasks_path: Path | None = None,
+) -> dict[str, dict[str, dict]]:
+    """Calcula métricas agrupadas por executor e estratificadas por nível de dificuldade."""
+    target_tasks = tasks_path or TASKS_PATH
+    diff_map: dict[str, str] = {}
+    if target_tasks.exists():
+        tasks_data = json.loads(target_tasks.read_text(encoding="utf-8"))
+        for t in tasks_data:
+            diff_map[t["task_id"]] = t.get("difficulty", "media")
+
+    grouped: dict[str, dict[str, list[ExperimentRun]]] = {}
+    for run in runs:
+        diff = diff_map.get(run.task_id, "media")
+        grouped.setdefault(run.executor, {}).setdefault(diff, []).append(run)
+
+    result: dict[str, dict[str, dict]] = {}
+    for executor, diff_runs_map in grouped.items():
+        result[executor] = {}
+        for diff_level in ("baixa", "media", "alta"):
+            level_runs = diff_runs_map.get(diff_level, [])
+            if level_runs:
+                result[executor][diff_level] = summarize(level_runs)
     return result
 
 
@@ -302,6 +418,7 @@ def _format_mean_std(
 def generate_preliminary_report(runs: list[ExperimentRun]) -> tuple[dict, str]:
     """Gera dados JSON e relatório em Markdown da rodada piloto comparativa."""
     by_exec = summarize_by_executor(runs)
+    by_diff = summarize_by_difficulty(runs)
     executors = sorted(by_exec.keys())
 
     # Pareamento entre os dois primeiros executores se houver pelo menos dois
@@ -318,6 +435,7 @@ def generate_preliminary_report(runs: list[ExperimentRun]) -> tuple[dict, str]:
         "total_runs": len(runs),
         "executors": executors,
         "by_executor": by_exec,
+        "by_difficulty": by_diff,
         "paired_comparison": comparison,
     }
 
@@ -435,7 +553,84 @@ def generate_preliminary_report(runs: list[ExperimentRun]) -> tuple[dict, str]:
             "",
             "---",
             "",
-            "## 3. Conformidade Metodológica e Regras Operacionais",
+            "## 3. Score Composto Ponderado por Perfil de Uso",
+            "",
+            "Pontuação (0.000 a 1.000) calculada por pesos parametrizados:",
+            "",
+            "| Perfil de Uso | Foco Ponderado | "
+            + " | ".join(f"**{e}**" for e in executors)
+            + " |",
+            "| :--- | :--- | " + " | ".join(":---:" for _ in executors) + " |",
+            "| **Triagem Operacional** | Lat (30%), Custo (20%), SR (25%), Comp (15%), TUA (10%) | "
+            + " | ".join(
+                _format_metric(
+                    by_exec[e].get("composite_scores", {}).get("triagem_operacional"),
+                    ".3f",
+                )
+                for e in executors
+            )
+            + " |",
+            "| **Auditoria Jurídica** | SR (45%), Comp (25%), TUA (15%), Lat (10%), Custo (5%) | "
+            + " | ".join(
+                _format_metric(
+                    by_exec[e].get("composite_scores", {}).get("auditoria_juridica"),
+                    ".3f",
+                )
+                for e in executors
+            )
+            + " |",
+            "| **Balanceado** | SR (35%), Comp (20%), TUA (15%), Lat (15%), Custo (15%) | "
+            + " | ".join(
+                _format_metric(
+                    by_exec[e].get("composite_scores", {}).get("balanceado"),
+                    ".3f",
+                )
+                for e in executors
+            )
+            + " |",
+            "",
+            "---",
+            "",
+            "## 4. Desempenho Estratificado por Dificuldade de Tarefa",
+            "",
+        ]
+    )
+
+    for executor in executors:
+        exec_diff = by_diff.get(executor, {})
+        if exec_diff:
+            md_lines.extend(
+                [
+                    f"### Executor: `{executor}`",
+                    "",
+                    "| Dificuldade | Tarefas | SR | Latência Média | Passos | TUA |",
+                    "| :--- | :---: | :---: | :---: | :---: | :---: |",
+                ]
+            )
+            for diff_level in ("baixa", "media", "alta"):
+                if diff_level in exec_diff:
+                    d_stats = exec_diff[diff_level]
+                    lat_str = _format_mean_std(
+                        d_stats["mean_latency_ms"], d_stats["std_latency_ms"], ".1f"
+                    )
+                    steps_str = _format_mean_std(d_stats["mean_steps"], None, ".1f")
+                    sr_str = _format_metric(d_stats["success_rate"], ".1%")
+                    tua_str = _format_metric(d_stats["tool_usage_accuracy"], ".1%")
+                    md_lines.append(
+                        f"| {diff_level.capitalize()} | "
+                        f"{d_stats['run_count']} | "
+                        f"{sr_str} | "
+                        f"{lat_str} | "
+                        f"{steps_str} | "
+                        f"{tua_str} |"
+                    )
+            md_lines.append("")
+
+    md_lines.extend(
+        [
+            "---",
+            "",
+            "## 5. Conformidade Metodológica e Regras Operacionais",
             "",
             "- **Preservação de Registros**: Valores ausentes ficam como `N/D` (`null`).",
             "- **Unidade de Análise**: Repetições são agregadas por tarefa antes do teste pareado.",

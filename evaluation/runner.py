@@ -10,6 +10,7 @@ from uuid import UUID, uuid4
 
 from agents.interface import AgentAdapter
 from contracts.models import ExperimentRun, ToolContext
+from evaluation.metrics import save_preliminary_report
 
 ROOT = Path(__file__).resolve().parents[1]
 TASKS_PATH = ROOT / "evaluation" / "tasks.json"
@@ -338,6 +339,11 @@ def main(argv: list[str] | None = None) -> None:
         default=RESULTS_PATH,
         help="Diretório onde salvar os registros JSON de ExperimentRun",
     )
+    parser.add_argument(
+        "--generate-report",
+        action="store_true",
+        help="Gera automaticamente relatorio_preliminar.json e .md após a execução",
+    )
     args = parser.parse_args(argv)
 
     repetitions = args.repeats if args.repeats is not None else (args.repetitions or 1)
@@ -409,6 +415,10 @@ def main(argv: list[str] | None = None) -> None:
             return
         paths = run_paired_adapters(tasks, adapters, repetitions, args.results_dir)
         print(f"Sucesso: {len(paths)} execuções pareadas salvas em {args.results_dir}")
+
+    if args.generate_report:
+        json_rep, md_rep = save_preliminary_report(args.results_dir)
+        print(f"Relatório preliminar gerado: {json_rep} e {md_rep}")
 
 
 if __name__ == "__main__":

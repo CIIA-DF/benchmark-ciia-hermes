@@ -40,8 +40,9 @@ COMPOSITE_PROFILES: dict[str, dict[str, float]] = {
 
 def load_runs(results_dir: Path) -> list[ExperimentRun]:
     paths = sorted(results_dir.glob("*.json"))
-    # Filtra arquivos especiais de relatório para não misturar com execuções
-    record_paths = [p for p in paths if not p.name.startswith("relatorio_")]
+    # Filtra arquivos especiais de relatório e dashboard para não misturar com execuções
+    ignored_prefixes = ("relatorio_", "preliminary_report", "dashboard_payload")
+    record_paths = [p for p in paths if not p.name.startswith(ignored_prefixes)]
     if not record_paths:
         raise ValueError(f"Nenhum registro JSON encontrado em {results_dir}")
     return [
@@ -661,10 +662,16 @@ def generate_preliminary_report(runs: list[ExperimentRun]) -> tuple[dict, str]:
 
 
 def save_preliminary_report(
-    runs: list[ExperimentRun],
-    results_dir: Path,
+    runs: list[ExperimentRun] | Path,
+    results_dir: Path | None = None,
 ) -> tuple[Path, Path]:
     """Exporta o relatório consolidado preliminar em JSON e Markdown."""
+    if isinstance(runs, Path):
+        results_dir = runs
+        runs = load_runs(results_dir)
+    elif results_dir is None:
+        raise ValueError("results_dir deve ser fornecido quando runs for uma lista")
+
     results_dir.mkdir(parents=True, exist_ok=True)
     report_dict, md_text = generate_preliminary_report(runs)
 

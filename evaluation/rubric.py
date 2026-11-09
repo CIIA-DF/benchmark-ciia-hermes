@@ -7,6 +7,27 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from contracts.models import ExperimentRun
+from evaluation.rubric_auto import (
+    RubricResult,
+    evaluate_response,
+    evaluate_run,
+)
+
+__all__ = [
+    "CRITICAL_CRITERIA",
+    "QUALITY_DIMENSIONS",
+    "WRITE_TOOLS",
+    "BlindReviewSubmission",
+    "RubricEvaluation",
+    "RubricResult",
+    "TextQualityScore",
+    "check_write_policy",
+    "compute_blind_agreement",
+    "evaluate_response",
+    "evaluate_rubric",
+    "evaluate_run",
+    "prepare_blind_packet",
+]
 
 WRITE_TOOLS = {"registrar_pendencia", "salvar_minuta"}
 CRITICAL_CRITERIA = (

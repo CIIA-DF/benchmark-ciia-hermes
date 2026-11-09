@@ -126,7 +126,15 @@ class SimulationAdapter:
         self.working_tree_dirty = working_tree_dirty
         self.latency_ms = latency_ms
 
-    def run(self, task: str, context: ToolContext) -> ExperimentRun:
+    def run(
+        self,
+        task: str,
+        context: ToolContext,
+        task_id: str | None = None,
+        split: str = "development",
+        repetition: int = 1,
+        **kwargs,
+    ) -> ExperimentRun:
         c = self.commit
         d = self.working_tree_dirty
         if c is None or d is None:
@@ -137,10 +145,10 @@ class SimulationAdapter:
         prompt_hash = hashlib.sha256(task.encode("utf-8")).hexdigest()
         return ExperimentRun(
             **context.model_dump(),
-            task_id=getattr(context, "task_id", "DEV-001"),
-            split="development",
+            task_id=task_id or getattr(context, "task_id", "DEV-001"),
+            split=split,
             executor="simulation",
-            repetition=1,
+            repetition=repetition,
             code_commit=c,
             harness_version="0.1.0",
             adapter_version=f"{self.executor_name}-0.1.0",
@@ -158,15 +166,15 @@ class SimulationAdapter:
         )
 
 
-def resolve_adapter(name: str) -> AgentAdapter:
+def resolve_adapter(name: str, **kwargs) -> AgentAdapter:
     """Retorna adaptador registrado ou levanta NotImplementedError quando pendente."""
     if name == "simulation":
-        return SimulationAdapter()
+        return SimulationAdapter(**kwargs)
     if name == "hermes":
         try:
             from agents.hermes.adapter import HermesAdapter  # type: ignore
 
-            return HermesAdapter()
+            return HermesAdapter(**kwargs)
         except (ImportError, ModuleNotFoundError, AttributeError) as exc:
             raise NotImplementedError(
                 "Adaptador 'hermes' ainda não está implementado/instalado nesta branch "
@@ -177,7 +185,7 @@ def resolve_adapter(name: str) -> AgentAdapter:
         try:
             from agents.langgraph.adapter import LangGraphAdapter  # type: ignore
 
-            return LangGraphAdapter()
+            return LangGraphAdapter(**kwargs)
         except (ImportError, ModuleNotFoundError, AttributeError) as exc:
             raise NotImplementedError(
                 "Adaptador 'langgraph' ainda não está implementado/instalado nesta branch "
@@ -185,6 +193,38 @@ def resolve_adapter(name: str) -> AgentAdapter:
                 "não inventamos dependências ou resultados."
             ) from exc
     raise ValueError(f"Adaptador desconhecido: {name!r}")
+
+
+def execute_adapter_run(
+    adapter: AgentAdapter,
+    prompt: str,
+    context: ToolContext,
+    task_id: str,
+    split: str,
+    repetition: int,
+) -> ExperimentRun:
+    """Executa o adaptador com task_id, split e repetition, avaliando com rubric_auto."""
+    try:
+        record = adapter.run(
+            prompt,
+            context,
+            task_id=task_id,
+            split=split,
+            repetition=repetition,
+        )
+    except TypeError:
+        record = adapter.run(prompt, context)
+
+    response = getattr(adapter, "final_response", None) or getattr(adapter, "last_response", None)
+    if response is not None:
+        try:
+            from evaluation.rubric_auto import evaluate_run
+
+            record = evaluate_run(record, response=response)
+        except Exception:
+            pass
+
+    return record
 
 
 def run_simulation(
@@ -231,11 +271,20 @@ def run_paired_adapters(
     paths: list[Path] = []
 
     for task in tasks:
+        task_id = task["task_id"]
+        split = task.get("split", "development")
         for repetition in range(1, repetitions + 1):
             ordered_names = names if repetition % 2 == 1 else list(reversed(names))
             for name in ordered_names:
                 context = build_tool_context(task)
-                record = adapters[name].run(task["prompt"], context)
+                record = execute_adapter_run(
+                    adapter=adapters[name],
+                    prompt=task["prompt"],
+                    context=context,
+                    task_id=task_id,
+                    split=split,
+                    repetition=repetition,
+                )
                 path = results_dir / f"{record.run_id}.json"
                 path.write_text(
                     record.model_dump_json(indent=2) + "\n",
@@ -326,11 +375,21 @@ def main(argv: list[str] | None = None) -> None:
             print(f"AVISO: {exc}")
             print("Para testar o pipeline e a coleta, use '--adapter simulation'.")
             return
+        args.results_dir.mkdir(parents=True, exist_ok=True)
         paths: list[Path] = []
         for task in tasks:
-            for _repetition in range(1, repetitions + 1):
+            task_id = task["task_id"]
+            split = task.get("split", "development")
+            for repetition in range(1, repetitions + 1):
                 context = build_tool_context(task)
-                record = adapter.run(task["prompt"], context)
+                record = execute_adapter_run(
+                    adapter=adapter,
+                    prompt=task["prompt"],
+                    context=context,
+                    task_id=task_id,
+                    split=split,
+                    repetition=repetition,
+                )
                 path = args.results_dir / f"{record.run_id}.json"
                 path.write_text(record.model_dump_json(indent=2) + "\n", encoding="utf-8")
                 paths.append(path)

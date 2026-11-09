@@ -226,17 +226,34 @@ def compute_composite_score(
 
     cost = summary.get("mean_cost_usd")
     if cost is None:
-        norm_cost = 1.0
+        cost = summary.get("cost_usd")
+
+    if cost is None:
+        # Quando o custo é desconhecido (None), renormaliza os pesos entre os
+        # componentes presentes (sr, compliance, tua, latency), evitando benefício artificial.
+        present_keys = ("sr", "compliance", "tua", "latency")
+        sub_weights = {k: weights.get(k, 0.0) for k in present_keys}
+        total_sub = sum(sub_weights.values())
+        if total_sub > 0:
+            renorm_w = {k: v / total_sub for k, v in sub_weights.items()}
+        else:
+            renorm_w = sub_weights
+
+        score = (
+            renorm_w.get("sr", 0.0) * sr_val
+            + renorm_w.get("compliance", 0.0) * comp_val
+            + renorm_w.get("tua", 0.0) * tua_val
+            + renorm_w.get("latency", 0.0) * norm_lat
+        )
     else:
         norm_cost = max(0.0, min(1.0, 1.0 - (float(cost) / cost_ceiling_usd)))
-
-    score = (
-        weights.get("sr", 0.0) * sr_val
-        + weights.get("compliance", 0.0) * comp_val
-        + weights.get("tua", 0.0) * tua_val
-        + weights.get("latency", 0.0) * norm_lat
-        + weights.get("cost", 0.0) * norm_cost
-    )
+        score = (
+            weights.get("sr", 0.0) * sr_val
+            + weights.get("compliance", 0.0) * comp_val
+            + weights.get("tua", 0.0) * tua_val
+            + weights.get("latency", 0.0) * norm_lat
+            + weights.get("cost", 0.0) * norm_cost
+        )
     return round(score, 4)
 
 

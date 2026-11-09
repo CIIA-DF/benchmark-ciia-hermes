@@ -589,6 +589,85 @@ def test_compute_composite_score_profiles():
         compute_composite_score(good_summary, {"sr": 0.5})
 
 
+def test_compute_composite_score_renormalizes_when_cost_is_none():
+    # Perfil balanceado: sr=0.35, compliance=0.20, tua=0.15, latency=0.15, cost=0.15 (soma=1.0)
+    # Quando o custo é desconhecido (None), o peso é removido e os 0.85 renormalizados
+    summary_no_cost = {
+        "success_rate": 0.5,
+        "compliance_rate": 1.0,
+        "tool_usage_accuracy": 0.8,
+        "mean_latency_ms": 30000.0,
+        "mean_cost_usd": None,
+    }
+    score = compute_composite_score(summary_no_cost, "balanceado")
+    # (0.35*0.5 + 0.20*1.0 + 0.15*0.8 + 0.15*0.0) / 0.85 = 0.495 / 0.85 = 0.5824
+    assert score == round(0.495 / 0.85, 4)
+    # Se o custo tivesse recebido nota máxima 1.0 artificial, o score seria 0.495 + 0.15 = 0.645
+    assert score != 0.645
+
+
+def test_runner_adapter_kwargs_and_rubric_auto_evaluation(tmp_path):
+    from evaluation.runner import execute_adapter_run
+
+    class DummyAdapterWithResponse:
+        def __init__(self, response: str):
+            self.final_response = response
+            self.last_kwargs: dict = {}
+
+        def run(self, task: str, context: ToolContext, **kwargs) -> ExperimentRun:
+            self.last_kwargs = kwargs
+            return ExperimentRun(
+                **context.model_dump(),
+                task_id=kwargs.get("task_id", "DEV-001"),
+                split=kwargs.get("split", "development"),
+                executor="hermes",
+                repetition=kwargs.get("repetition", 1),
+                code_commit="hash123",
+                harness_version="0.1.0",
+                adapter_version="0.1.0",
+                model="dummy-model",
+                endpoint_id="dummy-ep",
+                prompt_sha256="0" * 64,
+                parameters={},
+                started_at=datetime.now(UTC),
+                latency_ms=50.0,
+                tool_calls=[],
+                agent_declared_success=True,
+                persisted_artifact_ids=[],
+                verified_success=None,
+                evaluator=None,
+            )
+
+    adapter = DummyAdapterWithResponse(
+        response=(
+            "A previsão de entrega é dezembro de 2026 (DOC-DEMO-001, página 2). "
+            "A exportação é parcial."
+        )
+    )
+    ctx = build_tool_context(
+        {
+            "process_id": "PROC-DEMO-001",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+        }
+    )
+
+    record = execute_adapter_run(
+        adapter=adapter,
+        prompt="Consulte a previsão",
+        context=ctx,
+        task_id="DEV-001",
+        split="development",
+        repetition=2,
+    )
+
+    assert adapter.last_kwargs.get("task_id") == "DEV-001"
+    assert adapter.last_kwargs.get("split") == "development"
+    assert adapter.last_kwargs.get("repetition") == 2
+    assert record.verified_success is True
+    assert record.evaluator == "deterministic-rubric-v0.1"
+
+
 def test_summarize_by_difficulty(tmp_path):
     tasks = [
         {"task_id": "DEV-001", "difficulty": "baixa"},

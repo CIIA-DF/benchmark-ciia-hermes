@@ -11,7 +11,7 @@ from pathlib import Path
 
 import httpx
 
-from agents.hermes.tools import TOOLS
+from agents.hermes.tools import TOOLS, inject_tool_context
 from agents.interface import AgentAdapter, ModelConfig, ToolClient
 from contracts.models import ExperimentRun, ToolCallRecord, ToolContext
 
@@ -120,7 +120,6 @@ class HermesAdapter(AgentAdapter):
                     continue
 
                 messages.append(message)
-                context_fields = context.model_dump(mode="json")
                 for call, identity in zip(calls, identities, strict=True):
                     tool_call_id, name = identity
                     tool_started = time.perf_counter()
@@ -135,7 +134,7 @@ class HermesAdapter(AgentAdapter):
                         }
                         status = "error"
                     else:
-                        merged_arguments = {**context_fields, **arguments}
+                        merged_arguments = inject_tool_context(arguments, context)
                         try:
                             result = tool_client.call(name, merged_arguments)
                             status = "ok"

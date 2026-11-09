@@ -16,7 +16,21 @@ A frente está dividida em duas etapas claras:
 
 Limites: Não instalar um homônimo sem auditar a fonte. Não duplicar ferramentas de negócio ou acessar o banco diretamente (usar sempre `ToolClient`). Não alterar schemas de contratos sem alinhamento com Backend.
 
-As definições OpenAI/ChatML das três ferramentas de leitura ficam em `agents/hermes/tools.py` e derivam seus parâmetros dos modelos de entrada em `contracts/models.py`.
+As definições OpenAI/ChatML do catálogo completo das 6 ferramentas ficam em `agents/hermes/tools.py` e derivam seus parâmetros dos modelos de entrada em `contracts/models.py`.
+
+## Quadro de tarefas da equipe (Hugo Coelho / HugoDev999)
+
+Abaixo está o registro transparente das tarefas atribuídas e executadas na frente Hermes:
+
+| ID | Tarefa | Responsável | Status | Detalhes / Evidência |
+|---|---|---|---|---|
+| **HM-01** | Implementação inicial do loop ReAct e testes unitários com mock | Hugo Coelho | Concluído | Entregue nos commits `356a189`, `7685192`, etc. |
+| **HM-02** | Isolamento estrito de `ToolContext` e blindagem contra adulteração de `run_id`/`process_id` | Hugo Coelho / Agente Hermes | Concluído | Revisado e completado pelo Agente Hermes garantindo sobrescrita segura via `inject_tool_context`. |
+| **HM-03** | Suporte ao catálogo completo de 6 tools sem vazamento de contexto no schema | Hugo Coelho / Backend / Agente Hermes | Concluído | Catálogo de 6 ferramentas em `agents/hermes/tools.py` com `_clean_schema` e injeção transparente. |
+| **HM-04** | Parametrização de `task_id`, `split` e `repetition` para integração pareada e CLI `--save` | Agente Hermes | Concluído | Parametrização completa em `HermesAdapter.run` e `agents/hermes/run.py` com salvamento de `ExperimentRun`. |
+| **HM-05** | Execução do benchmark piloto pareado e relatório de latência/tokens | Hugo Coelho / Metodologia | Em andamento | Pareamento experimental com LangGraph e coleta comparativa de métricas. |
+
+> **Nota Arquitetural:** O runtime atual é um adaptador ReAct experimental OpenAI-compatible aderente aos contratos comuns (`contracts/models.py`), sem invenção de APIs não confirmadas. A definição de pacote oficial/versão do Hermes permanece como ADR pendente com a coordenação.
 
 ## Entradas, saídas e dependências
 
@@ -33,10 +47,10 @@ Documentação oficial do Hermes confirmado, tool calling, HTTP, timeouts, estad
 Primeiro siga [instalação](../00-comece-aqui/01-inicio-rapido.md) e execute a demo para popular a base sintética. Em outro terminal, inicie a API com `uv run --locked python -m scripts.dev serve`. Com a API local ativa em `http://127.0.0.1:8000`, configure `LLM_BASE_URL`, `LLM_MODEL` e `LLM_API_KEY` no terminal do agente e execute uma tarefa de avaliação:
 
 ```sh
-uv run --locked python -m agents.hermes.run --task-id DEV-001
+uv run --locked python -m agents.hermes.run --task-id DEV-001 --split development --repetition 1 --save
 ```
 
-O comando lê a tarefa de `evaluation/tasks.json`, chama `HermesAdapter` com o contexto dessa tarefa e imprime a resposta final e o `ExperimentRun` em JSON. O adapter usa `http://127.0.0.1:8000` para as ferramentas. A chamada à LLM usa o endpoint e as credenciais configurados no ambiente; o smoke `uv run --locked python -m agents.smoke --adapter hermes` continua testando apenas a interface HTTP, sem executar o agente real.
+O comando lê a tarefa de `evaluation/tasks.json`, chama `HermesAdapter` com o contexto dessa tarefa e imprime a resposta final, um resumo estruturado da execução e o `ExperimentRun` em JSON. Com `--save`, salva o resultado em `evaluation/results/{run_id}.json`. O adapter usa `http://127.0.0.1:8000` para as ferramentas. A chamada à LLM usa o endpoint e as credenciais configurados no ambiente; o smoke `uv run --locked python -m agents.smoke --adapter hermes` continua testando apenas a interface HTTP, sem executar o agente real.
 
 ## Primeiras tarefas
 

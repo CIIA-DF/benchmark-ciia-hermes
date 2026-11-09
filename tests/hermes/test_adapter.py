@@ -1,11 +1,13 @@
 import json
 from types import SimpleNamespace
+from typing import Literal
 from uuid import uuid4
 
 import httpx
 import pytest
 
 from agents.hermes.adapter import SYSTEM_PROMPT, HermesAdapter
+from agents.hermes.tools import inject_tool_context
 from agents.interface import ModelConfig, ToolClient
 from contracts.models import ExperimentRun, ToolContext
 
@@ -84,7 +86,9 @@ def test_hermes_adapter_exposes_required_run_signature():
     assert HermesAdapter.run.__annotations__ == {
         "task": str,
         "context": ToolContext,
-        "task_id": str | None,
+        "task_id": str,
+        "split": Literal["development", "final"],
+        "repetition": int,
         "return": ExperimentRun,
     }
 
@@ -136,6 +140,7 @@ def test_hermes_adapter_runs_tool_calls_and_records_usage(monkeypatch):
         "max_tool_rounds": 10,
         "temperature": 0.0,
         "seed": 42,
+        "final_response": "Consulta concluída.",
     }
     assert result.agent_declared_success is True
     assert adapter.final_response == "Consulta concluída."
@@ -153,13 +158,130 @@ def test_hermes_adapter_runs_tool_calls_and_records_usage(monkeypatch):
     assert requests[0]["seed"] == 42
 
 
-def test_hermes_adapter_uses_supplied_task_id(monkeypatch):
+def test_hermes_adapter_uses_supplied_parameters(monkeypatch):
     responses = [{"choices": [{"message": {"role": "assistant", "content": "Concluído."}}]}]
     _mock_openai_client(monkeypatch, responses)
 
-    result = HermesAdapter().run("Tarefa sintética.", _context(), task_id="DEV-001")
+    result = HermesAdapter().run(
+        "Tarefa sintética.",
+        _context(),
+        task_id="CUSTOM-001",
+        split="final",
+        repetition=3,
+    )
 
-    assert result.task_id == "DEV-001"
+    assert result.task_id == "CUSTOM-001"
+    assert result.split == "final"
+    assert result.repetition == 3
+
+
+def test_inject_tool_context_prevents_llm_override():
+    authenticated = _context()
+    malicious_arguments = {
+        "run_id": str(uuid4()),
+        "process_id": "PROC-EVIL-666",
+        "corpus_version": "corrupted-corpus",
+        "requirements_version": "fake-reqs",
+        "query": "solicitação de diárias",
+    }
+    injected = inject_tool_context(malicious_arguments, authenticated)
+    assert injected["run_id"] == str(authenticated.run_id)
+    assert injected["process_id"] == authenticated.process_id
+    assert injected["corpus_version"] == authenticated.corpus_version
+    assert injected["requirements_version"] == authenticated.requirements_version
+    assert injected["query"] == "solicitação de diárias"
+
+
+def test_hermes_adapter_handles_backend_tool_error(monkeypatch):
+    context = _context()
+    responses = [
+        {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "call-err-1",
+                                "type": "function",
+                                "function": {
+                                    "name": "consultar_requisitos",
+                                    "arguments": "{}",
+                                },
+                            }
+                        ],
+                    }
+                }
+            ],
+            "usage": {"prompt_tokens": 15, "completion_tokens": 5},
+        },
+        {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "A ferramenta de requisitos não está implementada.",
+                    }
+                }
+            ],
+            "usage": {"prompt_tokens": 25, "completion_tokens": 10},
+        },
+    ]
+
+    requests = []
+
+    class MockClient:
+        def __init__(self, **kwargs):
+            self.default_headers = kwargs.get("headers", {})
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info):
+            return False
+
+        def post(self, url, **kwargs):
+            if "/tools/" in url:
+                error_body = {
+                    "code": "not_implemented",
+                    "message": "Contrato previsto; ferramenta ainda não implementada.",
+                    "run_id": str(context.run_id),
+                    "retryable": False,
+                }
+                request = httpx.Request("POST", f"http://test{url}")
+                return httpx.Response(501, json=error_body, request=request)
+            requests.append(kwargs["json"])
+            payload = responses.pop(0)
+            request = httpx.Request("POST", f"http://test{url}")
+            return httpx.Response(200, json=payload, request=request)
+
+    monkeypatch.setattr("agents.hermes.adapter.httpx.Client", MockClient)
+    monkeypatch.setattr(
+        "agents.hermes.adapter._model_config_from_environment",
+        lambda: ModelConfig(
+            base_url="http://llm.test/v1",
+            model="model-test",
+            api_key="test-key",
+            timeout_seconds=5,
+        ),
+    )
+
+    adapter = HermesAdapter()
+    result = adapter.run("Consulte os requisitos normativos.", context)
+
+    assert result.agent_declared_success is True
+    assert adapter.final_response == "A ferramenta de requisitos não está implementada."
+    assert len(result.tool_calls) == 1
+    assert result.tool_calls[0].tool == "consultar_requisitos"
+    assert result.tool_calls[0].status == "error"
+    # Verifica que o erro retornado pelo backend foi propagado à LLM no envelope padrão
+    tool_message = requests[1]["messages"][-1]
+    assert tool_message["role"] == "tool"
+    assert tool_message["tool_call_id"] == "call-err-1"
+    tool_content = json.loads(tool_message["content"])
+    assert tool_content["error"]["code"] == "not_implemented"
+    assert "ferramenta ainda não implementada" in tool_content["error"]["message"]
 
 
 def test_hermes_adapter_uses_git_commit_when_environment_is_unset(monkeypatch):

@@ -36,6 +36,23 @@ def main():
         default="DEV-001",
         help="ID de uma tarefa de evaluation/tasks.json (padrão: DEV-001).",
     )
+    parser.add_argument(
+        "--split",
+        default="development",
+        choices=["development", "final"],
+        help="Split da avaliação (padrão: development).",
+    )
+    parser.add_argument(
+        "--repetition",
+        type=int,
+        default=1,
+        help="Número da repetição da execução (padrão: 1).",
+    )
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        help="Salva o ExperimentRun em evaluation/results/{run_id}.json.",
+    )
     args = parser.parse_args()
 
     task = _load_task(args.task_id)
@@ -46,11 +63,32 @@ def main():
         requirements_version=task["requirements_version"],
     )
     adapter = HermesAdapter()
-    run = adapter.run(task["prompt"], context, task_id=task["task_id"])
+    run = adapter.run(
+        task["prompt"],
+        context,
+        task_id=task["task_id"],
+        split=args.split,
+        repetition=args.repetition,
+    )
 
     print(f"Tarefa: {task['task_id']}")
     print("Resposta final do agente:")
     print(adapter.final_response)
+    print("\nResumo da Execução:")
+    print(f"  Run ID: {run.run_id}")
+    print(f"  Latência: {run.latency_ms:.2f} ms")
+    print(f"  Chamadas de ferramenta: {len(run.tool_calls)}")
+    print(f"  Tokens: {run.input_tokens} in / {run.output_tokens} out")
+    print(f"  Custo: {run.cost_usd}")
+
+    if args.save:
+        results_dir = ROOT / "evaluation" / "results"
+        results_dir.mkdir(parents=True, exist_ok=True)
+        result_path = results_dir / f"{run.run_id}.json"
+        with result_path.open("w", encoding="utf-8") as f:
+            json.dump(run.model_dump(mode="json"), f, ensure_ascii=False, indent=2)
+        print(f"Resultado salvo em: {result_path}")
+
     print("ExperimentRun:")
     print(json.dumps(run.model_dump(mode="json"), ensure_ascii=False, indent=2))
 

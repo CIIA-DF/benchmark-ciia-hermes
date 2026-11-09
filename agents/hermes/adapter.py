@@ -8,6 +8,7 @@ import subprocess
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 import httpx
 
@@ -39,7 +40,15 @@ class HermesAdapter(AgentAdapter):
     def __init__(self):
         self.final_response = ""
 
-    def run(self, task: str, context: ToolContext, *, task_id: str | None = None) -> ExperimentRun:
+    def run(
+        self,
+        task: str,
+        context: ToolContext,
+        *,
+        task_id: str = "DEV-001",
+        split: Literal["development", "final"] = "development",
+        repetition: int = 1,
+    ) -> ExperimentRun:
         self.final_response = ""
         config = _model_config_from_environment()
         started_at = datetime.now(UTC)
@@ -51,6 +60,7 @@ class HermesAdapter(AgentAdapter):
         backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
         tool_client = ToolClient(backend_url)
         tool_calls: list[ToolCallRecord] = []
+        persisted_artifact_ids: list[str] = []
         input_tokens = 0
         output_tokens = 0
         input_tokens_known = True
@@ -127,20 +137,97 @@ class HermesAdapter(AgentAdapter):
                         _, _, arguments = _parse_tool_call(call)
                     except ValueError:
                         result = {
-                            "error": (
-                                "Argumentos inválidos: envie um objeto JSON válido "
-                                "para a ferramenta."
-                            )
+                            "error": {
+                                "code": "invalid_arguments",
+                                "message": (
+                                    "Argumentos inválidos: envie um objeto JSON válido "
+                                    "para a ferramenta."
+                                ),
+                            }
                         }
                         status = "error"
+                        artifact_id = None
                     else:
                         merged_arguments = inject_tool_context(arguments, context)
+                        artifact_id = None
                         try:
-                            result = tool_client.call(name, merged_arguments)
-                            status = "ok"
-                        except (httpx.HTTPError, ValueError):
-                            result = {"error": "A chamada da ferramenta falhou."}
+                            raw_result = tool_client.call(name, merged_arguments)
+                            if (
+                                isinstance(raw_result, dict)
+                                and "code" in raw_result
+                                and "message" in raw_result
+                                and "error" not in raw_result
+                            ):
+                                result = {
+                                    "error": {
+                                        "code": raw_result["code"],
+                                        "message": raw_result["message"],
+                                    }
+                                }
+                                status = "error"
+                            elif isinstance(raw_result, dict) and "error" in raw_result:
+                                result = raw_result
+                                status = "error"
+                            else:
+                                result = raw_result
+                                status = "ok"
+                                if (
+                                    isinstance(result, dict)
+                                    and "artifact_id" in result
+                                    and isinstance(result["artifact_id"], str)
+                                ):
+                                    artifact_id = result["artifact_id"]
+                                    persisted_artifact_ids.append(artifact_id)
+                        except httpx.HTTPStatusError as exc:
                             status = "error"
+                            try:
+                                error_payload = exc.response.json()
+                                if isinstance(error_payload, dict):
+                                    code = (
+                                        error_payload.get("code")
+                                        or f"http_{exc.response.status_code}"
+                                    )
+                                    message = (
+                                        error_payload.get("message")
+                                        or exc.response.text
+                                        or "A chamada da ferramenta falhou."
+                                    )
+                                    result = {"error": {"code": code, "message": message}}
+                                else:
+                                    result = {
+                                        "error": {
+                                            "code": f"http_{exc.response.status_code}",
+                                            "message": (
+                                                exc.response.text
+                                                or "A chamada da ferramenta falhou."
+                                            ),
+                                        }
+                                    }
+                            except Exception:
+                                result = {
+                                    "error": {
+                                        "code": f"http_{exc.response.status_code}",
+                                        "message": (
+                                            exc.response.text or "A chamada da ferramenta falhou."
+                                        ),
+                                    }
+                                }
+                        except httpx.HTTPError as exc:
+                            status = "error"
+                            result = {
+                                "error": {
+                                    "code": "backend_unavailable",
+                                    "message": f"Falha de comunicação com o backend: {exc}",
+                                }
+                            }
+                        except ValueError as exc:
+                            status = "error"
+                            result = {
+                                "error": {
+                                    "code": "invalid_tool_call",
+                                    "message": str(exc),
+                                }
+                            }
                     duration_ms = (time.perf_counter() - tool_started) * 1000
                     tool_calls.append(
                         ToolCallRecord(
@@ -148,6 +235,7 @@ class HermesAdapter(AgentAdapter):
                             tool=name,
                             duration_ms=duration_ms,
                             status=status,
+                            artifact_id=artifact_id,
                         )
                     )
                     messages.append(
@@ -168,15 +256,13 @@ class HermesAdapter(AgentAdapter):
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest()
-        if task_id is None:
-            task_id = f"task-{hashlib.sha256(task.encode('utf-8')).hexdigest()[:16]}"
         endpoint_id = f"endpoint-{hashlib.sha256(config.base_url.encode()).hexdigest()[:16]}"
         return ExperimentRun(
             **context.model_dump(),
             task_id=task_id,
-            split="development",
+            split=split,
             executor="hermes",
-            repetition=1,
+            repetition=repetition,
             code_commit=_git_commit(),
             harness_version=PROJECT_VERSION,
             adapter_version=PROJECT_VERSION,
@@ -187,6 +273,7 @@ class HermesAdapter(AgentAdapter):
                 "max_tool_rounds": MAX_TOOL_ROUNDS,
                 "temperature": MODEL_TEMPERATURE,
                 "seed": MODEL_SEED,
+                "final_response": final_content,
             },
             started_at=started_at,
             latency_ms=(time.perf_counter() - started) * 1000,
@@ -194,7 +281,7 @@ class HermesAdapter(AgentAdapter):
             input_tokens=input_tokens if input_tokens_known else None,
             output_tokens=output_tokens if output_tokens_known else None,
             agent_declared_success=bool(final_content.strip()),
-            persisted_artifact_ids=[],
+            persisted_artifact_ids=persisted_artifact_ids,
             verified_success=None,
             evaluator=None,
         )

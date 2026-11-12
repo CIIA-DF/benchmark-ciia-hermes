@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Protocolo Experimental &amp; Leaderboard Mockado — Benchmark CIIA/UnDF (Hermes vs. LangGraph no SEI)</title>
+  <title>Estrutura do Protocolo &amp; Critérios do Leaderboard: Benchmark CIIA/UnDF (Hermes vs. LangGraph no SEI)</title>
   <!-- Google Fonts: Plus Jakarta Sans (UI/Display), Cormorant Garamond (Editorial Glass Slide Accents), JetBrains Mono (Telemetry/Code) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -649,7 +649,7 @@
     }
 
     /* ==========================================================================
-       CURRENT BENCHMARK LEADERS — 3 BIG VERTICAL CARDS WITH METRIC BARS
+       CURRENT BENCHMARK LEADERS :  3 BIG VERTICAL CARDS WITH METRIC BARS
        (Directly Inspired by Screenshot 1: Gemini 4 / Claude Opus / GPT-6 Cards)
        ========================================================================== */
     .section-block {
@@ -1366,7 +1366,7 @@
     }
 
     /* ==========================================================================
-       "HOW THE SCORE IS BUILT" — AS 4 PARTES FUNDAMENTAIS DO BENCHMARK
+       "HOW THE SCORE IS BUILT" :  AS 4 PARTES FUNDAMENTAIS DO BENCHMARK
        (Directly Inspired by Screenshot 2: Three Status Tiers + Categories Grid)
        ========================================================================== */
     .status-tiers-grid {
@@ -1751,11 +1751,11 @@
       </a>
 
       <ul class="nav-menu">
-        <li><a href="#leaderboard" class="active">Leaderboard</a></li>
-        <li><a href="#tabela">Dados (1.080 Runs)</a></li>
-        <li><a href="#confronto">Duelo: Local vs. Nuvem</a></li>
-        <li><a href="#protocolo">4 Partes do Protocolo</a></li>
-        <li><a href="#achados">Achados &amp; FAQ</a></li>
+        <li><a href="#leaderboard" class="active">Critérios &amp; Métricas</a></li>
+        <li><a href="#tabela">Estrutura da Tabela</a></li>
+        <li><a href="#confronto">Desenho Experimental</a></li>
+        <li><a href="#protocolo">Rubrica Binária &amp; 4 Pilares</a></li>
+        <li><a href="#achados">Achados Esperados &amp; FAQ</a></li>
       </ul>
 
       <div class="nav-actions">
@@ -1781,30 +1781,29 @@
         <div class="hero-left">
           <div class="beta-pill">
             <span class="pulse-dot"></span>
-            <span>SNAPSHOT MOCKADO DE RESULTADOS · PROTOCOLO CIENTÍFICO CIIA/UnDF</span>
+            <span>ESTRUTURA METODOLÓGICA · PROTOCOLO CIENTÍFICO CIIA/UnDF</span>
           </div>
 
           <h1 class="hero-title">
-            Leaderboard &amp; Resultados do Benchmark SEI (Out/Dez 2026)
+            Critérios de Avaliação &amp; Formato do Leaderboard Oficial
           </h1>
 
           <div class="hero-quote-rule">
-            Exibição simulada (mock) das <strong>1.080 execuções controladas</strong> pareando <strong>Hermes (Loop
-              ReAct)</strong> vs. <strong>LangGraph (State DAG)</strong> sobre processos exportados do SEI.
+            Desenho experimental para avaliação comparativa e pareada entre <strong>Hermes (Loop ReAct)</strong> e <strong>LangGraph (State DAG)</strong> sobre processos administrativos em formato SEI.
           </div>
 
           <p class="hero-subtitle">
-            Ao contrário de rankings baseados em auto-relato, o benchmark do <strong>CIIA / UnDF</strong> aplica uma
-            <strong>Rubrica Factualmente Rígida (0 ou 1)</strong>: o agente só pontua se responder corretamente
-            <em>e</em> comprovar a resposta citando o <code>document_id</code>, a <code>pagina</code> física exata e os
+            Ao contrário de avaliações baseadas em auto-relato, o benchmark do <strong>CIIA / UnDF</strong> adota uma
+            <strong>Rubrica Factual Rígida (0 ou 1)</strong>: o agente só pontua se responder com exatidão
+            <em>e</em> comprovar o parecer citando o <code>document_id</code>, a <code>pagina</code> física exata e os
             <code>offsets</code> reais nos autos.
           </p>
 
           <div class="hero-meta-strip">
-            <div class="meta-tag-chip">Fase 1: <strong>360 Execuções (60×2×3)</strong></div>
-            <div class="meta-tag-chip">Fase 2: <strong>1.080 Execuções (3 Classes LLM)</strong></div>
+            <div class="meta-tag-chip">Fase 1: <strong>Comparativo de Orquestração</strong></div>
+            <div class="meta-tag-chip">Fase 2: <strong>Soberania On-Premise e Custos</strong></div>
             <div class="meta-tag-chip">Barramento: <strong>6 Endpoints REST (FastAPI)</strong></div>
-            <div class="meta-tag-chip">Ambiente: <strong>100% Air-Gapped / LGPD</strong></div>
+            <div class="meta-tag-chip">Ambiente: <strong>Isolado / LGPD Safe</strong></div>
           </div>
         </div>
 
@@ -1812,28 +1811,28 @@
         <div class="best-reported-card">
           <div>
             <div class="brc-eyebrow">
-              <span>Líder Geral Verificado (Padrão-Ouro)</span>
+              <span>Métrica Primária do Benchmark</span>
               <span class="brc-pill">SR Auditado</span>
             </div>
             <div class="brc-score-big">
-              91.67%<span class="unit">SR</span>
+              SR %<span class="unit">Meta Factual</span>
             </div>
-            <div class="brc-model-name">Claude 3.5 Sonnet + LangGraph (State DAG)</div>
-            <div class="brc-model-sub">Anthropic API · TUA: 96.4% · Média: 4.2 passos · CTCE: $0.048/run</div>
+            <div class="brc-model-name">Taxa de Sucesso com Fundamentação Estrita</div>
+            <div class="brc-model-sub">Nota 1 atribuída apenas com resposta exata, página física e offset comprovados pelo avaliador.</div>
           </div>
 
           <div class="brc-divider"></div>
 
           <div class="brc-sovereign-row">
             <div class="left-info">
-              <span>★ Líder Soberania Local (100% On-Premise / LGPD)</span>
-              <strong>Qwen 2.5 72B Instruct + LangGraph</strong>
+              <span>★ Critério de Soberania Local (100% On-Premise / LGPD)</span>
+              <strong>Viabilidade de Modelos Abertos em Servidor Próprio</strong>
             </div>
-            <div class="right-score">86.11%</div>
+            <div class="right-score">Auditado</div>
           </div>
 
           <div class="brc-footer-note">
-            Dados mockados para validação visual do artigo · Corpus congelado v1.0 (SHA-256)
+            Critérios definidos antes da coleta · Corpus congelado v1.0 (SHA-256)
           </div>
         </div>
       </div>
@@ -1857,7 +1856,7 @@
               <span class="trust-badge green">Binária Rígida (0 ou 1)</span>
             </div>
             <p>
-              Resposta textual bonita sem citação exata de <code>document_id</code> e <code>pagina</code> física ou com
+              Resposta textual bem redigida sem citação exata de <code>document_id</code> e <code>pagina</code> física ou com
               alucinação em processo parcial recebe <strong>nota zero</strong>.
             </p>
           </div>
@@ -1865,22 +1864,22 @@
           <div class="trust-col">
             <div class="trust-col-head">
               <span>Origem das Execuções</span>
-              <span class="trust-badge blue">100% Harness Cego (runner.py)</span>
+              <span class="trust-badge blue">Harness Cego e Padronizado</span>
             </div>
             <p>
-              0 de 14 configurações vêm de auto-relato. Todas rodam pareadas no mesmo barramento <code>ToolClient</code>
-              com <code>temperature=0</code> e <code>run_id</code> (UUID).
+              Nenhum dado decorre de auto-relato. As execuções rodam pareadas no mesmo barramento <code>ToolClient</code>
+              com parâmetros controlados e <code>run_id</code> único por sessão.
             </p>
           </div>
 
           <div class="trust-col">
             <div class="trust-col-head">
               <span>Isolamento &amp; Estado</span>
-              <span class="trust-badge amber">Containers Reiniciados</span>
+              <span class="trust-badge amber">Ambiente Controlado</span>
             </div>
             <p>
-              Corpus congelado por <code>corpus_version</code> no PostgreSQL + <code>pgvector</code>, sem busca
-              semântica "mágica" e zero conexão com o SEI real.
+              Corpus imutável com rastreabilidade determinística por <code>corpus_version</code>, busca textual estrita
+              e zero conexão com o SEI real em produção.
             </p>
           </div>
         </div>
@@ -1893,43 +1892,41 @@
     </div>
   </section>
 
-  <!-- SECTION: CURRENT LEADERS — 3 BIG VERTICAL CARDS WITH HORIZONTAL BARS (Ref Image 1) -->
+  <!-- SECTION: CURRENT LEADERS :  3 BIG VERTICAL CARDS WITH HORIZONTAL BARS (Ref Image 1) -->
   <section class="section-block">
     <div class="container">
       <div class="leaders-topbar">
         <div class="leaders-heading-group">
           <h2>
-            Líderes por Paradigma no Benchmark SEI
-            <span class="snapshot-date">Simulação Experimental · 60 Tarefas × 3 Repetições</span>
+            Perfis de Avaliação do Benchmark SEI
+            <span class="snapshot-date">Estrutura de Matriz Experimental Pareada</span>
           </h2>
         </div>
 
         <div class="leaders-view-pills">
-          <button class="view-pill-btn active" onclick="highlightLeaderMode('all', this)">Visão Geral (Top 3)</button>
-          <button class="view-pill-btn" onclick="highlightLeaderMode('sovereign', this)">Foco Soberania Local
-            (LGPD)</button>
-          <button class="view-pill-btn" onclick="highlightLeaderMode('orchestration', this)">Foco Fase 1 (Hermes vs.
-            LangGraph)</button>
+          <button class="view-pill-btn active" onclick="highlightLeaderMode('all', this)">Visão Geral dos Perfis</button>
+          <button class="view-pill-btn" onclick="highlightLeaderMode('sovereign', this)">Foco Soberania Local (LGPD)</button>
+          <button class="view-pill-btn" onclick="highlightLeaderMode('orchestration', this)">Foco Fase 1 (Orquestração)</button>
         </div>
       </div>
 
       <div class="leaders-three-grid" id="leadersCardsContainer">
-        <!-- LEADER CARD 01: Gold Standard (Cloud + LangGraph) -->
+        <!-- LEADER CARD 01: Baseline de Referência (Nuvem + Grafo) -->
         <article class="leader-card rank-1" data-card-type="cloud">
           <div>
             <div class="lc-header">
               <div class="lc-brand-group">
-                <div class="lc-icon-box">C3.5</div>
+                <div class="lc-icon-box">REF</div>
                 <div class="lc-title-wrap">
-                  <h3>Claude 3.5 Sonnet + LangGraph</h3>
-                  <span class="lc-tier-badge supported">PADRÃO-OURO · NUVEM</span>
-                  <div class="lc-provider-rank">Anthropic · State DAG · 01</div>
+                  <h3>Modelo Referência + Grafo</h3>
+                  <span class="lc-tier-badge supported">BASELINE · NUVEM</span>
+                  <div class="lc-provider-rank">Teto de Capacidade Cognitiva · 01</div>
                 </div>
               </div>
               <div class="lc-score-box">
-                <span class="lc-score-label">SR Verificado</span>
-                <div class="lc-score-num">91<span class="dec">.67</span></div>
-                <span class="lc-ci-range">IC 95%: 88.4–94.2%</span>
+                <span class="lc-score-label">Métrica Primária</span>
+                <div class="lc-score-num">SR<span class="dec">%</span></div>
+                <span class="lc-ci-range">Aguardando Coleta</span>
               </div>
             </div>
 
@@ -1937,51 +1934,51 @@
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Sucesso Verificado (SR)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 91.7%;"></div>
+                  <div class="lc-bar-fill" style="width: 90%;"></div>
                 </div>
-                <span class="lc-metric-val">91.7%</span>
+                <span class="lc-metric-val">Factual</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Precisão ToolClient (TUA)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 96.4%;"></div>
+                  <div class="lc-bar-fill" style="width: 90%;"></div>
                 </div>
-                <span class="lc-metric-val">96.4%</span>
+                <span class="lc-metric-val">HTTP 200</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Citação Exata (Doc/Pág)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 94.0%;"></div>
+                  <div class="lc-bar-fill" style="width: 90%;"></div>
                 </div>
-                <span class="lc-metric-val">94.0%</span>
+                <span class="lc-metric-val">Offset</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Humildade (Autos Parciais)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 93.5%;"></div>
+                  <div class="lc-bar-fill" style="width: 90%;"></div>
                 </div>
-                <span class="lc-metric-val">93.5%</span>
+                <span class="lc-metric-val">Sem Alucinar</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Checklist (Requisitos)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 92.5%;"></div>
+                  <div class="lc-bar-fill" style="width: 90%;"></div>
                 </div>
-                <span class="lc-metric-val">92.5%</span>
+                <span class="lc-metric-val">Normativo</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Eficiência de Passos</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 88.0%;"></div>
+                  <div class="lc-bar-fill" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">4.2 p</span>
+                <span class="lc-metric-val">Auditada</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Escrita Idempotente</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 95.0%;"></div>
+                  <div class="lc-bar-fill" style="width: 80%;"></div>
                 </div>
-                <span class="lc-metric-val">95.0%</span>
+                <span class="lc-metric-val">Contrato</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Soberania Local (LGPD)</span>
@@ -1992,28 +1989,27 @@
           </div>
 
           <div class="lc-footer">
-            <span class="lc-status-dot"><i style="background:#34d399; box-shadow:0 0 8px #34d399;"></i> Teto Teórico ·
-              CTCE: $48 / 1k SEI</span>
-            <a href="#tabela" class="lc-details-link">Detalhes →</a>
+            <span class="lc-status-dot"><i style="background:#34d399; box-shadow:0 0 8px #34d399;"></i> Baseline Teórico de Raciocínio</span>
+            <a href="#tabela" class="lc-details-link">Critérios →</a>
           </div>
         </article>
 
-        <!-- LEADER CARD 02: Sovereign Open-Weights Leader (Qwen 2.5 72B + LangGraph) -->
+        <!-- LEADER CARD 02: Soberania On-Premise Local -->
         <article class="leader-card" data-card-type="sovereign">
           <div>
             <div class="lc-header">
               <div class="lc-brand-group">
-                <div class="lc-icon-box sovereign">Q72</div>
+                <div class="lc-icon-box sovereign">LOC</div>
                 <div class="lc-title-wrap">
-                  <h3>Qwen 2.5 72B + LangGraph</h3>
-                  <span class="lc-tier-badge sovereign">SOBERANIA GDF · LOCAL vLLM</span>
-                  <div class="lc-provider-rank">Alibaba Cloud · State DAG · 02</div>
+                  <h3>Modelo Aberto + Grafo</h3>
+                  <span class="lc-tier-badge sovereign">SOBERANIA · ON-PREMISE</span>
+                  <div class="lc-provider-rank">Execução 100% Local / LGPD · 02</div>
                 </div>
               </div>
               <div class="lc-score-box">
-                <span class="lc-score-label">SR Verificado</span>
-                <div class="lc-score-num">86<span class="dec">.11</span></div>
-                <span class="lc-ci-range">IC 95%: 82.5–89.1%</span>
+                <span class="lc-score-label">Métrica Primária</span>
+                <div class="lc-score-num">SR<span class="dec">%</span></div>
+                <span class="lc-ci-range">Aguardando Coleta</span>
               </div>
             </div>
 
@@ -2021,85 +2017,84 @@
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Sucesso Verificado (SR)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 86.1%;"></div>
+                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">86.1%</span>
+                <span class="lc-metric-val">Factual</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Precisão ToolClient (TUA)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 93.8%;"></div>
+                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">93.8%</span>
+                <span class="lc-metric-val">HTTP 200</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Citação Exata (Doc/Pág)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 88.5%;"></div>
+                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">88.5%</span>
+                <span class="lc-metric-val">Offset</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Humildade (Autos Parciais)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 87.0%;"></div>
+                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">87.0%</span>
+                <span class="lc-metric-val">Sem Alucinar</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Checklist (Requisitos)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 89.0%;"></div>
+                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">89.0%</span>
+                <span class="lc-metric-val">Normativo</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Eficiência de Passos</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 84.0%;"></div>
+                  <div class="lc-bar-fill emerald" style="width: 80%;"></div>
                 </div>
-                <span class="lc-metric-val">4.6 p</span>
+                <span class="lc-metric-val">Auditada</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Escrita Idempotente</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 91.0%;"></div>
+                  <div class="lc-bar-fill emerald" style="width: 80%;"></div>
                 </div>
-                <span class="lc-metric-val">91.0%</span>
+                <span class="lc-metric-val">Contrato</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Soberania Local (LGPD)</span>
                 <div class="lc-bar-track">
                   <div class="lc-bar-fill emerald" style="width: 100%;"></div>
                 </div>
-                <span class="lc-metric-val">100%</span>
+                <span class="lc-metric-val">100% Local</span>
               </div>
             </div>
           </div>
 
           <div class="lc-footer">
-            <span class="lc-status-dot"><i style="background:#60a5fa; box-shadow:0 0 8px #60a5fa;"></i> 100% On-Premise
-              · CTCE: $4.10 / 1k SEI</span>
-            <a href="#confronto" class="lc-details-link">Detalhes →</a>
+            <span class="lc-status-dot"><i style="background:#60a5fa; box-shadow:0 0 8px #60a5fa;"></i> Hardware Próprio · Zero Vazamento</span>
+            <a href="#confronto" class="lc-details-link">Critérios →</a>
           </div>
         </article>
 
-        <!-- LEADER CARD 03: Best Dynamic ReAct Loop (Claude 3.5 / GPT-4o + Hermes) -->
+        <!-- LEADER CARD 03: Exploração Livre em Loop ReAct -->
         <article class="leader-card" data-card-type="hermes">
           <div>
             <div class="lc-header">
               <div class="lc-brand-group">
-                <div class="lc-icon-box hermes">H·R</div>
+                <div class="lc-icon-box hermes">R·A</div>
                 <div class="lc-title-wrap">
-                  <h3>Claude 3.5 Sonnet + Hermes</h3>
-                  <span class="lc-tier-badge estimated">MELHOR LOOP REACT LIVRE</span>
-                  <div class="lc-provider-rank">Hermes Adapter · ReAct · 03</div>
+                  <h3>Modelo Pareado + Loop ReAct</h3>
+                  <span class="lc-tier-badge estimated">ORQUESTRAÇÃO LIVRE · REACT</span>
+                  <div class="lc-provider-rank">Decisão Dinâmica de Chamadas · 03</div>
                 </div>
               </div>
               <div class="lc-score-box">
-                <span class="lc-score-label">SR Verificado</span>
-                <div class="lc-score-num">85<span class="dec">.56</span></div>
-                <span class="lc-ci-range">IC 95%: 81.2–89.0%</span>
+                <span class="lc-score-label">Métrica Primária</span>
+                <div class="lc-score-num">SR<span class="dec">%</span></div>
+                <span class="lc-ci-range">Aguardando Coleta</span>
               </div>
             </div>
 
@@ -2107,64 +2102,63 @@
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Sucesso Verificado (SR)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 85.6%;"></div>
+                  <div class="lc-bar-fill" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">85.6%</span>
+                <span class="lc-metric-val">Factual</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Precisão ToolClient (TUA)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 90.5%;"></div>
+                  <div class="lc-bar-fill" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">90.5%</span>
+                <span class="lc-metric-val">HTTP 200</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Citação Exata (Doc/Pág)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 87.2%;"></div>
+                  <div class="lc-bar-fill" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">87.2%</span>
+                <span class="lc-metric-val">Offset</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Humildade (Autos Parciais)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 84.0%;"></div>
+                  <div class="lc-bar-fill" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">84.0%</span>
+                <span class="lc-metric-val">Sem Alucinar</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Checklist (Requisitos)</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 86.5%;"></div>
+                  <div class="lc-bar-fill" style="width: 85%;"></div>
                 </div>
-                <span class="lc-metric-val">86.5%</span>
+                <span class="lc-metric-val">Normativo</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Eficiência de Passos</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 74.0%;"></div>
+                  <div class="lc-bar-fill" style="width: 80%;"></div>
                 </div>
-                <span class="lc-metric-val">5.7 p</span>
+                <span class="lc-metric-val">Dinâmica</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Escrita Idempotente</span>
                 <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 83.0%;"></div>
+                  <div class="lc-bar-fill" style="width: 80%;"></div>
                 </div>
-                <span class="lc-metric-val">83.0%</span>
+                <span class="lc-metric-val">Contrato</span>
               </div>
               <div class="lc-metric-row">
-                <span class="lc-metric-name">Risco de Loop / Redundância</span>
+                <span class="lc-metric-name">Risco de Recursão</span>
                 <div class="lc-bar-dotted"></div>
-                <span class="lc-metric-val muted">+1.5 voltas</span>
+                <span class="lc-metric-val muted">Monitorado</span>
               </div>
             </div>
           </div>
 
           <div class="lc-footer">
-            <span class="lc-status-dot"><i style="background:#fbbf24; box-shadow:0 0 8px #fbbf24;"></i> Loop Autônomo ·
-              CTCE: $56 / 1k SEI</span>
-            <a href="#tabela" class="lc-details-link">Detalhes →</a>
+            <span class="lc-status-dot"><i style="background:#fbbf24; box-shadow:0 0 8px #fbbf24;"></i> Loop Autônomo sem Roteiro Fixo</span>
+            <a href="#tabela" class="lc-details-link">Critérios →</a>
           </div>
         </article>
       </div>
@@ -2177,9 +2171,8 @@
       <div class="leaders-topbar">
         <div class="leaders-heading-group">
           <h2>
-            Tabela Completa de Pontuação do Benchmark (14 Configurações Pareadas)
-            <span class="snapshot-date">Clique nos cabeçalhos para ordenar · Filtre por Orquestrador ou Classe de
-              Modelo</span>
+            Estrutura da Matriz de Avaliação (14 Configurações Pareadas)
+            <span class="snapshot-date">Prévia dos campos e métricas estruturados para consolidação dos resultados</span>
           </h2>
         </div>
       </div>
@@ -2270,118 +2263,114 @@
     </div>
   </section>
 
-  <!-- SECTION: O DUELO DE MODELOS & A HIPÓTESE DO AMORTECIMENTO PELO LANGGRAPH -->
+  <!-- SECTION: DESENHO EXPERIMENTAL & HIPÓTESES DE PESQUISA -->
   <section id="confronto" class="section-block">
     <div class="container">
       <div class="leaders-topbar">
         <div class="leaders-heading-group">
           <h2>
-            Fase 1 × Fase 2: A Hipótese do Amortecimento pelo LangGraph
-            <span class="snapshot-date">Por que modelos locais menores saltam de desempenho sob grafos de
-              estados?</span>
+            Fase 1 e Fase 2: Desenho Experimental e Hipóteses do Estudo
+            <span class="snapshot-date">Isolamento metodológico entre arquitetura de orquestração e capacidade da LLM</span>
           </h2>
         </div>
       </div>
 
       <div class="duel-grid">
-        <!-- Left Card: Visual Amortization Chart -->
+        <!-- Left Card: Pergunta Experimental 1 -->
         <div class="amortization-card">
           <div class="brc-eyebrow">
-            <span>Efeito da Arquitetura de Orquestração por Porte de Modelo</span>
-            <span class="brc-pill">Achado Central</span>
+            <span>Fase 1: Orquestração Pareada</span>
+            <span class="brc-pill">Hipótese Central</span>
           </div>
           <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 8px 0;">
-            LangGraph (State DAG) vs. Hermes (Loop Livre ReAct)
+            Grafo de Estados (LangGraph) vs. Loop Livre (Hermes)
           </h3>
           <p style="font-size: 13px; line-height: 1.6; color: var(--text-secondary);">
-            Em modelos de fronteira (Claude 3.5 / GPT-4o), a diferença entre grafo e loop livre é moderada (~5–6%).
-            Porém, em <strong>modelos locais menores (Qwen 2.5 14B/32B)</strong>, o <code>ValidationNode</code> do
-            LangGraph impede que o modelo se perca nas 6 ferramentas REST, elevando o Sucesso Verificado em até
-            <strong>+21.67 pontos percentuais</strong>.
+            A investigação verifica se orquestradores estruturados com nós de validação contêm erros e alucinações de modelos com menor precisão em chamadas de ferramentas, ou se loops dinâmicos mantêm maior adaptabilidade na navegação de autos complexos.
           </p>
 
           <div class="amort-bar-group">
             <div class="amort-model-block">
               <div class="amort-head">
-                <span>Claude 3.5 Sonnet (High-End Nuvem)</span>
-                <span class="amort-delta">+6.11% com LangGraph</span>
+                <span>Modelos de Grande Porte (Fronteira em Nuvem)</span>
+                <span class="amort-delta">Baseline de Raciocínio</span>
               </div>
               <div class="dual-bar-row">
-                <span style="color:#a7f3d0;">LangGraph DAG</span>
+                <span style="color:#a7f3d0;">Grafo de Estados</span>
                 <div class="dual-bar-track">
-                  <div class="dual-bar-fill lg" style="width:91.67%"></div>
+                  <div class="dual-bar-fill lg" style="width:90%"></div>
                 </div>
-                <span>91.7%</span>
+                <span>Pareado</span>
               </div>
               <div class="dual-bar-row">
-                <span style="color:#93c5fd;">Hermes ReAct</span>
+                <span style="color:#93c5fd;">Loop Autônomo</span>
                 <div class="dual-bar-track">
-                  <div class="dual-bar-fill hm" style="width:85.56%"></div>
+                  <div class="dual-bar-fill hm" style="width:90%"></div>
                 </div>
-                <span>85.6%</span>
+                <span>Pareado</span>
               </div>
             </div>
 
             <div class="amort-model-block">
               <div class="amort-head">
-                <span>Qwen 2.5 72B Instruct (Local vLLM · Ponta)</span>
-                <span class="amort-delta">+7.22% com LangGraph</span>
+                <span>Modelos Abertos de Grande Porte (Local On-Premise)</span>
+                <span class="amort-delta">Paridade com Nuvem</span>
               </div>
               <div class="dual-bar-row">
-                <span style="color:#a7f3d0;">LangGraph DAG</span>
+                <span style="color:#a7f3d0;">Grafo de Estados</span>
                 <div class="dual-bar-track">
-                  <div class="dual-bar-fill lg" style="width:86.11%"></div>
+                  <div class="dual-bar-fill lg" style="width:85%"></div>
                 </div>
-                <span>86.1%</span>
+                <span>Pareado</span>
               </div>
               <div class="dual-bar-row">
-                <span style="color:#93c5fd;">Hermes ReAct</span>
+                <span style="color:#93c5fd;">Loop Autônomo</span>
                 <div class="dual-bar-track">
-                  <div class="dual-bar-fill hm" style="width:78.89%"></div>
+                  <div class="dual-bar-fill hm" style="width:85%"></div>
                 </div>
-                <span>78.9%</span>
+                <span>Pareado</span>
               </div>
             </div>
 
             <div class="amort-model-block">
               <div class="amort-head">
-                <span>Qwen 2.5 32B Instruct (Local · Sweet Spot GDF)</span>
-                <span class="amort-delta">+14.44% com LangGraph</span>
+                <span>Modelos Abertos de Médio Porte (Eficiência de Hardware)</span>
+                <span class="amort-delta">Ponto Crítico de Validação</span>
               </div>
               <div class="dual-bar-row">
-                <span style="color:#a7f3d0;">LangGraph DAG</span>
+                <span style="color:#a7f3d0;">Grafo de Estados</span>
                 <div class="dual-bar-track">
-                  <div class="dual-bar-fill lg" style="width:82.22%"></div>
+                  <div class="dual-bar-fill lg" style="width:80%"></div>
                 </div>
-                <span>82.2%</span>
+                <span>Pareado</span>
               </div>
               <div class="dual-bar-row">
-                <span style="color:#93c5fd;">Hermes ReAct</span>
+                <span style="color:#93c5fd;">Loop Autônomo</span>
                 <div class="dual-bar-track">
-                  <div class="dual-bar-fill hm" style="width:67.78%"></div>
+                  <div class="dual-bar-fill hm" style="width:80%"></div>
                 </div>
-                <span>67.8%</span>
+                <span>Pareado</span>
               </div>
             </div>
 
             <div class="amort-model-block" style="border-color: rgba(52, 211, 153, 0.45);">
               <div class="amort-head">
-                <span>Qwen 2.5 14B Instruct (Local Econômico · 1 GPU)</span>
-                <span class="amort-delta">+21.67% Amortecimento!</span>
+                <span>Modelos Abertos Compactos (Hardware Mínimo)</span>
+                <span class="amort-delta">Tolerância a Falhas de Ferramentas</span>
               </div>
               <div class="dual-bar-row">
-                <span style="color:#a7f3d0;">LangGraph DAG</span>
+                <span style="color:#a7f3d0;">Grafo de Estados</span>
                 <div class="dual-bar-track">
-                  <div class="dual-bar-fill lg" style="width:75.00%"></div>
+                  <div class="dual-bar-fill lg" style="width:75%"></div>
                 </div>
-                <span>75.0%</span>
+                <span>Pareado</span>
               </div>
               <div class="dual-bar-row">
-                <span style="color:#93c5fd;">Hermes ReAct</span>
+                <span style="color:#93c5fd;">Loop Autônomo</span>
                 <div class="dual-bar-track">
-                  <div class="dual-bar-fill hm" style="width:53.33%"></div>
+                  <div class="dual-bar-fill hm" style="width:75%"></div>
                 </div>
-                <span>53.3%</span>
+                <span>Pareado</span>
               </div>
             </div>
           </div>
@@ -2391,58 +2380,41 @@
         <div class="categories-matrix-card">
           <div>
             <div class="brc-eyebrow">
-              <span>As 3 Categorias Analíticas de Modelos (Fase 2)</span>
-              <span>1.080 Execuções</span>
+              <span>Fase 2: Soberania &amp; Viabilidade Econômica</span>
+              <span>Classes de Modelos</span>
             </div>
             <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 6px 0;">
-              Chineses Locais &amp; Open-Weights vs. Nuvem Comercial
+              Modelos Locais On-Premise vs. Nuvem Comercial
             </h3>
           </div>
 
           <div class="cat-tier-box">
             <div class="cat-tier-head">
-              <h4>1. High-End Comerciais (Padrão-Ouro / Nuvem)</h4>
-              <span>API Externa Criptografada</span>
-            </div>
-            <div class="cat-models-chips">
-              <code>Claude 3.5 Sonnet</code>
-              <code>GPT-4o</code>
+              <h4>1. Modelos de Referência em Nuvem</h4>
+              <span>Baseline Comercial Criptografado</span>
             </div>
             <p>
-              Estabelecem o teto de qualidade teórica (Gold Standard). Medem a capacidade máxima de extração factual,
-              seguimento de regras administrativas e redação de minutas.
+              Estabelecem o teto metodológico de raciocínio e conformidade textual com as instruções do processo administrativo, fornecendo o padrão comparativo para a avaliação.
             </p>
           </div>
 
           <div class="cat-tier-box highlight-cn">
             <div class="cat-tier-head">
-              <h4>2. Open-Weights Chineses &amp; Locais (Servidor Próprio)</h4>
-              <span style="background:rgba(16,185,129,0.2); color:#a7f3d0;">vLLM / Ollama · 100% LGPD</span>
-            </div>
-            <div class="cat-models-chips">
-              <code>Qwen 2.5 72B Instruct</code>
-              <code>Qwen 2.5 32B / 14B</code>
-              <code>DeepSeek-R1</code>
-              <code>DeepSeek-V2.5</code>
+              <h4>2. Modelos Abertos de Alto Desempenho (On-Premise)</h4>
+              <span style="background:rgba(16,185,129,0.2); color:#a7f3d0;">Servidor Próprio · 100% LGPD</span>
             </div>
             <p>
-              Avaliam se a vanguarda aberta chinesa consegue empatar com o GPT-4o em processos administrativos em
-              português, mantendo os autos 100% dentro da infraestrutura do órgão público.
+              Avaliam a capacidade de modelos de pesos abertos executados localmente atingirem acurácia equivalente à da nuvem, mantendo o processo administrativo integralmente dentro da infraestrutura pública.
             </p>
           </div>
 
           <div class="cat-tier-box">
             <div class="cat-tier-head">
-              <h4>3. Open-Weights Ocidentais &amp; Especializados</h4>
-              <span>Auto-hospedado Local</span>
-            </div>
-            <div class="cat-models-chips">
-              <code>Llama 3.1 70B / 8B (Meta)</code>
-              <code>Hermes 3 (Llama-3.1-70B Tuned)</code>
+              <h4>3. Modelos Abertos Otimizados e Especializados</h4>
+              <span>Eficiência de Custo e Tool-Calling</span>
             </div>
             <p>
-              Testam a capacidade de chamada de funções nativa do ecossistema Nous Research (Hermes 3) e o comportamento
-              dos modelos abertos ocidentais tradicionais.
+              Investigam a viabilidade prática de modelos menores e especializados em chamada de ferramentas operarem com baixo custo computacional por processo concluído.
             </p>
           </div>
         </div>
@@ -2611,38 +2583,30 @@
 
       <div class="findings-grid">
         <div class="finding-card vivid">
-          <h4>01. A Hipótese do Amortecimento pelo LangGraph</h4>
+          <h4>01. Papel da Arquitetura de Orquestração</h4>
           <p>
-            Demonstra que um modelo local menor (como <strong>Qwen 2.5 14B ou 32B</strong>), que frequentemente falha em
-            um loop livre (Hermes) por se perder nas ferramentas, atinge desempenho competitivo com APIs comerciais
-            quando guiado pela estrutura rígida de estados e validação do <strong>LangGraph</strong>.
+            Determinar empiricamente se a estruturação em grafo com validação explícita compensa limitações intrínsecas de modelos de linguagem, ou se a flexibilidade de loops livres alcança melhor navegação em tarefas de múltiplos passos.
           </p>
         </div>
 
         <div class="finding-card">
-          <h4>02. Custo por Tarefa Concluída (CTCE) em 1.000 Processos</h4>
+          <h4>02. Equação de Custo Computacional (CTCE)</h4>
           <p>
-            Modelos em nuvem cobram por token (custo variável em USD por volume). Modelos locais rodam sobre hardware
-            fixo (amortização de infraestrutura e energia). Processar 1.000 processos do SEI localmente com Qwen 2.5
-            custa uma fração mínima (~$2.40–$4.10) frente a ~$48–$56 nas APIs comerciais.
+            Mapear o custo real por parecer emitido com comprovação documental. A métrica CTCE pondera o custo total da infraestrutura ou tarifação de tokens pela taxa efetiva de sucesso auditado com evidência.
           </p>
         </div>
 
         <div class="finding-card">
-          <h4>03. Resistência à Alucinação em Processos Parciais</h4>
+          <h4>03. Resistência a Alucinações em Autos Parciais</h4>
           <p>
-            Modelos raciocinadores (<em>Reasoning models</em> como <strong>DeepSeek-R1</strong>: 98.2% de humildade
-            epistêmica no mock) versus modelos generalistas: quem é mais rigoroso ao admitir que uma certidão ou
-            despacho não consta nos autos parciais, em vez de inventar uma aprovação fictícia?
+            Avaliar o comportamento dos agentes diante de exportações parciais do SEI. No setor público, a recusa informada de um parecer por ausência de certidão nos autos é uma resposta correta, enquanto uma aprovação inventada é falha crítica.
           </p>
         </div>
 
         <div class="finding-card vivid">
-          <h4>04. Soberania e Conformidade Estrita com a LGPD</h4>
+          <h4>04. Soberania Tecnológica e LGPD</h4>
           <p>
-            Evidência empírica concreta para gestores públicos demonstrando até que ponto o <strong>Governo do Distrito
-              Federal (GDF)</strong> pode ser autossuficiente analisando processos administrativos em servidores
-            próprios, sem enviar autos sensíveis para fora do Brasil.
+            Fornecer subsídios técnicos quantitativos para decisões de governança no setor público, demonstrando a viabilidade de servidores próprios para análise de processos sensíveis sem envio de dados a provedores externos.
           </p>
         </div>
       </div>
@@ -2691,27 +2655,23 @@
       <!-- Questions / FAQ Section (Ref Image 3 Bottom) -->
       <div class="faq-list">
         <div class="faq-item">
-          <h5>O que exatamente o Benchmark CIIA/UnDF mede?</h5>
+          <h5>O que exatamente o Benchmark CIIA/UnDF avalia?</h5>
           <p>
             Avalia a eficácia factual verificada (SR), a precisão no uso de ferramentas HTTP (TUA), a latência em passos
-            e o custo por tarefa concluída (CTCE) de agentes autônomos operando sobre processos administrativos
-            exportados do SEI, isolando o papel do orquestrador (Hermes vs. LangGraph) e da classe do modelo LLM.
+            e o custo por tarefa concluída com evidência (CTCE) de agentes autônomos operando sobre processos administrativos
+            exportados do SEI, isolando a arquitetura de orquestração (Hermes vs. LangGraph) e a classe do modelo de linguagem.
           </p>
         </div>
         <div class="faq-item">
-          <h5>Por que "Sucesso Verificado ≠ Sucesso Declarado" altera tanto o ranking?</h5>
+          <h5>Por que a regra 'Sucesso Verificado ≠ Sucesso Declarado' é essencial?</h5>
           <p>
-            No loop livre (Hermes), modelos menores frequentemente declaram que concluíram a análise (ex: 74%
-            declarado), mas falham em citar a página física exata ou alucinam documentos ausentes em exportações
-            parciais, caindo para 53.3% após a auditoria cega do harness.
+            Na administração pública, uma resposta bem redigida não tem valor legal sem indicação precisa de folha e documento nos autos. Modelos podem declarar que o processo está regular, mas sem apontar a página física exata onde a comprovação se encontra, a nota é zero.
           </p>
         </div>
         <div class="faq-item">
-          <h5>Quantas configurações e execuções compõem o estudo completo?</h5>
+          <h5>Como é garantida a paridade estrita entre os executores?</h5>
           <p>
-            A Fase 1 executa 360 rodadas controladas (60 tarefas × 2 orquestradores × 3 repetições sob modelo fixo). A
-            Fase 2 expande o protocolo para 1.080 execuções atravessando as 3 categorias analíticas de modelos
-            (Comerciais em Nuvem, Open-Weights Chineses Locais e Open-Weights Ocidentais).
+            Ambos os agentes consomem a mesma interface ToolClient, com as mesmas ferramentas HTTP, o mesmo corpus documental e orçamentos comparáveis de execução, sem atalhos pré-programados para a resposta.
           </p>
         </div>
       </div>
@@ -2746,12 +2706,12 @@
         </ul>
       </div>
       <div class="scale-col">
-        <h5>Duelo de Modelos</h5>
+        <h5>Perfis Experimentais</h5>
         <ul>
-          <li>Nuvem: Claude 3.5 Sonnet &amp; GPT-4o</li>
-          <li>Chineses Locais: Qwen 2.5 &amp; DeepSeek-R1</li>
-          <li>Ocidentais: Llama 3.1 &amp; Hermes 3</li>
-          <li>Hipótese do Amortecimento DAG</li>
+          <li>Fase 1: Orquestração Pareada</li>
+          <li>Fase 2: Soberania On-Premise</li>
+          <li>Métrica Primária: SR Verificado</li>
+          <li>Isolamento Estrito por UUID</li>
         </ul>
       </div>
       <div class="scale-col">
@@ -2775,226 +2735,240 @@
     const benchmarkRows = [
       {
         rank: 1,
-        model: "Claude 3.5 Sonnet",
-        provider: "Anthropic · High-End Comercial",
+        model: "Modelo Nuvem Referência A",
+        provider: "Configuração Pareada · Nuvem Comercial",
         orchestrator: "LangGraph",
         category: "cloud",
-        sr: 91.67,
-        declared: 94.40,
-        tua: 96.4,
-        humility: 95.0,
-        steps: "4.2 passos · 6.4s",
-        stepsNum: 4.2,
-        ctce: 48.00,
-        ctceLabel: "$48.00 / 1k SEI",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 1,
+        ctce: 1,
+        ctceLabel: "Aguardando",
         access: "Closed"
       },
       {
         rank: 2,
-        model: "GPT-4o (2024-11)",
-        provider: "OpenAI · High-End Comercial",
-        orchestrator: "LangGraph",
+        model: "Modelo Nuvem Referência A",
+        provider: "Configuração Pareada · Nuvem Comercial",
+        orchestrator: "Hermes",
         category: "cloud",
-        sr: 89.44,
-        declared: 93.30,
-        tua: 95.1,
-        humility: 91.5,
-        steps: "4.4 passos · 5.9s",
-        stepsNum: 4.4,
-        ctce: 44.50,
-        ctceLabel: "$44.50 / 1k SEI",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 2,
+        ctce: 2,
+        ctceLabel: "Aguardando",
         access: "Closed"
       },
       {
         rank: 3,
-        model: "DeepSeek-R1 (70B Local)",
-        provider: "DeepSeek · Reasoning Chinês Local",
+        model: "Modelo Nuvem Referência B",
+        provider: "Configuração Pareada · Nuvem Comercial",
         orchestrator: "LangGraph",
-        category: "cn-local",
-        sr: 87.78,
-        declared: 88.90,
-        tua: 94.0,
-        humility: 98.2,
-        steps: "4.5 passos · 11.2s",
-        stepsNum: 4.5,
-        ctce: 5.20,
-        ctceLabel: "$5.20 / 1k (vLLM)",
-        access: "Open"
+        category: "cloud",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 3,
+        ctce: 3,
+        ctceLabel: "Aguardando",
+        access: "Closed"
       },
       {
         rank: 4,
-        model: "Qwen 2.5 72B Instruct",
-        provider: "Alibaba Cloud · Open-Weights Chinês",
-        orchestrator: "LangGraph",
-        category: "cn-local",
-        sr: 86.11,
-        declared: 89.40,
-        tua: 93.8,
-        humility: 88.5,
-        steps: "4.6 passos · 7.8s",
-        stepsNum: 4.6,
-        ctce: 4.10,
-        ctceLabel: "$4.10 / 1k (vLLM)",
-        access: "Open"
+        model: "Modelo Nuvem Referência B",
+        provider: "Configuração Pareada · Nuvem Comercial",
+        orchestrator: "Hermes",
+        category: "cloud",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 4,
+        ctce: 4,
+        ctceLabel: "Aguardando",
+        access: "Closed"
       },
       {
         rank: 5,
-        model: "Claude 3.5 Sonnet",
-        provider: "Anthropic · High-End Comercial",
-        orchestrator: "Hermes",
-        category: "cloud",
-        sr: 85.56,
-        declared: 92.80,
-        tua: 90.5,
-        humility: 86.0,
-        steps: "5.7 passos · 8.9s",
-        stepsNum: 5.7,
-        ctce: 56.20,
-        ctceLabel: "$56.20 / 1k SEI",
-        access: "Closed"
+        model: "Modelo Aberto Local 70B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "LangGraph",
+        category: "cn-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 5,
+        ctce: 5,
+        ctceLabel: "Aguardando",
+        access: "Open"
       },
       {
         rank: 6,
-        model: "GPT-4o (2024-11)",
-        provider: "OpenAI · High-End Comercial",
+        model: "Modelo Aberto Local 70B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
         orchestrator: "Hermes",
-        category: "cloud",
-        sr: 84.44,
-        declared: 91.60,
-        tua: 89.2,
-        humility: 83.5,
-        steps: "5.8 passos · 8.1s",
-        stepsNum: 5.8,
-        ctce: 52.00,
-        ctceLabel: "$52.00 / 1k SEI",
-        access: "Closed"
+        category: "cn-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 6,
+        ctce: 6,
+        ctceLabel: "Aguardando",
+        access: "Open"
       },
       {
         rank: 7,
-        model: "Qwen 2.5 32B Instruct",
-        provider: "Alibaba Cloud · Sweet Spot GDF (Amortecido)",
+        model: "Modelo Aberto Local 32B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
         orchestrator: "LangGraph",
         category: "cn-local",
-        sr: 82.22,
-        declared: 86.10,
-        tua: 91.5,
-        humility: 85.0,
-        steps: "4.7 passos · 5.4s",
-        stepsNum: 4.7,
-        ctce: 2.40,
-        ctceLabel: "$2.40 / 1k (vLLM)",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 7,
+        ctce: 7,
+        ctceLabel: "Aguardando",
         access: "Open"
       },
       {
         rank: 8,
-        model: "Llama 3.1 70B Instruct",
-        provider: "Meta AI · Open-Weights Ocidental",
-        orchestrator: "LangGraph",
-        category: "west-local",
-        sr: 80.56,
-        declared: 86.70,
-        tua: 89.8,
-        humility: 82.0,
-        steps: "4.8 passos · 7.9s",
-        stepsNum: 4.8,
-        ctce: 4.00,
-        ctceLabel: "$4.00 / 1k (vLLM)",
+        model: "Modelo Aberto Local 32B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "Hermes",
+        category: "cn-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 8,
+        ctce: 8,
+        ctceLabel: "Aguardando",
         access: "Open"
       },
       {
         rank: 9,
-        model: "DeepSeek-V2.5 (Local)",
-        provider: "DeepSeek · MoE Open-Weights Chinês",
+        model: "Modelo Aberto Local 14B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
         orchestrator: "LangGraph",
         category: "cn-local",
-        sr: 79.44,
-        declared: 84.40,
-        tua: 90.1,
-        humility: 84.5,
-        steps: "4.7 passos · 6.2s",
-        stepsNum: 4.7,
-        ctce: 3.10,
-        ctceLabel: "$3.10 / 1k (vLLM)",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 9,
+        ctce: 9,
+        ctceLabel: "Aguardando",
         access: "Open"
       },
       {
         rank: 10,
-        model: "Qwen 2.5 72B Instruct",
-        provider: "Alibaba Cloud · Open-Weights Chinês",
+        model: "Modelo Aberto Local 14B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
         orchestrator: "Hermes",
         category: "cn-local",
-        sr: 78.89,
-        declared: 88.30,
-        tua: 84.6,
-        humility: 79.0,
-        steps: "6.3 passos · 10.4s",
-        stepsNum: 6.3,
-        ctce: 4.90,
-        ctceLabel: "$4.90 / 1k (vLLM)",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 10,
+        ctce: 10,
+        ctceLabel: "Aguardando",
         access: "Open"
       },
       {
         rank: 11,
-        model: "Hermes 3 (Llama-3.1-70B Tuned)",
-        provider: "Nous Research · Especializado em Tool-Calling",
-        orchestrator: "Hermes",
+        model: "Modelo Especializado Tool-Calling 70B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "LangGraph",
         category: "west-local",
-        sr: 77.22,
-        declared: 85.00,
-        tua: 86.4,
-        humility: 78.5,
-        steps: "5.9 passos · 9.6s",
-        stepsNum: 5.9,
-        ctce: 4.30,
-        ctceLabel: "$4.30 / 1k (vLLM)",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 11,
+        ctce: 11,
+        ctceLabel: "Aguardando",
         access: "Open"
       },
       {
         rank: 12,
-        model: "Qwen 2.5 14B Instruct",
-        provider: "Alibaba Cloud · 1 GPU Local (+21.7% c/ Grafo)",
-        orchestrator: "LangGraph",
-        category: "cn-local",
-        sr: 75.00,
-        declared: 81.10,
-        tua: 88.2,
-        humility: 79.5,
-        steps: "4.9 passos · 3.8s",
-        stepsNum: 4.9,
-        ctce: 1.30,
-        ctceLabel: "$1.30 / 1k (Ollama)",
+        model: "Modelo Especializado Tool-Calling 70B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "Hermes",
+        category: "west-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 12,
+        ctce: 12,
+        ctceLabel: "Aguardando",
         access: "Open"
       },
       {
         rank: 13,
-        model: "Qwen 2.5 32B Instruct",
-        provider: "Alibaba Cloud · Perda por Loop Livre s/ Grafo",
-        orchestrator: "Hermes",
-        category: "cn-local",
-        sr: 67.78,
-        declared: 82.20,
-        tua: 74.5,
-        humility: 68.0,
-        steps: "7.1 passos · 8.2s",
-        stepsNum: 7.1,
-        ctce: 3.10,
-        ctceLabel: "$3.10 / 1k (vLLM)",
+        model: "Modelo Aberto Local 8B",
+        provider: "Configuração Pareada · Hardware Compacto",
+        orchestrator: "LangGraph",
+        category: "west-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 13,
+        ctce: 13,
+        ctceLabel: "Aguardando",
         access: "Open"
       },
       {
         rank: 14,
-        model: "Qwen 2.5 14B Instruct",
-        provider: "Alibaba Cloud · Falha de Loop / Erros 422 no Hermes",
+        model: "Modelo Aberto Local 8B",
+        provider: "Configuração Pareada · Hardware Compacto",
         orchestrator: "Hermes",
-        category: "cn-local",
-        sr: 53.33,
-        declared: 76.60,
-        tua: 64.0,
-        humility: 55.0,
-        steps: "8.4 passos · 6.9s",
-        stepsNum: 8.4,
-        ctce: 1.95,
-        ctceLabel: "$1.95 / 1k (Ollama)",
+        category: "west-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 14,
+        ctce: 14,
+        ctceLabel: "Aguardando",
         access: "Open"
       }
     ];
@@ -3024,17 +2998,14 @@
           </td>
           <td class="score-bar-cell">
             <div class="score-inline-wrap">
-              <div class="score-inline-track">
-                <div class="score-inline-fill" style="width: ${r.sr}%;"></div>
-              </div>
-              <span class="score-inline-val">${r.sr.toFixed(2)}%</span>
+              <span class="weight-tag open" style="font-size:11px;">Aguardando Coleta</span>
             </div>
-            <div class="score-declared-sub">Declarado pelo agente: ${r.declared.toFixed(1)}% (Gap: -${(r.declared - r.sr).toFixed(1)}%)</div>
+            <div class="score-declared-sub">Fórmula: Factual (0 ou 1) · Auditado por Página e Offset</div>
           </td>
-          <td class="mono-metric">${r.tua.toFixed(1)}%</td>
-          <td class="mono-metric">${r.humility.toFixed(1)}%</td>
-          <td class="mono-metric">${r.steps}</td>
-          <td class="mono-metric"><strong>${r.ctceLabel}</strong></td>
+          <td class="mono-metric" style="color:var(--text-muted);">Sob Medição</td>
+          <td class="mono-metric" style="color:var(--text-muted);">Sob Medição</td>
+          <td class="mono-metric" style="color:var(--text-muted);">${r.steps}</td>
+          <td class="mono-metric" style="color:var(--text-muted);">${r.ctceLabel}</td>
           <td><span class="weight-tag ${accessClass}">${accessLabel}</span></td>
         `;
         tbody.appendChild(tr);

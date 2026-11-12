@@ -1094,7 +1094,7 @@
     }
 
     /* ==========================================================================
-       SECTION 03: PARIDADE EXPERIMENTAL — HOLOGRAPHIC CORE & ISOMETRIC PEDESTALS
+       SECTION 03: PARIDADE EXPERIMENTAL: HOLOGRAPHIC CORE & ISOMETRIC PEDESTALS
        (Inspired by Ref Image 4 Top & Bottom Slides - "DATA CENTER" & "COMMON PLATFORM")
        ========================================================================== */
     .parity-hud-grid {
@@ -1762,7 +1762,7 @@
     </div>
   </section>
 
-  <!-- SECTION 02: A REGRA DE OURO — PARIDADE EXPERIMENTAL ESTRITA (Ref Image 4) -->
+  <!-- SECTION 02: A REGRA DE OURO: PARIDADE EXPERIMENTAL ESTRITA (Ref Image 4) -->
   <section id="paridade" class="section-wrap">
     <div class="container">
       <span class="section-eyebrow">2. A Regra de Ouro</span>
@@ -1831,34 +1831,34 @@
       <!-- 6 Endpoints HTTP Pedestals (Ref Image 4 Top Data Center Pedestals) -->
       <div class="pedestals-strip">
         <div class="pedestal-node">
-          <div class="pedestal-type">ENDPOINT · LEITURA</div>
+          <div class="pedestal-type">LEITURA · DISPONÍVEL</div>
           <div class="pedestal-name">consultar_processo</div>
         </div>
         <div class="pedestal-node">
-          <div class="pedestal-type">ENDPOINT · LEITURA</div>
+          <div class="pedestal-type">LEITURA · DISPONÍVEL</div>
           <div class="pedestal-name">buscar_documentos</div>
         </div>
         <div class="pedestal-node">
-          <div class="pedestal-type">ENDPOINT · LEITURA</div>
+          <div class="pedestal-type">LEITURA · DISPONÍVEL</div>
           <div class="pedestal-name">ler_documento</div>
         </div>
         <div class="pedestal-node">
-          <div class="pedestal-type">ENDPOINT · LEITURA</div>
+          <div class="pedestal-type">CONTRATO · HTTP 501</div>
           <div class="pedestal-name">consultar_requisitos</div>
         </div>
         <div class="pedestal-node">
-          <div class="pedestal-type write">ESCRITA · FUTURA</div>
+          <div class="pedestal-type write">ESCRITA · CONTRATO</div>
           <div class="pedestal-name">registrar_pendencia</div>
         </div>
         <div class="pedestal-node">
-          <div class="pedestal-type write">ESCRITA · FUTURA</div>
+          <div class="pedestal-type write">ESCRITA · CONTRATO</div>
           <div class="pedestal-name">salvar_minuta</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SECTION 04: COMO O PROJETO SE DIVIDE — 6 EQUIPES (Ref Image 3 Cobalt Bento) -->
+  <!-- SECTION 04: COMO O PROJETO SE DIVIDE: 6 EQUIPES (Ref Image 3 Cobalt Bento) -->
   <!-- SECTION 03: ESTRUTURA DE EQUIPES DO BENCHMARK -->
   <section id="equipes" class="section-wrap">
     <div class="container">
@@ -1866,8 +1866,7 @@
         <span class="section-eyebrow" style="margin-bottom: 8px;">3. Como o Projeto se Divide</span>
         <h2 class="section-title" style="margin-bottom: 6px;">Estrutura de Equipes do Benchmark</h2>
         <p style="color: var(--ice-blue); font-size: 14px; max-width: 620px;">
-          Da extração OCR sobre exportações do SEI até a execução automatizada das 1.080 rodadas e redação do artigo
-          científico.
+          Do tratamento de exportações do SEI à orquestração dos agentes e avaliação com evidência documental auditada.
         </p>
         <div class="stepped-pills-row">
           <div class="step-glass-pill">Rastreável (Doc/Página)</div>
@@ -1886,14 +1885,13 @@
             </div>
             <h3 class="bento-team-title">Data &amp; RAG (Documentos)</h3>
             <p class="bento-team-desc">
-              Trata as exportações do SEI, roda OCR (Tesseract), divide os textos em chunks imutáveis com
-              rastreabilidade de página/documento e ingere no PostgreSQL.
+              Trata exportações do SEI, segmenta textos em páginas e chunks rastreáveis com offsets determinísticos e realiza a ingestão com integridade transacional na base de dados.
             </p>
           </div>
           <div class="bento-chip-row">
-            <span class="bento-chip">Tesseract OCR</span>
-            <span class="bento-chip">Chunks Imutáveis</span>
-            <span class="bento-chip">PostgreSQL</span>
+            <span class="bento-chip">Pipeline Textual</span>
+            <span class="bento-chip">Chunks Rastreáveis</span>
+            <span class="bento-chip">Armazenamento Factual</span>
           </div>
         </article>
 
@@ -1905,14 +1903,13 @@
             </div>
             <h3 class="bento-team-title">Backend &amp; Tools</h3>
             <p class="bento-team-desc">
-              Cria os endpoints REST comuns em FastAPI com validação rigorosa (Pydantic), prevenindo escrita duplicada e
-              garantindo isolamento de contexto.
+              Implementa os 6 endpoints REST consumidos via ToolClient, com validação Pydantic estrita, controle de idempotência e isolamento por run_id.
             </p>
           </div>
           <div class="bento-chip-row">
-            <span class="bento-chip">FastAPI</span>
-            <span class="bento-chip">Pydantic</span>
-            <span class="bento-chip">6 Endpoints REST</span>
+            <span class="bento-chip">FastAPI &amp; Pydantic</span>
+            <span class="bento-chip">ToolClient</span>
+            <span class="bento-chip">Idempotência</span>
           </div>
         </article>
 
@@ -1924,14 +1921,13 @@
             </div>
             <h3 class="bento-team-title">Hermes</h3>
             <p class="bento-team-desc">
-              Constrói o adaptador do Hermes com chamadas dinâmicas às ferramentas e engenharia de prompts instruindo a
-              citação obrigatória de evidências.
+              Desenvolve o adaptador do Hermes sobre a interface comum, operando em loop dinâmico de tool calling e extração obrigatória de evidências documentais.
             </p>
           </div>
           <div class="bento-chip-row">
             <span class="bento-chip">Hermes Adapter</span>
-            <span class="bento-chip">ReAct Dinâmico</span>
-            <span class="bento-chip">Citação de Evidências</span>
+            <span class="bento-chip">Loop Dinâmico</span>
+            <span class="bento-chip">Citação de Provas</span>
           </div>
         </article>
 
@@ -1943,14 +1939,13 @@
             </div>
             <h3 class="bento-team-title">LangGraph</h3>
             <p class="bento-team-desc">
-              Modela o agente em nós e arestas condicionais de tomada de decisão com tolerância a falhas e limite
-              estrito de recursão.
+              Modela o agente em nós e arestas de estado com fluxo de validação estruturado, tolerância a falhas de ferramentas e controle de recursão.
             </p>
           </div>
           <div class="bento-chip-row">
-            <span class="bento-chip">Nós &amp; Arestas</span>
-            <span class="bento-chip">Fault Tolerance</span>
-            <span class="bento-chip">Limite de Recursão</span>
+            <span class="bento-chip">LangGraph Adapter</span>
+            <span class="bento-chip">Grafo Dirigido</span>
+            <span class="bento-chip">Controle de Estados</span>
           </div>
         </article>
 
@@ -1962,14 +1957,13 @@
             </div>
             <h3 class="bento-team-title">AI Infra</h3>
             <p class="bento-team-desc">
-              Gerencia a VPS, containers Docker, bancos com <code>pgvector</code> e rotinas de reinício limpo para que
-              uma rodada não suje a memória da próxima.
+              Provê isolamento por containers Docker, automação de CI/CD, rotinas de ambiente limpo entre rodadas e orquestração do portal institucional.
             </p>
           </div>
           <div class="bento-chip-row">
-            <span class="bento-chip">VPS &amp; Docker</span>
-            <span class="bento-chip">pgvector</span>
-            <span class="bento-chip">Reinício Limpo</span>
+            <span class="bento-chip">Docker Compose</span>
+            <span class="bento-chip">CI / Automação</span>
+            <span class="bento-chip">Isolamento Limpo</span>
           </div>
         </article>
 
@@ -1981,8 +1975,7 @@
             </div>
             <h3 class="bento-team-title">Metodologia &amp; Evaluation</h3>
             <p class="bento-team-desc">
-              Formula o protocolo científico, cataloga as perguntas factuais (<code>tasks.json</code>), desenvolve o
-              harness de medição automática (<code>runner.py</code>), apura as métricas e redige o artigo acadêmico.
+              Estrutura o protocolo científico, cataloga o conjunto de tarefas factuais, apura métricas de fundamentação e redige a análise para o artigo acadêmico.
             </p>
           </div>
           <div class="bento-chip-row">
@@ -2069,35 +2062,35 @@
                 <tbody>
                   <tr data-phase="fase1">
                     <td>#run-8f92a1</td>
-                    <td><span class="badge-agent">Hermes (ReAct Loop)</span></td>
-                    <td>Mesmo Modelo (Fixo)</td>
+                    <td><span class="badge-agent">Hermes (Loop ReAct)</span></td>
+                    <td>Modelo Fixo Pareado</td>
                     <td>ler_documento()</td>
-                    <td>SEI Doc #412 · Pág. 14, off:820</td>
-                    <td><span class="status-verified">Verificado ≠ Declarado</span></td>
+                    <td>PROC-DEMO-001 / doc: 101 · Pág. 1, off: 0-140</td>
+                    <td><span class="status-verified">Auditoria: Aprovado (1.0)</span></td>
                   </tr>
                   <tr data-phase="fase1">
                     <td>#run-3c41e9</td>
                     <td><span class="badge-agent langgraph">LangGraph (State DAG)</span></td>
-                    <td>Mesmo Modelo (Fixo)</td>
-                    <td>consultar_requisitos()</td>
-                    <td>SEI Doc #108 · Pág. 03, off:112</td>
-                    <td><span class="status-verified">Verificado ≠ Declarado</span></td>
+                    <td>Modelo Fixo Pareado</td>
+                    <td>consultar_processo()</td>
+                    <td>PROC-DEMO-001 / metadados conferidos</td>
+                    <td><span class="status-verified">Auditoria: Aprovado (1.0)</span></td>
                   </tr>
                   <tr data-phase="fase2">
                     <td>#run-7d19b4</td>
-                    <td><span class="badge-agent">Hermes (ReAct Loop)</span></td>
-                    <td>Qwen 2.5 / Llama 3.1 (Local)</td>
+                    <td><span class="badge-agent">Hermes (Loop ReAct)</span></td>
+                    <td>Modelo Aberto Local</td>
                     <td>buscar_documentos()</td>
-                    <td>SEI Doc #904 · Pág. 27, off:450</td>
-                    <td><span class="status-verified">Soberania GDF / LGPD</span></td>
+                    <td>PROC-DEMO-001 / doc: 102 · Pág. 2, off: 40-180</td>
+                    <td><span class="status-verified">Soberania On-Premise</span></td>
                   </tr>
                   <tr data-phase="fase2">
                     <td>#run-5a08f2</td>
                     <td><span class="badge-agent langgraph">LangGraph (State DAG)</span></td>
-                    <td>GPT-4o / Claude 3.5 (Nuvem)</td>
-                    <td>consultar_processo()</td>
-                    <td>SEI Doc #219 · Pág. 09, off:305</td>
-                    <td><span class="status-verified">Baseline CTCE Auditado</span></td>
+                    <td>Modelo Referência Nuvem</td>
+                    <td>ler_documento()</td>
+                    <td>PROC-DEMO-001 / doc: 101 · Pág. 1, off: 0-140</td>
+                    <td><span class="status-verified">Baseline Auditado</span></td>
                   </tr>
                 </tbody>
               </table>
@@ -2112,7 +2105,7 @@
               </div>
               <div class="notif-card">
                 <strong>Isolamento por Sessão</strong>
-                <span>Cada rodada recebe UUID único e containers reiniciados via Docker + pgvector.</span>
+                <span>Cada rodada recebe UUID único e isolamento de estado na execução.</span>
               </div>
               <div class="notif-card">
                 <strong>Prazo Planejado</strong>
@@ -2137,8 +2130,8 @@
       <div class="scale-col">
         <h5>Escopo Experimental</h5>
         <ul>
-          <li>Fase 1: 60 × 2 × 3 = 360 Execuções</li>
-          <li>Fase 2: 360 × 3 = 1.080 Execuções</li>
+          <li>Fase 1: Comparativo de Orquestração</li>
+          <li>Fase 2: Viabilidade de Modelos Locais</li>
           <li>Exportações Manuais do SEI</li>
           <li>Dados Tratados ou Sintéticos</li>
         </ul>

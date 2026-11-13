@@ -802,6 +802,8 @@
       opacity: 0.75;
       position: relative;
       z-index: 3;
+      flex-wrap: wrap;
+      gap: 8px 14px;
     }
 
     .slide-dots {
@@ -1693,6 +1695,148 @@
       pointer-events: none;
     }
 
+    /* ==========================================================================
+       MOBILE NAVBAR HAMBURGER & DRAWER
+       ========================================================================== */
+    .nav-hamburger-btn {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      width: 40px;
+      height: 40px;
+      background: rgba(15, 32, 74, 0.65);
+      border: 1px solid rgba(147, 197, 253, 0.3);
+      border-radius: 10px;
+      cursor: pointer;
+      padding: 0;
+      color: #ffffff;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .nav-hamburger-btn:hover {
+      background: rgba(59, 130, 246, 0.25);
+      border-color: rgba(147, 197, 253, 0.6);
+    }
+
+    .hamburger-line {
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: #e2e8f0;
+      border-radius: 2px;
+      transition: all 0.25s ease;
+    }
+
+    .nav-hamburger-btn.open .hamburger-line:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .nav-hamburger-btn.open .hamburger-line:nth-child(2) {
+      opacity: 0;
+    }
+
+    .nav-hamburger-btn.open .hamburger-line:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+
+    .mobile-nav-drawer {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: rgba(4, 9, 24, 0.98);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(120, 175, 255, 0.22);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.85), 0 0 35px rgba(29, 94, 255, 0.25);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 99;
+    }
+
+    .mobile-nav-drawer.open {
+      max-height: 440px;
+    }
+
+    .mobile-nav-inner {
+      padding: 20px 24px 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .mobile-nav-links {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mobile-nav-link {
+      color: var(--ice-light);
+      text-decoration: none;
+      font-size: 14.5px;
+      font-weight: 500;
+      padding: 10px 14px;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mobile-nav-link:hover,
+    .mobile-nav-link:active {
+      color: #ffffff;
+      background: rgba(59, 130, 246, 0.16);
+      border-left: 3px solid var(--cyan-glow);
+    }
+
+    .mobile-nav-divider {
+      height: 1px;
+      background: rgba(120, 175, 255, 0.16);
+      margin: 2px 0;
+    }
+
+    .mobile-nav-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .mobile-nav-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 18px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .mobile-nav-btn.primary {
+      background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%);
+      color: #030718;
+      box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
+    }
+
+    .mobile-nav-btn.ghost {
+      background: rgba(15, 30, 68, 0.6);
+      border: 1px solid rgba(147, 197, 253, 0.35);
+      color: var(--ice-light);
+    }
+
+    /* HUD Two-Phase Mobile Tabs */
+    .hud-tabs-mobile {
+      display: none;
+    }
+
     /* Responsive Breakpoints */
     @media (max-width: 1080px) {
       .telemetry-kpi-strip {
@@ -1705,7 +1849,6 @@
       }
 
       .editorial-deck-grid,
-      .hud-reports-grid,
       .parity-hud-grid,
       .cobalt-bento-grid {
         grid-template-columns: 1fr;
@@ -1720,16 +1863,86 @@
       }
     }
 
-    @media (max-width: 720px) {
+    @media (max-width: 860px) {
+      .nav-menu,
+      .nav-deadline,
+      .desktop-only {
+        display: none !important;
+      }
 
+      .nav-hamburger-btn {
+        display: flex;
+      }
+
+      .nav-actions {
+        gap: 10px;
+      }
+
+      .nav-cta-pill {
+        padding: 7px 15px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .hud-tabs-mobile {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .hud-tab-btn {
+        background: rgba(15, 32, 74, 0.7);
+        border: 1px solid rgba(147, 197, 253, 0.28);
+        color: var(--ice-light);
+        font-family: var(--font-mono);
+        font-size: 11px;
+        font-weight: 500;
+        padding: 7px 14px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .hud-tab-btn.active {
+        background: linear-gradient(180deg, #3b82f6 0%, #1d5eff 100%);
+        color: #ffffff;
+        border-color: #93c5fd;
+        box-shadow: 0 0 16px rgba(59, 130, 246, 0.55);
+      }
+
+      .hud-reports-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hud-report-col {
+        display: none;
+      }
+
+      .hud-report-col.mobile-active {
+        display: block;
+        animation: fadeInHud 0.25s ease;
+      }
+
+      @keyframes fadeInHud {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    }
+
+    @media (min-width: 769px) {
+      .hud-report-col {
+        display: block !important;
+      }
+    }
+
+    @media (max-width: 720px) {
       .container,
       .navbar-inner {
         padding: 0 20px;
-      }
-
-      .nav-menu,
-      .nav-deadline {
-        display: none;
       }
 
       .crystal-monolith-card,
@@ -1744,14 +1957,141 @@
         padding: 24px 20px;
       }
 
-      .pedestals-strip,
-      .scale-frame-links {
+      .pedestals-strip {
         grid-template-columns: 1fr;
+      }
+
+      .scale-frame-links {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 22px 14px;
+        padding: 26px 0;
+      }
+
+      .scale-frame-top {
+        padding-bottom: 22px;
+        font-size: 10.5px;
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+      }
+
+      .scale-col h5 {
+        font-size: 11px;
+        margin-bottom: 8px;
+      }
+
+      .scale-col ul li {
+        font-size: 11px;
+        line-height: 1.45;
+        margin-bottom: 4px;
       }
 
       .scale-frame-footer {
         margin: 24px 16px;
-        padding: 28px 24px 0 24px;
+        padding: 28px 20px 0 20px;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .frosted-venn-card {
+        padding: 24px 18px;
+        min-height: auto;
+      }
+
+      .venn-stage {
+        height: auto;
+        flex-direction: column;
+        gap: 12px;
+        position: static;
+        margin: 18px 0;
+      }
+
+      .venn-circle {
+        position: static;
+        width: 100%;
+        height: auto;
+        border-radius: 14px;
+        padding: 16px 18px;
+        box-sizing: border-box;
+      }
+
+      .venn-circle.left,
+      .venn-circle.right {
+        align-items: flex-start;
+        text-align: left;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1.5px solid rgba(255, 255, 255, 0.95);
+      }
+
+      .venn-intersection {
+        position: static;
+        width: 100%;
+        height: auto;
+        border-radius: 14px;
+        padding: 16px 18px;
+        background: linear-gradient(135deg, #13469e 0%, #1d5ed8 100%);
+        box-shadow: 0 8px 24px rgba(19, 70, 158, 0.5);
+      }
+
+      .venn-sub {
+        max-width: 100%;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .crystal-monolith-card {
+        padding: 24px 18px;
+        min-height: auto;
+      }
+
+      .beta-pill {
+        padding: 6px 14px;
+        font-size: 11px;
+        margin-bottom: 16px;
+        line-height: 1.35;
+        text-align: center;
+      }
+
+      .hero-subtitle {
+        font-size: 14px;
+        line-height: 1.55;
+        margin-bottom: 22px;
+        padding: 0 6px;
+      }
+
+      .hero-cta-group {
+        flex-direction: column;
+        width: 100%;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .hero-cta-group a {
+        width: 100%;
+        max-width: 320px;
+        justify-content: center;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .navbar-inner {
+        padding: 0 14px;
+        height: 62px;
+      }
+
+      .logo-img {
+        height: 26px;
+      }
+
+      .nav-cta-pill {
+        padding: 6px 11px;
+        font-size: 11px;
+      }
+
+      .scale-frame-links {
+        grid-template-columns: 1fr;
+        gap: 18px;
       }
     }
   </style>
@@ -1766,8 +2106,7 @@
   <header class="navbar">
     <div class="navbar-inner">
       <a href="#top" class="logo">
-        <img src="ciialogo.png" alt="" class="logo-img" />
-
+        <img src="ciialogo.png" alt="CIIA / UnDF" class="logo-img" />
       </a>
       <ul class="nav-menu">
         <li><a href="#equipes">1. Equipes</a></li>
@@ -1776,8 +2115,42 @@
         <li><a href="#telemetria">4. Telemetria</a></li>
       </ul>
       <div class="nav-actions">
-        <a href="/team" class="btn-lumine-ghost" style="padding: 8px 18px; font-size: 12.5px; border-radius: 999px;">Docs das Equipes</a>
-        <a href="resultados.html" class="btn-pill-white">Resultados &amp; Protocolo</a>
+        <a href="/team" class="btn-lumine-ghost desktop-only" style="padding: 8px 18px; font-size: 12.5px; border-radius: 999px;">Docs das Equipes</a>
+        <a href="resultados.html" class="btn-pill-white nav-cta-pill">Resultados &amp; Protocolo</a>
+        <button class="nav-hamburger-btn" id="navHamburgerBtn" aria-label="Abrir menu de navegação" onclick="toggleMobileMenu()">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Drawer Overlay -->
+    <div class="mobile-nav-drawer" id="mobileNavDrawer">
+      <div class="mobile-nav-inner">
+        <div class="mobile-nav-links">
+          <a href="#equipes" class="mobile-nav-link" onclick="closeMobileMenu()">
+            <span>1. Equipes &amp; Coordenação</span>
+            <span style="opacity: 0.6; font-size: 12px;">→</span>
+          </a>
+          <a href="#problema" class="mobile-nav-link" onclick="closeMobileMenu()">
+            <span>2. O Problema &amp; Fases</span>
+            <span style="opacity: 0.6; font-size: 12px;">→</span>
+          </a>
+          <a href="#paridade" class="mobile-nav-link" onclick="closeMobileMenu()">
+            <span>3. Paridade Estrita</span>
+            <span style="opacity: 0.6; font-size: 12px;">→</span>
+          </a>
+          <a href="#telemetria" class="mobile-nav-link" onclick="closeMobileMenu()">
+            <span>4. Telemetria do Harness</span>
+            <span style="opacity: 0.6; font-size: 12px;">→</span>
+          </a>
+        </div>
+        <div class="mobile-nav-divider"></div>
+        <div class="mobile-nav-actions">
+          <a href="/team" class="mobile-nav-btn ghost" onclick="closeMobileMenu()">Docs das Equipes</a>
+          <a href="resultados.html" class="mobile-nav-btn primary" onclick="closeMobileMenu()">Resultados &amp; Protocolo</a>
+        </div>
       </div>
     </div>
   </header>
@@ -2111,9 +2484,16 @@
           <h3>DESENHO EXPERIMENTAL EM DUAS FASES</h3>
         </div>
 
+        <!-- Mobile Phase Tabs -->
+        <div class="hud-tabs-mobile" id="hudTabsMobile">
+          <button class="hud-tab-btn active" onclick="switchHudTab(0, this)">&lt; FASE 1 &gt;</button>
+          <button class="hud-tab-btn" onclick="switchHudTab(1, this)">&lt; FASE 2 &gt;</button>
+          <button class="hud-tab-btn" onclick="switchHudTab(2, this)">&lt; AUDITORIA &gt;</button>
+        </div>
+
         <div class="hud-reports-grid">
           <!-- Column 1: Fase 1 -->
-          <div class="hud-report-col">
+          <div class="hud-report-col mobile-active">
             <div class="hud-report-pill">
               <span class="bracket">&lt;</span>
               <span>FASE 1 · PRIORIDADE</span>
@@ -2545,6 +2925,41 @@
 
   <!-- INTERACTIVE VISUAL EFFECTS SCRIPTS -->
   <script>
+    /* ==========================================================================
+       MOBILE NAVIGATION DRAWER & HUD PHASE TABS
+       ========================================================================== */
+    function toggleMobileMenu() {
+      const btn = document.getElementById('navHamburgerBtn');
+      const drawer = document.getElementById('mobileNavDrawer');
+      if (btn && drawer) {
+        btn.classList.toggle('open');
+        drawer.classList.toggle('open');
+      }
+    }
+
+    function closeMobileMenu() {
+      const btn = document.getElementById('navHamburgerBtn');
+      const drawer = document.getElementById('mobileNavDrawer');
+      if (btn && drawer) {
+        btn.classList.remove('open');
+        drawer.classList.remove('open');
+      }
+    }
+
+    function switchHudTab(index, btn) {
+      const cols = document.querySelectorAll('.hud-report-col');
+      const btns = document.querySelectorAll('.hud-tab-btn');
+      btns.forEach(b => b.classList.remove('active'));
+      cols.forEach((c, i) => {
+        if (i === index) {
+          c.classList.add('mobile-active');
+        } else {
+          c.classList.remove('mobile-active');
+        }
+      });
+      if (btn) btn.classList.add('active');
+    }
+
     /* ==========================================================================
        DASHBOARD TABLE FILTER (Interactive Harness Preview)
        ========================================================================== */

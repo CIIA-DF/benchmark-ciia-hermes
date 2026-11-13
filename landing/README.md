@@ -7,8 +7,8 @@ Pasta dedicada ao site institucional, vitrine científica e leaderboard do **Ben
 ## 1. Estrutura de Arquivos
 
 - `index.html`: Landing page principal do projeto com visão executiva, formulação do problema, paridade estrita e estrutura das 6 equipes.
-- `resultados.html`: Painel completo de resultados e leaderboard (dados simulados/mockados para validação visual do artigo), contendo tabela de 14 configurações pareadas, duelo local vs. nuvem e regras das 4 partes do protocolo.
-- `ciia_logo.png`: Logo oficial do Centro de Inovação em Inteligência Artificial (CIIA / UnDF), integrado no topo da navegação de ambas as páginas.
+- `resultados.html`: Painel oficial de resultados em produção (com estrutura de matriz pareada aguardando consolidação final dos dados experimentais), contendo as 14 configurações em avaliação, duelo metodológico local vs. nuvem e regras das 4 partes do protocolo.
+- `ciia_logo.png`: Logo oficial do Centro Integrado de Inteligência Artificial (CIIA), integrado no topo da navegação de ambas as páginas.
 
 ---
 
@@ -32,19 +32,21 @@ As páginas refletem fielmente as diretrizes do projeto definidas em [AGENTS.md]
    - Equipe 04: LangGraph
    - Equipe 05: AI Infra
    - Equipe 06: Metodologia & Evaluation
-5. **Salvaguardas Institucionais**:
+5. **Salvaguardas Institucionais & Transparência**:
    - Operação 100% sobre exportações manuais tratadas/sintéticas do SEI.
    - Zero conexão com o SEI real em produção.
-   - Conformidade com a LGPD e aviso explícito de dados simulados antes do congelamento experimental.
+   - Conformidade com a LGPD e ausência total de dados fictícios ou falsos vencedores: o painel opera em modo de produção/espera até a homologação final dos testes.
 
 ---
 
 ## 3. Como Visualizar Localmente
 
 ### Opção A — Abertura Direta no Navegador
+
 Abra o arquivo `landing/index.html` ou `landing/resultados.html` diretamente em qualquer navegador moderno.
 
 ### Opção B — Servidor Local Rápido (Python)
+
 No terminal, a partir da raiz do repositório:
 
 ```bash
@@ -52,7 +54,7 @@ uv run --locked python -m http.server 3001 --directory landing
 ```
 
 - Visão Geral: [http://localhost:3001/index.html](http://localhost:3001/index.html)
-- Leaderboard & Resultados Mockados: [http://localhost:3001/resultados.html](http://localhost:3001/resultados.html)
+- Painel Oficial de Resultados (Em Produção): [http://localhost:3001/resultados.html](http://localhost:3001/resultados.html)
 
 ---
 
@@ -61,6 +63,7 @@ uv run --locked python -m http.server 3001 --directory landing
 O repositório já possui uma aplicação Next.js configurada em [`portal/`](../portal/README.md) voltada ao deploy contínuo via VPS Hostinger ([deploy-vps-hostinger.md](../docs/04-operacoes/deploy-vps-hostinger.md)).
 
 Atualmente, `portal/app/page.tsx` realiza um redirecionamento imediato para `/team` (leitor da documentação das equipes). A evolução arquitetural recomendada é:
+
 - `portal/app/page.tsx`: Landing page principal (baseada em `landing/index.html`).
 - `portal/app/resultados/page.tsx`: Leaderboard interativo (baseado em `landing/resultados.html`).
 - `portal/app/team`: Documentação técnica das equipes (mantida intacta).

@@ -1,0 +1,2933 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CIIA: Benchmark Científico: Hermes vs. LangGraph no SEI</title>
+  <!-- Google Fonts: Plus Jakarta Sans (UI/Display), Cormorant Garamond (Editorial Glass Slide Accents), JetBrains Mono (Telemetry/Code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #020510;
+      --bg-navy: #050b1e;
+      --bg-card: rgba(9, 18, 44, 0.62);
+      --bg-card-solid: #071026;
+      --cobalt-core: #1d5eff;
+      --cobalt-bright: #3b82f6;
+      --cyan-glow: #60a5fa;
+      --ice-blue: #bfd9ff;
+      --ice-light: #e6f0ff;
+      --text-white: #ffffff;
+      --text-secondary: #94a9c9;
+      --text-muted: #587099;
+      --border-glass: rgba(120, 175, 255, 0.18);
+      --border-bright: rgba(147, 197, 253, 0.45);
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-deep);
+      color: var(--text-white);
+    }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text-white);
+      font-family: var(--font-sans);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+
+    /* ==========================================================================
+       GLOBAL AMBIENT LIGHT LEAKS &VERTICAL RAY COLUMNS (Ref Image 1 & 3)
+       ========================================================================== */
+    .ambient-rays {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 70% 45% at 50% -10%, rgba(29, 94, 255, 0.28), transparent 70%),
+        repeating-linear-gradient(90deg,
+          rgba(59, 130, 246, 0.0) 0px,
+          rgba(59, 130, 246, 0.0) 78px,
+          rgba(96, 165, 250, 0.03) 80px,
+          rgba(59, 130, 246, 0.0) 82px);
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 36px;
+      position: relative;
+      z-index: 5;
+    }
+
+    /* ==========================================================================
+       TOP NAVIGATION BAR (Inspired by "NEONE" Header - Ref Image 1)
+       ========================================================================== */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(2, 5, 16, 0.72);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(120, 175, 255, 0.1);
+    }
+
+    .navbar-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 36px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-white);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.04em;
+    }
+
+    .logo-img {
+      height: 32px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.5));
+    }
+
+    .logo-star {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #ffffff 0%, #60a5fa 45%, transparent 75%);
+      border-radius: 50%;
+      box-shadow: 0 0 18px #3b82f6;
+      position: relative;
+    }
+
+    .logo-star::before,
+    .logo-star::after {
+      content: "";
+      position: absolute;
+      background: #ffffff;
+      border-radius: 2px;
+    }
+
+    .logo-star::before {
+      width: 16px;
+      height: 2px;
+    }
+
+    .logo-star::after {
+      width: 2px;
+      height: 16px;
+    }
+
+    .logo-sub {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--cyan-glow);
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.14);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+    }
+
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-menu a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 500;
+      transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+
+    .nav-menu a:hover {
+      color: var(--text-white);
+      text-shadow: 0 0 12px rgba(96, 165, 250, 0.7);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .nav-deadline {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    .nav-deadline strong {
+      color: var(--ice-light);
+    }
+
+    .btn-pill-white {
+      background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%);
+      color: #030718;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 20px;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 0 25px rgba(96, 165, 250, 0.45), inset 0 1px 0 #ffffff;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-pill-white:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 35px rgba(96, 165, 250, 0.8), inset 0 1px 0 #ffffff;
+    }
+
+    /* ==========================================================================
+       HERO SECTION: ECLIPSE HORIZON ARC + LUMINE GRADIENT TYPOGRAPHY + DASHBOARD
+       (Inspired by Ref Image 1 - "NEONE / Build Faster With Lumine Insights")
+       ========================================================================== */
+    .hero-section {
+      position: relative;
+      padding-top: 120px;
+      padding-bottom: 28px;
+      overflow: hidden;
+    }
+
+    /* Planetary Glowing Eclipse Horizon Arc */
+    .eclipse-horizon-wrap {
+      position: absolute;
+      top: 105px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1120px;
+      height: 620px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Intense Crown Apex Flare at Top of Arc */
+    .eclipse-crown-flare {
+      position: absolute;
+      top: -38px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 340px;
+      height: 110px;
+      background: radial-gradient(ellipse at center, #ffffff 0%, #93c5fd 30%, rgba(29, 94, 255, 0.45) 60%, transparent 78%);
+      filter: blur(14px);
+      z-index: 3;
+      animation: pulseCrown 4s infinite ease-in-out;
+    }
+
+    @keyframes pulseCrown {
+
+      0%,
+      100% {
+        opacity: 0.95;
+        transform: translateX(-50%) scale(1);
+      }
+
+      50% {
+        opacity: 0.72;
+        transform: translateX(-50%) scale(1.08);
+      }
+    }
+
+    .eclipse-arc {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 980px;
+      height: 980px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 37, 92, 0.55) 0%, rgba(3, 7, 22, 0.96) 52%, var(--bg-deep) 70%);
+      box-shadow:
+        0 -3px 12px rgba(255, 255, 255, 0.95),
+        0 -8px 35px rgba(96, 165, 250, 0.9),
+        0 -28px 90px rgba(29, 94, 255, 0.75),
+        inset 0 4px 28px rgba(147, 197, 253, 0.55);
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 36%, rgba(0, 0, 0, 0) 54%);
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 36%, rgba(0, 0, 0, 0) 54%);
+    }
+
+    #heroBokehCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .hero-center {
+      position: relative;
+      z-index: 5;
+      text-align: center;
+      max-width: 850px;
+      margin: 45px auto 0 auto;
+    }
+
+    .beta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 18px;
+      border-radius: 999px;
+      background: rgba(15, 32, 75, 0.72);
+      border: 1px solid rgba(147, 197, 253, 0.35);
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--ice-light);
+      margin-bottom: 20px;
+      backdrop-filter: blur(8px);
+    }
+
+    .beta-pill svg {
+      width: 14px;
+      height: 14px;
+      fill: #93c5fd;
+      filter: drop-shadow(0 0 6px #60a5fa);
+    }
+
+    .hero-title {
+      font-size: clamp(36px, 5.4vw, 66px);
+      font-weight: 700;
+      line-height: 1.09;
+      letter-spacing: -0.03em;
+      margin-bottom: 18px;
+      background: linear-gradient(95deg, #ffffff 15%, #dbeafe 48%, #60a5fa 88%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 12px 40px rgba(29, 94, 255, 0.25);
+    }
+
+    .hero-subtitle {
+      font-size: clamp(15px, 1.35vw, 17.5px);
+      line-height: 1.68;
+      color: var(--text-secondary);
+      max-width: 680px;
+      margin: 0 auto 28px auto;
+      font-weight: 400;
+    }
+
+    .hero-subtitle strong {
+      color: var(--ice-light);
+      font-weight: 500;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-lumine-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 30px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #04091a;
+      text-decoration: none;
+      background: linear-gradient(180deg, #ffffff 0%, #bfd9ff 100%);
+      border: 1px solid #ffffff;
+      box-shadow:
+        0 0 30px rgba(96, 165, 250, 0.55),
+        0 8px 20px rgba(0, 0, 0, 0.4),
+        inset 0 2px 2px #ffffff;
+      transition: all 0.25s ease;
+    }
+
+    .btn-lumine-primary:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 0 42px rgba(147, 197, 253, 0.85),
+        0 12px 26px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-lumine-ghost {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ice-light);
+      text-decoration: none;
+      background: rgba(15, 30, 68, 0.45);
+      border: 1px solid rgba(147, 197, 253, 0.28);
+      backdrop-filter: blur(10px);
+      transition: all 0.25s ease;
+    }
+
+    .btn-lumine-ghost:hover {
+      background: rgba(29, 94, 255, 0.22);
+      border-color: rgba(147, 197, 253, 0.65);
+      transform: translateY(-2px);
+    }
+
+    /* ==========================================================================
+       TELEMETRY SHOWCASE: COBALT & OBSIDIAN HUD EXECUTION CARDS
+       ========================================================================== */
+    .telemetry-showcase-wrap {
+      position: relative;
+      z-index: 6;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .telemetry-kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .telemetry-kpi-card {
+      border-radius: 16px;
+      padding: 18px 20px;
+      background: linear-gradient(155deg, rgba(14, 28, 66, 0.88) 0%, rgba(5, 11, 28, 0.95) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.28);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.14);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.24s ease, border-color 0.24s ease;
+    }
+
+    .telemetry-kpi-card.vivid {
+      background: radial-gradient(circle at 20% 15%, rgba(96, 165, 250, 0.42) 0%, rgba(29, 94, 255, 0.35) 55%, rgba(8, 22, 58, 0.95) 100%);
+      border-color: rgba(191, 217, 255, 0.55);
+      box-shadow: 0 16px 38px rgba(29, 94, 255, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+    }
+
+    .telemetry-kpi-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(147, 197, 253, 0.65);
+    }
+
+    .telemetry-kpi-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--cyan-glow);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .telemetry-kpi-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .telemetry-kpi-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    .telemetry-hud-panel {
+      position: relative;
+      border-radius: 22px;
+      background:
+        radial-gradient(ellipse 60% 45% at 50% 0%, rgba(59, 130, 246, 0.22) 0%, transparent 70%),
+        linear-gradient(180deg, rgba(10, 20, 48, 0.94) 0%, rgba(4, 8, 22, 0.98) 100%);
+      border: 1px solid rgba(147, 197, 253, 0.38);
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.75),
+        0 0 45px rgba(29, 94, 255, 0.2),
+        inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      padding: 28px 30px;
+      overflow: hidden;
+    }
+
+    .telemetry-top-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(120, 175, 255, 0.18);
+      flex-wrap: wrap;
+    }
+
+    .telemetry-console-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .telemetry-console-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #93c5fd;
+    }
+
+    .telemetry-console-eyebrow .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 10px #34d399;
+    }
+
+    .telemetry-console-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    .dash-filter-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .dash-tab {
+      background: rgba(15, 32, 74, 0.55);
+      border: 1px solid rgba(147, 197, 253, 0.25);
+      color: var(--ice-light);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.22s ease;
+    }
+
+    .dash-tab:hover {
+      border-color: rgba(147, 197, 253, 0.6);
+      background: rgba(59, 130, 246, 0.2);
+    }
+
+    .dash-tab.active {
+      background: linear-gradient(180deg, #3b82f6 0%, #1d5eff 100%);
+      color: #ffffff;
+      border-color: #93c5fd;
+      box-shadow: 0 0 18px rgba(59, 130, 246, 0.5);
+    }
+
+    .telemetry-cards-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .telemetry-run-row {
+      display: grid;
+      grid-template-columns: 135px 195px 175px 185px 1fr 175px;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, rgba(13, 27, 64, 0.72) 0%, rgba(7, 15, 38, 0.86) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.2);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .telemetry-run-row:hover {
+      transform: translateX(4px);
+      border-color: rgba(147, 197, 253, 0.55);
+      box-shadow: 0 8px 26px rgba(15, 40, 100, 0.45);
+      background: linear-gradient(90deg, rgba(20, 42, 96, 0.82) 0%, rgba(10, 22, 54, 0.92) 100%);
+    }
+
+    .tr-col-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .tr-uuid {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .tr-phase-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(59, 130, 246, 0.18);
+      color: #93c5fd;
+      margin-top: 4px;
+    }
+
+    .badge-agent {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(59, 130, 246, 0.22);
+      color: #dbeafe;
+      border: 1px solid rgba(147, 197, 253, 0.45);
+      box-shadow: 0 0 14px rgba(59, 130, 246, 0.22);
+    }
+
+    .badge-agent.langgraph {
+      background: rgba(16, 185, 129, 0.18);
+      color: #a7f3d0;
+      border-color: rgba(52, 211, 153, 0.45);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.18);
+    }
+
+    .tr-model-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ice-light);
+    }
+
+    .tr-tool-chip {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 7px;
+      background: rgba(4, 10, 26, 0.75);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      color: #93c5fd;
+    }
+
+    .tr-evidence-box {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: #e2e8f0;
+      line-height: 1.45;
+    }
+
+    .tr-evidence-box span {
+      display: block;
+      font-size: 10.5px;
+      color: #93c5fd;
+    }
+
+    .status-verified {
+      color: #60a5fa;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 8px;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(96, 165, 250, 0.28);
+    }
+
+    .status-verified::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+      flex-shrink: 0;
+    }
+
+    .telemetry-footer-bar {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(120, 175, 255, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    .telemetry-footer-link {
+      color: #93c5fd;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .telemetry-footer-link:hover {
+      color: #ffffff;
+    }
+
+    /* ==========================================================================
+       SECTION HEADINGS & COMMON UTILITIES
+       ========================================================================== */
+    .section-wrap {
+      padding: 46px 0;
+      position: relative;
+      z-index: 5;
+    }
+
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--cyan-glow);
+      margin-bottom: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-eyebrow::before {
+      content: "";
+      width: 18px;
+      height: 1px;
+      background: var(--cyan-glow);
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    .section-title {
+      font-size: clamp(28px, 3.6vw, 44px);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
+      margin-bottom: 14px;
+      background: linear-gradient(90deg, #ffffff 0%, #bfd9ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ==========================================================================
+       SECTION 01 & 02: FROSTED VENN DIAGRAM + 3D CRYSTAL MONOLITH SLIDE
+       (Directly Inspired by Ref Image 2 - Frosted Venn & Crystal Block with Caustics)
+       ========================================================================== */
+    .editorial-deck-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 26px;
+    }
+
+    /* Card Style 1: Ice-Blue Frosted Venn Strategy Card (Ref Image 2 Top Slide) */
+    .frosted-venn-card {
+      border-radius: 22px;
+      padding: 34px 32px;
+      background: linear-gradient(145deg, #d8e8ff 0%, #9ec2f7 48%, #6d9de6 100%);
+      color: #081d4a;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.55),
+        inset 0 2px 4px rgba(255, 255, 255, 0.85);
+      min-height: 460px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Architectural construction lines across Venn card */
+    .frosted-venn-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(8, 29, 74, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(8, 29, 74, 0.08) 1px, transparent 1px);
+      background-size: 50% 50%;
+      pointer-events: none;
+    }
+
+    .slide-meta-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.75;
+      position: relative;
+      z-index: 3;
+    }
+
+    .slide-dots {
+      letter-spacing: 3px;
+      font-size: 9px;
+    }
+
+    .editorial-serif-heading {
+      font-family: var(--font-serif);
+      font-size: clamp(26px, 2.6vw, 34px);
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      margin-top: 14px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .editorial-serif-heading em {
+      font-style: italic;
+      font-weight: 600;
+    }
+
+    /* Overlapping Translucent Frosted Circles (Venn) */
+    .venn-stage {
+      position: relative;
+      height: 255px;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .venn-circle {
+      width: 235px;
+      height: 235px;
+      border-radius: 50%;
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+      transition: transform 0.35s ease;
+    }
+
+    .venn-circle.left {
+      left: 4%;
+      background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.55), rgba(95, 148, 232, 0.38));
+      border: 1.5px solid rgba(255, 255, 255, 0.75);
+      box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.5);
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .venn-circle.right {
+      right: 4%;
+      background: radial-gradient(circle at 65% 35%, rgba(255, 255, 255, 0.6), rgba(112, 162, 240, 0.35));
+      border: 1.5px solid rgba(255, 255, 255, 0.85);
+      box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.55);
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .venn-intersection {
+      position: relative;
+      z-index: 4;
+      width: 132px;
+      height: 190px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, #13469e 0%, #1d5ed8 55%, rgba(45, 108, 223, 0.2) 100%);
+      box-shadow: 0 10px 30px rgba(13, 45, 112, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 14px;
+      color: #ffffff;
+    }
+
+    .venn-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+    }
+
+    .venn-sub {
+      font-size: 10.5px;
+      line-height: 1.4;
+      opacity: 0.88;
+      max-width: 120px;
+    }
+
+    /* Card Style 2: Deep Cobalt Glass Monolith & Star Flares (Ref Image 2 Middle Slide) */
+    .crystal-monolith-card {
+      border-radius: 22px;
+      padding: 34px 32px;
+      background: radial-gradient(circle at 75% 25%, #3b76d4 0%, #0d2b6b 52%, #030b21 100%);
+      color: #ffffff;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(147, 197, 253, 0.35);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+      min-height: 460px;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 20px;
+    }
+
+    .monolith-copy {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      z-index: 3;
+    }
+
+    .monolith-question-box {
+      margin-top: 20px;
+      padding: 18px 20px;
+      border: 1px solid rgba(191, 217, 255, 0.28);
+      background: rgba(6, 20, 56, 0.42);
+      backdrop-filter: blur(8px);
+      position: relative;
+    }
+
+    /* 4-Point Crosshair Sparkles on corners (From Ref Image 2) */
+    .sparkle-corner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+    }
+
+    .sparkle-corner::before,
+    .sparkle-corner::after {
+      content: "";
+      position: absolute;
+      background: #ffffff;
+      box-shadow: 0 0 10px #93c5fd, 0 0 20px #ffffff;
+    }
+
+    .sparkle-corner::before {
+      top: 8px;
+      left: 0;
+      width: 18px;
+      height: 1.5px;
+    }
+
+    .sparkle-corner::after {
+      top: 0;
+      left: 8px;
+      width: 1.5px;
+      height: 18px;
+    }
+
+    .sparkle-tl {
+      top: -9px;
+      left: -9px;
+    }
+
+    .sparkle-br {
+      bottom: -9px;
+      right: -9px;
+    }
+
+    .monolith-canvas-stage {
+      position: relative;
+      height: 100%;
+      min-height: 360px;
+      z-index: 2;
+    }
+
+    #monolithCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ==========================================================================
+       SECTION 02B: HOLOGRAPHIC HUD REPORTS + 3D NEURAL BRAIN
+       (Directly Inspired by Ref Image 4 Middle Slide - "DEVELOPMENT OF AI TECHNOLOGY")
+       ========================================================================== */
+    .hud-frame-panel {
+      margin-top: 40px;
+      border-radius: 24px;
+      background: radial-gradient(ellipse at 50% 85%, rgba(20, 62, 160, 0.32) 0%, rgba(4, 10, 28, 0.94) 70%);
+      border: 1px solid rgba(96, 165, 250, 0.28);
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.75), inset 0 0 60px rgba(29, 94, 255, 0.12);
+      padding: 48px 40px 36px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* HUD Corner Crosshairs (+) */
+    .hud-cross {
+      position: absolute;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      color: rgba(96, 165, 250, 0.45);
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .hud-cross.tl {
+      top: 18px;
+      left: 22px;
+    }
+
+    .hud-cross.tr {
+      top: 18px;
+      right: 22px;
+    }
+
+    .hud-cross.bl {
+      bottom: 18px;
+      left: 22px;
+    }
+
+    .hud-cross.br {
+      bottom: 18px;
+      right: 22px;
+    }
+
+    .hud-panel-header {
+      text-align: center;
+      margin-bottom: 42px;
+      position: relative;
+    }
+
+    .hud-panel-header h3 {
+      font-size: clamp(22px, 2.6vw, 32px);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 0 24px rgba(59, 130, 246, 0.65);
+    }
+
+    .hud-reports-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 26px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .hud-report-col {
+      background: linear-gradient(180deg, rgba(14, 33, 82, 0.55) 0%, rgba(5, 13, 35, 0.25) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.25);
+      border-bottom: none;
+      border-radius: 14px 14px 0 0;
+      padding: 28px 24px;
+      position: relative;
+      transition: transform 0.3s ease, border-color 0.3s ease;
+    }
+
+    .hud-report-col:hover {
+      transform: translateY(-4px);
+      border-color: rgba(147, 197, 253, 0.65);
+      box-shadow: 0 -10px 35px rgba(29, 94, 255, 0.22);
+    }
+
+    .hud-report-pill {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      margin: -42px auto 22px auto;
+      max-width: 230px;
+      background: linear-gradient(90deg, rgba(12, 32, 84, 0.95) 0%, rgba(28, 78, 196, 0.95) 50%, rgba(12, 32, 84, 0.95) 100%);
+      border: 1px solid rgba(147, 197, 253, 0.55);
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.45);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 0.05em;
+    }
+
+    .hud-report-pill span.bracket {
+      color: var(--cyan-glow);
+    }
+
+    .hud-bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .hud-bullet-list li {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      position: relative;
+      padding-left: 16px;
+    }
+
+    .hud-bullet-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: var(--cyan-glow);
+      font-weight: bold;
+    }
+
+    .hud-bullet-list li strong {
+      color: var(--ice-light);
+      font-weight: 600;
+    }
+
+    /* 3D Glowing Neural Brain Stage under the 3 HUD Columns */
+    .neural-stage-wrap {
+      position: relative;
+      height: 230px;
+      margin-top: -10px;
+      z-index: 2;
+    }
+
+    #neuralBrainCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ==========================================================================
+       SECTION 03: PARIDADE EXPERIMENTAL: HOLOGRAPHIC CORE & ISOMETRIC PEDESTALS
+       (Inspired by Ref Image 4 Top & Bottom Slides - "DATA CENTER" & "COMMON PLATFORM")
+       ========================================================================== */
+    .parity-hud-grid {
+      display: grid;
+      grid-template-columns: 1fr 370px 1fr;
+      gap: 24px;
+      align-items: center;
+      margin-top: 26px;
+    }
+
+    .parity-side-col {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .hud-feature-box {
+      background: linear-gradient(135deg, rgba(14, 31, 74, 0.72) 0%, rgba(6, 14, 36, 0.85) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.28);
+      border-radius: 14px;
+      padding: 22px 24px;
+      position: relative;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      transition: all 0.25s ease;
+    }
+
+    .hud-feature-box:hover {
+      border-color: var(--cyan-glow);
+      box-shadow: 0 0 28px rgba(59, 130, 246, 0.3);
+    }
+
+    .hud-feature-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(96, 165, 250, 0.18);
+    }
+
+    .hud-icon-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid rgba(147, 197, 253, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ice-light);
+      box-shadow: 0 0 14px rgba(59, 130, 246, 0.35);
+    }
+
+    .hud-feature-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .hud-feature-box p {
+      font-size: 12.8px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* Central Glowing Circular HUD Portal ("TOOLCLIENT PARITY CORE") */
+    .hud-portal-center {
+      position: relative;
+      height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #hudCoreCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .portal-center-label {
+      position: absolute;
+      text-align: center;
+      pointer-events: none;
+      padding: 20px;
+    }
+
+    .portal-center-label .tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--cyan-glow);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .portal-center-label strong {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #ffffff;
+      text-shadow: 0 0 18px #3b82f6;
+      display: block;
+    }
+
+    /* 6 Endpoints Isometric Pedestal Strip (From Ref Image 4 Top Data Center Pedestals) */
+    .pedestals-strip {
+      margin-top: 36px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 14px;
+    }
+
+    .pedestal-node {
+      background: radial-gradient(circle at 50% 100%, rgba(29, 94, 255, 0.38) 0%, rgba(7, 16, 40, 0.85) 75%);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+      position: relative;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .pedestal-node:hover {
+      transform: translateY(-4px);
+      border-color: #93c5fd;
+      box-shadow: 0 10px 25px rgba(29, 94, 255, 0.4);
+    }
+
+    /* Glowing hologram ring at bottom of each endpoint pedestal */
+    .pedestal-node::after {
+      content: "";
+      display: block;
+      width: 70%;
+      height: 5px;
+      margin: 12px auto 0 auto;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, #93c5fd 0%, #1d5eff 60%, transparent 100%);
+      box-shadow: 0 0 12px #3b82f6;
+    }
+
+    .pedestal-type {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--cyan-glow);
+      margin-bottom: 6px;
+    }
+
+    .pedestal-type.write {
+      color: #fbbf24;
+    }
+
+    .pedestal-name {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #ffffff;
+      word-break: break-word;
+    }
+
+    /* ==========================================================================
+       SECTION 04: LIQUID COBALT LIGHT-LEAK BENTO GRID (6 TEAMS)
+       (Directly Inspired by Ref Image 3 - Alternating Electric Blue & Dark Glass Cards)
+       ========================================================================== */
+    .stepped-pills-banner {
+      border-radius: 22px;
+      padding: 30px 32px;
+      margin-bottom: 24px;
+      background:
+        radial-gradient(ellipse 65% 80% at 80% 15%, rgba(96, 165, 250, 0.55) 0%, rgba(29, 94, 255, 0.28) 45%, rgba(4, 10, 28, 0.95) 85%),
+        linear-gradient(135deg, #061230 0%, #030714 100%);
+      border: 1px solid rgba(147, 197, 253, 0.35);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    }
+
+    .stepped-pills-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .step-glass-pill {
+      padding: 12px 26px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(191, 217, 255, 0.5);
+      backdrop-filter: blur(12px);
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff;
+      box-shadow: 0 8px 24px rgba(10, 32, 82, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+    }
+
+    .step-glass-pill:nth-child(2) {
+      transform: translateY(-10px);
+      background: rgba(59, 130, 246, 0.35);
+      border-color: #ffffff;
+    }
+
+    /* Hierarchy Top: General Coordinator Card */
+    .hierarchy-top-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .coordinator-card {
+      width: 100%;
+      max-width: 680px;
+      border-radius: 20px;
+      padding: 26px 32px;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.32) 0%, rgba(12, 26, 62, 0.92) 55%, rgba(4, 9, 24, 0.98) 100%);
+      border: 1.5px solid rgba(147, 197, 253, 0.55);
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.65),
+        0 0 35px rgba(29, 94, 255, 0.28),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      position: relative;
+      z-index: 2;
+      transition: transform 0.28s ease, box-shadow 0.28s ease;
+    }
+
+    .coordinator-card:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 24px 56px rgba(0, 0, 0, 0.72),
+        0 0 45px rgba(59, 130, 246, 0.38),
+        inset 0 1px 2px rgba(255, 255, 255, 0.45);
+    }
+
+    .coordinator-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .coordinator-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: center top;
+      border: 3px solid #93c5fd;
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.55);
+      background: #0a1535;
+      display: block;
+    }
+
+    .coordinator-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.25);
+      border: 1px solid rgba(147, 197, 253, 0.5);
+      color: #dbeafe;
+      margin-bottom: 8px;
+    }
+
+    .coordinator-info h3 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .coordinator-role {
+      font-size: 14px;
+      font-weight: 600;
+      color: #93c5fd;
+      margin-bottom: 8px;
+    }
+
+    .coordinator-desc {
+      font-size: 13px;
+      line-height: 1.55;
+      color: rgba(226, 232, 240, 0.85);
+    }
+
+    /* Visual Hierarchy Connector Lines */
+    .hierarchy-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      position: relative;
+    }
+
+    .hierarchy-stem {
+      width: 2px;
+      height: 28px;
+      background: linear-gradient(180deg, rgba(147, 197, 253, 0.75) 0%, rgba(59, 130, 246, 0.35) 100%);
+    }
+
+    .hierarchy-branch-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ice-light);
+      background: rgba(8, 17, 42, 0.92);
+      border: 1px solid rgba(96, 165, 250, 0.35);
+      padding: 5px 16px;
+      border-radius: 999px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Manager Profile inside each Team Bento Card */
+    .bento-manager-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      margin: 14px 0 14px 0;
+      border-radius: 12px;
+      background: rgba(4, 10, 28, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+    }
+
+    .bento-team-card.obsidian-dark .bento-manager-profile {
+      background: rgba(18, 33, 74, 0.45);
+      border: 1px solid rgba(96, 165, 250, 0.25);
+    }
+
+    .bento-manager-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: center top;
+      border: 2px solid rgba(191, 217, 255, 0.85);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
+      background: #09132c;
+    }
+
+    .bento-manager-meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .bento-manager-tag {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #93c5fd;
+      margin-bottom: 2px;
+    }
+
+    .bento-team-card.cobalt-vivid .bento-manager-tag {
+      color: #dbeafe;
+    }
+
+    .bento-manager-name {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .bento-manager-sub {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.75);
+      margin-top: 2px;
+    }
+
+    /* Alternating Cobalt / Obsidian Checkerboard Bento (Ref Image 3 Middle Right Slide) */
+    .cobalt-bento-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .bento-team-card {
+      border-radius: 16px;
+      padding: 28px 26px;
+      min-height: 230px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.28s ease, box-shadow 0.28s ease;
+    }
+
+    .bento-team-card:hover {
+      transform: translateY(-4px);
+    }
+
+    /* Vibrant Electric Cobalt Cards (1, 3, 5) */
+    .bento-team-card.cobalt-vivid {
+      background: radial-gradient(circle at 20% 15%, #60a5fa 0%, #1d5eff 55%, #0c2b78 100%);
+      border: 1px solid rgba(191, 217, 255, 0.65);
+      box-shadow: 0 16px 40px rgba(29, 94, 255, 0.32), inset 0 1px 2px rgba(255, 255, 255, 0.55);
+    }
+
+    /* Deep Obsidian Glass Cards (2, 4, 6) */
+    .bento-team-card.obsidian-dark {
+      background: linear-gradient(160deg, rgba(12, 22, 50, 0.9) 0%, rgba(4, 8, 20, 0.96) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.25);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .bento-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .bento-team-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      letter-spacing: 0.06em;
+    }
+
+    .bento-team-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .bento-team-desc {
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    .bento-team-card.obsidian-dark .bento-team-desc {
+      color: var(--text-secondary);
+    }
+
+    .bento-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 18px;
+    }
+
+    .bento-chip {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      background: rgba(4, 10, 28, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #ffffff;
+    }
+
+    /* ==========================================================================
+       FOOTER: NEON COBALT INNER-GLOW FRAME + GIANT CROPPED WATERMARK
+       (Directly Inspired by Ref Image 3 Bottom Right Slide - "уровень масштаба / Company")
+       ========================================================================== */
+    .scale-frame-footer {
+      margin: 40px 36px 44px 36px;
+      border-radius: 26px;
+      background: #030714;
+      border: 2px solid rgba(147, 197, 253, 0.7);
+      box-shadow:
+        0 0 60px rgba(29, 94, 255, 0.45),
+        inset 0 0 85px rgba(59, 130, 246, 0.65),
+        inset 0 0 25px rgba(191, 217, 255, 0.45);
+      padding: 40px 48px 0 48px;
+      position: relative;
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    .scale-frame-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ice-light);
+      padding-bottom: 44px;
+      border-bottom: 1px solid rgba(147, 197, 253, 0.22);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .scale-frame-links {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      padding: 44px 0;
+    }
+
+    .scale-col h5 {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--cyan-glow);
+      margin-bottom: 16px;
+    }
+
+    .scale-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .scale-col ul li {
+      font-size: 12.5px;
+      color: var(--ice-light);
+      opacity: 0.85;
+    }
+
+    .scale-watermark {
+      font-size: clamp(56px, 11.5vw, 158px);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 0.82;
+      text-align: center;
+      margin-top: 12px;
+      margin-bottom: -14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(147, 197, 253, 0.65) 55%, rgba(29, 94, 255, 0.15) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 1080px) {
+      .telemetry-kpi-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .telemetry-run-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .editorial-deck-grid,
+      .hud-reports-grid,
+      .parity-hud-grid,
+      .cobalt-bento-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pedestals-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .scale-frame-links {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 720px) {
+
+      .container,
+      .navbar-inner {
+        padding: 0 20px;
+      }
+
+      .nav-menu,
+      .nav-deadline {
+        display: none;
+      }
+
+      .crystal-monolith-card,
+      .telemetry-kpi-strip,
+      .telemetry-run-row {
+        grid-template-columns: 1fr;
+      }
+
+      .coordinator-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px 20px;
+      }
+
+      .pedestals-strip,
+      .scale-frame-links {
+        grid-template-columns: 1fr;
+      }
+
+      .scale-frame-footer {
+        margin: 24px 16px;
+        padding: 28px 24px 0 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Background Vertical Light Rays -->
+  <div class="ambient-rays"></div>
+
+  <!-- Top Navigation (Ref Image 1 - NEONE Header) -->
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a href="#top" class="logo">
+        <img src="ciialogo.png" alt="" class="logo-img" />
+
+      </a>
+      <ul class="nav-menu">
+        <li><a href="#equipes">1. Equipes</a></li>
+        <li><a href="#problema">2. O Problema</a></li>
+        <li><a href="#paridade">3. Paridade Estrita</a></li>
+        <li><a href="#telemetria">4. Telemetria</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="/team" class="btn-lumine-ghost" style="padding: 8px 18px; font-size: 12.5px; border-radius: 999px;">Docs das Equipes</a>
+        <a href="resultados.html" class="btn-pill-white">Resultados &amp; Protocolo</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION: Glowing Planetary Horizon Arc + Dashboard Harness (Ref Image 1) -->
+  <section id="top" class="hero-section">
+    <div class="eclipse-horizon-wrap" id="eclipseWrap">
+      <div class="eclipse-crown-flare"></div>
+      <div class="eclipse-arc"></div>
+      <canvas id="heroBokehCanvas"></canvas>
+    </div>
+
+    <div class="container">
+      <div class="hero-center">
+        <div class="beta-pill">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z" />
+          </svg>
+          <span>Resumo Executivo · Ambiente Estritamente Experimental (LGPD Safe)</span>
+        </div>
+
+        <h1 class="hero-title">
+          Benchmark:<br>
+          Hermes vs. LangGraph no SEI
+        </h1>
+
+        <p class="hero-subtitle">
+          Um benchmark científico experimental conduzido pelo <strong>Centro Integrado de Inteligência Artificial
+            (CIIA / UnDF)</strong> para avaliar agentes autônomos de IA no setor público sobre processos administrativos
+          exportados do <strong>SEI</strong> sem conexão com o sistema real e com rastreabilidade rigorosa de página e
+          documento.
+        </p>
+
+        <div class="hero-cta-group">
+          <a href="#equipes" class="btn-lumine-primary">Conhecer Coordenação &amp; Equipes</a>
+          <a href="#problema" class="btn-lumine-ghost">Explorar as Fases</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 01: ESTRUTURA DE EQUIPES DO BENCHMARK -->
+  <section id="equipes" class="section-wrap">
+    <div class="container">
+      <div class="stepped-pills-banner">
+        <span class="section-eyebrow" style="margin-bottom: 8px;">1. Como o Projeto se Divide</span>
+        <h2 class="section-title" style="margin-bottom: 6px;">Coordenação &amp; Estrutura de Equipes</h2>
+        <p style="color: var(--ice-blue); font-size: 14px; max-width: 620px;">
+          Do tratamento de exportações do SEI à orquestração dos agentes e avaliação com evidência documental auditada.
+        </p>
+      </div>
+
+      <!-- HIERARCHY TOP: Coordenador Geral do Projeto & CIIA -->
+      <div class="hierarchy-top-wrap">
+        <article class="coordinator-card">
+          <div class="coordinator-avatar-wrap">
+            <img src="fotos_equipe/ricardo%20foto.png" alt="Ricardo Sampaio" class="coordinator-avatar" />
+          </div>
+          <div class="coordinator-info">
+            <span class="coordinator-badge-pill">✦ COORDENAÇÃO GERAL · CIIA &amp; BENCHMARK</span>
+            <h3>Ricardo Sampaio</h3>
+            <div class="coordinator-role">Coordenador Geral do Projeto e do CIIA</div>
+            <p class="coordinator-desc">
+              Supervisão científica, governança institucional e diretrizes estratégicas do estudo experimental entre
+              arquiteturas de agentes autônomos sobre o SEI.
+            </p>
+          </div>
+        </article>
+
+        <div class="hierarchy-connector">
+          <div class="hierarchy-stem"></div>
+          <div class="hierarchy-branch-label">Gerentes de Área &amp; 6 Frentes Técnicas</div>
+          <div class="hierarchy-stem"></div>
+        </div>
+      </div>
+
+      <!-- Alternating Cobalt & Obsidian Bento Grid (Ref Image 3) -->
+      <div class="cobalt-bento-grid">
+        <article class="bento-team-card cobalt-vivid">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 01</span>
+              <span class="bento-team-num">CORPUS SEI</span>
+            </div>
+            <h3 class="bento-team-title">Data &amp; RAG (Documentos)</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/foto_andre1.PNG" alt="André Vital" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">André Vital</span>
+                <span class="bento-manager-sub">Extração, RAG &amp; Conformidade LGPD</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Trata exportações do SEI, segmenta textos em páginas e chunks rastreáveis com offsets determinísticos e
+              realiza a ingestão com integridade transacional na base de dados.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">Pipeline Textual</span>
+            <span class="bento-chip">Chunks Rastreáveis</span>
+            <span class="bento-chip">Armazenamento Factual</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card obsidian-dark">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 02</span>
+              <span class="bento-team-num">FASTAPI</span>
+            </div>
+            <h3 class="bento-team-title">Backend &amp; Tools</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/foto_Roger.PNG" alt="Roger Quinelato" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">Roger Quinelato</span>
+                <span class="bento-manager-sub">Arquitetura de API, Contratos &amp; Banco</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Implementa os 6 endpoints REST consumidos via ToolClient, com validação Pydantic estrita, controle de
+              idempotência e isolamento por run_id.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">FastAPI &amp; Pydantic</span>
+            <span class="bento-chip">ToolClient</span>
+            <span class="bento-chip">Idempotência</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card cobalt-vivid">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 03</span>
+              <span class="bento-team-num">LOOP REACT</span>
+            </div>
+            <h3 class="bento-team-title">Hermes</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/gustavo_img.jpeg" alt="Gustavo Antônio" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">Gustavo Antônio</span>
+                <span class="bento-manager-sub">Arquitetura Hermes &amp; Agente Autônomo</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Desenvolve o adaptador do Hermes sobre a interface comum, operando em loop dinâmico de tool calling e
+              extração obrigatória de evidências documentais.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">Hermes Adapter</span>
+            <span class="bento-chip">Loop Dinâmico</span>
+            <span class="bento-chip">Citação de Provas</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card obsidian-dark">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 04</span>
+              <span class="bento-team-num">STATE GRAPH</span>
+            </div>
+            <h3 class="bento-team-title">LangGraph</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/foto_joao_enomoto.PNG" alt="João Enomoto" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">João Enomoto</span>
+                <span class="bento-manager-sub">Orquestração em Grafos &amp; Estados</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Modela o agente em nós e arestas de estado com fluxo de validação estruturado, tolerância a falhas de
+              ferramentas e controle de recursão.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">LangGraph Adapter</span>
+            <span class="bento-chip">Grafo Dirigido</span>
+            <span class="bento-chip">Controle de Estados</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card cobalt-vivid">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 05</span>
+              <span class="bento-team-num">CONTAINERS</span>
+            </div>
+            <h3 class="bento-team-title">AI Infra</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/foto_joao_enomoto.PNG" alt="João Enomoto" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">João Enomoto</span>
+                <span class="bento-manager-sub">DevOps, Containers &amp; Infraestrutura</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Provê isolamento por containers Docker, automação de CI/CD, rotinas de ambiente limpo entre rodadas e
+              orquestração do portal institucional.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">Docker Compose</span>
+            <span class="bento-chip">CI / Automação</span>
+            <span class="bento-chip">Isolamento Limpo</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card obsidian-dark">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 06</span>
+              <span class="bento-team-num">HARNESS &amp; PAPER</span>
+            </div>
+            <h3 class="bento-team-title">Metodologia &amp; Evaluation</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/gustavo_img.jpeg" alt="Gustavo Antônio" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">Gustavo Antônio</span>
+                <span class="bento-manager-sub">Protocolo Científico &amp; Avaliação</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Estrutura o protocolo científico, cataloga o conjunto de tarefas factuais, apura métricas de fundamentação
+              e redige a análise para o artigo acadêmico.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">tasks.json</span>
+            <span class="bento-chip">runner.py</span>
+            <span class="bento-chip">Artigo Científico</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 02: O PROBLEMA & A PERGUNTA CIENTÍFICA (Ref Image 2 + Ref Image 4) -->
+  <section id="problema" class="section-wrap">
+    <div class="container">
+      <span class="section-eyebrow">2. O Problema &amp; A Pergunta Científica</span>
+      <h2 class="section-title">Isolando a Orquestração da Capacidade do Modelo</h2>
+
+      <!-- Editorial Slide Pair (Inspired by Ref Image 2: Frosted Venn & Crystal Monolith) -->
+      <div class="editorial-deck-grid">
+        <!-- Left Card: Frosted Venn Diagram -->
+        <div class="frosted-venn-card">
+          <div>
+            <div class="slide-meta-bar">
+              <span>CIIA e UNDF · METODOLOGIA EXPERIMENTAL</span>
+              <span class="slide-dots"></span>
+            </div>
+            <h3 class="editorial-serif-heading">
+              <em>ISOLAMENTO</em> DE VARIÁVEIS
+            </h3>
+          </div>
+
+          <div class="venn-stage">
+            <div class="venn-circle left">
+              <div class="venn-label">MICRO (Modelo LLM):</div>
+              <div class="venn-sub">Capacidade intrínseca de raciocínio: Qwen 2.5, Llama 3.1, GPT-4o ou Claude 3.5.
+              </div>
+            </div>
+
+            <div class="venn-intersection">
+              <div class="venn-label">Regra CIIA:</div>
+              <div class="venn-sub" style="color: #e0f2fe;">“Zero parecer sem citação de documento e página física.”
+              </div>
+            </div>
+
+            <div class="venn-circle right">
+              <div class="venn-label">Orquestrador:</div>
+              <div class="venn-sub">Loop ReAct dinâmico (Hermes) vs. Grafo de Estados (LangGraph).</div>
+            </div>
+          </div>
+
+          <div class="slide-meta-bar">
+            <span>CORPUS FIXO · 6 ENDPOINTS REST</span>
+            <span>360 → 1.080 EXECUÇÕES</span>
+          </div>
+        </div>
+
+        <!-- Right Card: 3D Crystal Monolith & Star Flares -->
+        <div class="crystal-monolith-card">
+          <div class="monolith-copy">
+            <div>
+              <div class="slide-meta-bar">
+                <span>SETOR PÚBLICO &amp; CONFIABILIDADE</span>
+                <span class="slide-dots"></span>
+              </div>
+              <h3 class="editorial-serif-heading" style="color: #ffffff; margin-bottom: 14px;">
+                <em>QUANDO</em> O AGENTE ERRA, DE QUEM É A CULPA?
+              </h3>
+              <p style="font-size: 13px; line-height: 1.65; color: var(--ice-blue);">
+                Na administração pública, a IA não pode “alucinar” nem emitir pareceres sem fundamentação em páginas e
+                documentos reais do SEI.
+              </p>
+            </div>
+
+            <div class="monolith-question-box">
+              <span class="sparkle-corner sparkle-tl"></span>
+              <span class="sparkle-corner sparkle-br"></span>
+              <p style="font-size: 12.5px; line-height: 1.6; color: #e6f0ff;">
+                <strong>A Dúvida Metodológica:</strong> Quando uma execução falha, a culpa é da <strong>LLM</strong> ou
+                da <strong>arquitetura de orquestração</strong>? Nosso desenho experimental separa essas duas dimensões
+                em duas fases estritas.
+              </p>
+            </div>
+          </div>
+
+          <div class="monolith-canvas-stage">
+            <canvas id="monolithCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 HUD Report Columns + 3D Glowing Neural Brain (Inspired by Ref Image 4 Middle Slide) -->
+      <div class="hud-frame-panel">
+        <span class="hud-cross tl">+</span>
+        <span class="hud-cross tr">+</span>
+        <span class="hud-cross bl">+</span>
+        <span class="hud-cross br">+</span>
+
+        <div class="hud-panel-header">
+          <h3>DESENHO EXPERIMENTAL EM DUAS FASES</h3>
+        </div>
+
+        <div class="hud-reports-grid">
+          <!-- Column 1: Fase 1 -->
+          <div class="hud-report-col">
+            <div class="hud-report-pill">
+              <span class="bracket">&lt;</span>
+              <span>FASE 1 · PRIORIDADE</span>
+              <span class="bracket">&gt;</span>
+            </div>
+            <ul class="hud-bullet-list">
+              <li>
+                <strong>Comparação de Orquestradores (Hermes vs. LangGraph):</strong> Sob o mesmo modelo, mesmas
+                ferramentas REST e mesmo corpus documental, como o loop ReAct dinâmico do Hermes se compara ao grafo
+                determinístico de estados do LangGraph?
+              </li>
+              <li>
+                <strong>Escopo Controlado:</strong> 60 tarefas × 2 executores × 3 repetições = <strong>360 execuções
+                  controladas</strong>.
+              </li>
+              <li>
+                <strong>Métricas Primárias:</strong> Taxa de Sucesso com Fundamentação (citação de doc/página física),
+                Precisão no uso de Ferramentas (TUA), Latência e Passos.
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 2: Fase 2 -->
+          <div class="hud-report-col">
+            <div class="hud-report-pill">
+              <span class="bracket">&lt;</span>
+              <span>FASE 2 · SOBERANIA</span>
+              <span class="bracket">&gt;</span>
+            </div>
+            <ul class="hud-bullet-list">
+              <li>
+                <strong>Modelos de Ponta vs. Modelos Locais (LGPD):</strong> É viável para governos locais (como o GDF)
+                rodar modelos abertos/locais (<strong>Qwen 2.5, Llama 3.1</strong>) em servidores próprios para proteger
+                processos?
+              </li>
+              <li>
+                <strong>Fronteira Comercial:</strong> Ou a perda de acurácia em relação a APIs comerciais de nuvem
+                (<strong>GPT-4o, Claude 3.5</strong>) ainda é proibitiva?
+              </li>
+              <li>
+                <strong>Escopo &amp; Métrica:</strong> 360 execuções × 3 classes de modelos = <strong>1.080
+                  execuções</strong> avaliando <strong>Custo por Tarefa Concluída (CTCE)</strong> vs. degradação de
+                acurácia.
+              </li>
+            </ul>
+          </div>
+
+          <!-- Column 3: Auditoria Independente -->
+          <div class="hud-report-col">
+            <div class="hud-report-pill">
+              <span class="bracket">&lt;</span>
+              <span>AUDITORIA &amp; RIGOR</span>
+              <span class="bracket">&gt;</span>
+            </div>
+            <ul class="hud-bullet-list">
+              <li>
+                <strong>Sucesso Verificado ≠ Declarado:</strong> Não basta o agente afirmar que concluiu o parecer
+                administrativo.
+              </li>
+              <li>
+                <strong>Avaliador Cego:</strong> Um juiz independente (código determinístico ou humano cego) audita se a
+                evidência (página física e offset) realmente comprova a resposta.
+              </li>
+              <li>
+                <strong>Zero Conexão com SEI Real:</strong> Operação integralmente sobre exportações manuais com dados
+                tratados/sintéticos.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 3D Neural Brain Constellation Canvas -->
+        <div class="neural-stage-wrap">
+          <canvas id="neuralBrainCanvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 03: A REGRA DE OURO: PARIDADE EXPERIMENTAL ESTRITA (Ref Image 4) -->
+  <section id="paridade" class="section-wrap">
+    <div class="container">
+      <span class="section-eyebrow">3. A Regra de Ouro</span>
+      <h2 class="section-title">Paridade Experimental Estrita</h2>
+
+      <!-- Central Circular HUD Core flanked by the 4 Golden Rules -->
+      <div class="parity-hud-grid">
+        <div class="parity-side-col">
+          <div class="hud-feature-box">
+            <div class="hud-feature-head">
+              <span class="hud-icon-badge">01</span>
+              <span class="hud-feature-title">Mesmo Barramento (ToolClient)</span>
+            </div>
+            <p>
+              Ambos os agentes (Hermes e LangGraph) usam rigorosamente a mesma interface (<code>ToolClient</code>) e os
+              mesmos <strong>6 endpoints HTTP</strong> do Backend em FastAPI.
+            </p>
+          </div>
+
+          <div class="hud-feature-box">
+            <div class="hud-feature-head">
+              <span class="hud-icon-badge">02</span>
+              <span class="hud-feature-title">Sem Roteiro Pré-Programado</span>
+            </div>
+            <p>
+              Nenhum agente pode ter o caminho da resposta <em>"hardcoded"</em>. Eles devem raciocinar autonomamente e
+              escolher quais ferramentas invocar a cada passo.
+            </p>
+          </div>
+        </div>
+
+        <!-- Center Rotating Holographic Portal -->
+        <div class="hud-portal-center">
+          <canvas id="hudCoreCanvas"></canvas>
+          <div class="portal-center-label">
+            <span class="tag">BARRAMENTO ÚNICO</span>
+            <strong>FERRAMENTAS<br>PADRONIZADAS</strong>
+          </div>
+        </div>
+
+        <div class="parity-side-col">
+          <div class="hud-feature-box">
+            <div class="hud-feature-head">
+              <span class="hud-icon-badge">03</span>
+              <span class="hud-feature-title">Sucesso Verificado ≠ Declarado</span>
+            </div>
+            <p>
+              Um avaliador independente (código ou humano cego) audita se a evidência documental citada (página
+              física/offset do SEI) realmente comprova a resposta emitida.
+            </p>
+          </div>
+
+          <div class="hud-feature-box">
+            <div class="hud-feature-head">
+              <span class="hud-icon-badge">04</span>
+              <span class="hud-feature-title">Isolamento por Sessão (UUID)</span>
+            </div>
+            <p>
+              Toda execução recebe um <code>ToolContext</code> com <code>run_id</code> (UUID único), impedindo que o
+              histórico ou estado de uma pergunta contamine a seguinte.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 Endpoints HTTP Pedestals (Ref Image 4 Top Data Center Pedestals) -->
+      <div class="pedestals-strip">
+        <div class="pedestal-node">
+          <div class="pedestal-type">LEITURA · DISPONÍVEL</div>
+          <div class="pedestal-name">consultar_processo</div>
+        </div>
+        <div class="pedestal-node">
+          <div class="pedestal-type">LEITURA · DISPONÍVEL</div>
+          <div class="pedestal-name">buscar_documentos</div>
+        </div>
+        <div class="pedestal-node">
+          <div class="pedestal-type">LEITURA · DISPONÍVEL</div>
+          <div class="pedestal-name">ler_documento</div>
+        </div>
+        <div class="pedestal-node">
+          <div class="pedestal-type">CONTRATO · HTTP 501</div>
+          <div class="pedestal-name">consultar_requisitos</div>
+        </div>
+        <div class="pedestal-node">
+          <div class="pedestal-type write">ESCRITA · CONTRATO</div>
+          <div class="pedestal-name">registrar_pendencia</div>
+        </div>
+        <div class="pedestal-node">
+          <div class="pedestal-type write">ESCRITA · CONTRATO</div>
+          <div class="pedestal-name">salvar_minuta</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 04: TELEMETRIA & EXECUÇÕES CONTROLADAS DO HARNESS (Cobalt & Obsidian HUD Showcase) -->
+  <section id="telemetria" class="section-wrap">
+    <div class="container">
+      <div style="text-align: center; margin-bottom: 26px;">
+        <span class="section-eyebrow" style="justify-content: center;">4. Telemetria &amp; Execuções Controladas</span>
+        <h2 class="section-title" style="margin-top: 6px;">Amostra de Execução do Harness (runner.py)</h2>
+        <p
+          style="color: var(--text-secondary); font-size: 14.5px; max-width: 680px; margin: 8px auto 0; line-height: 1.6;">
+          Estrutura dos registros de telemetria produzidos pelo harness determinístico. Auditoria cega de evidências com
+          validação de <code>document_id</code>, página física e offsets antes da consolidação de resultados.
+        </p>
+      </div>
+
+      <div class="telemetry-showcase-wrap">
+        <!-- Top 4 KPI / Architecture Cards -->
+        <div class="telemetry-kpi-strip">
+          <div class="telemetry-kpi-card vivid">
+            <span class="telemetry-kpi-tag">Fase 1 · Orquestração</span>
+            <div class="telemetry-kpi-val">360 Execuções</div>
+            <div class="telemetry-kpi-sub">60 tarefas × 2 agentes × 3 repetições pareadas sob o mesmo modelo.</div>
+          </div>
+
+          <div class="telemetry-kpi-card">
+            <span class="telemetry-kpi-tag">Fase 2 · Soberania LGPD</span>
+            <div class="telemetry-kpi-val">1.080 Execuções</div>
+            <div class="telemetry-kpi-sub">Modelos abertos locais (Qwen/Llama) vs. fronteira comercial em nuvem.</div>
+          </div>
+
+          <div class="telemetry-kpi-card">
+            <span class="telemetry-kpi-tag">Isolamento de Sessão</span>
+            <div class="telemetry-kpi-val">UUID por Run</div>
+            <div class="telemetry-kpi-sub">Cada chamada exige <code>ToolContext</code> isolado sem vazamento de estado.
+            </div>
+          </div>
+
+          <div class="telemetry-kpi-card">
+            <span class="telemetry-kpi-tag">Salvaguarda SEI</span>
+            <div class="telemetry-kpi-val">100% Air-Gapped</div>
+            <div class="telemetry-kpi-sub">Zero conexão com o SEI real; corpus estático auditável com hash SHA-256.
+            </div>
+          </div>
+        </div>
+
+        <!-- Main HUD Telemetry Console -->
+        <div class="telemetry-hud-panel">
+          <span class="hud-cross tl">+</span>
+          <span class="hud-cross tr">+</span>
+          <span class="hud-cross bl">+</span>
+          <span class="hud-cross br">+</span>
+
+          <div class="telemetry-top-controls">
+            <div class="telemetry-console-title-group">
+              <div class="telemetry-console-eyebrow">
+                <span class="live-dot"></span>
+                <span>HARNESS DETERMINÍSTICO · EVALUATION/TASKS.JSON → EXPERIMENTRUN</span>
+              </div>
+              <div class="telemetry-console-title">Rastreabilidade de Chamadas &amp; Auditoria de Evidências</div>
+            </div>
+
+            <div class="dash-filter-tabs">
+              <button class="dash-tab active" onclick="filterRuns('all', this)">Todas as Fases</button>
+              <button class="dash-tab" onclick="filterRuns('fase1', this)">Fase 1 (Orquestração)</button>
+              <button class="dash-tab" onclick="filterRuns('fase2', this)">Fase 2 (Soberania LLM)</button>
+            </div>
+          </div>
+
+          <!-- Horizontal Execution Cards -->
+          <div class="telemetry-cards-stack" id="telemetryTable">
+            <div class="telemetry-run-row" data-phase="fase1">
+              <div>
+                <span class="tr-col-label">Run ID (UUID)</span>
+                <div class="tr-uuid">#run-8f92a1</div>
+                <span class="tr-phase-tag">FASE 1 · PAREADO</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Executor / Agente</span>
+                <span class="badge-agent">Hermes (Loop ReAct)</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Classe de Modelo</span>
+                <div class="tr-model-name">Modelo Fixo Pareado</div>
+              </div>
+              <div>
+                <span class="tr-col-label">Endpoint ToolClient</span>
+                <span class="tr-tool-chip">ler_documento()</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Evidência Documental Auditada</span>
+                <div class="tr-evidence-box">
+                  PROC-DEMO-001 · doc_id: 101
+                  <span>Página Física 1 · Offset [0:140]</span>
+                </div>
+              </div>
+              <div>
+                <span class="tr-col-label">Veredito Factual</span>
+                <span class="status-verified">Auditado (1.0)</span>
+              </div>
+            </div>
+
+            <div class="telemetry-run-row" data-phase="fase1">
+              <div>
+                <span class="tr-col-label">Run ID (UUID)</span>
+                <div class="tr-uuid">#run-3c41e9</div>
+                <span class="tr-phase-tag">FASE 1 · PAREADO</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Executor / Agente</span>
+                <span class="badge-agent langgraph">LangGraph (State DAG)</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Classe de Modelo</span>
+                <div class="tr-model-name">Modelo Fixo Pareado</div>
+              </div>
+              <div>
+                <span class="tr-col-label">Endpoint ToolClient</span>
+                <span class="tr-tool-chip">consultar_processo()</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Evidência Documental Auditada</span>
+                <div class="tr-evidence-box">
+                  PROC-DEMO-001 · Metadados do Processo
+                  <span>Catálogo de Documentos Conferido</span>
+                </div>
+              </div>
+              <div>
+                <span class="tr-col-label">Veredito Factual</span>
+                <span class="status-verified">Auditado (1.0)</span>
+              </div>
+            </div>
+
+            <div class="telemetry-run-row" data-phase="fase2">
+              <div>
+                <span class="tr-col-label">Run ID (UUID)</span>
+                <div class="tr-uuid">#run-7d19b4</div>
+                <span class="tr-phase-tag">FASE 2 · LOCAL LGPD</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Executor / Agente</span>
+                <span class="badge-agent">Hermes (Loop ReAct)</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Classe de Modelo</span>
+                <div class="tr-model-name">Modelo Aberto Local</div>
+              </div>
+              <div>
+                <span class="tr-col-label">Endpoint ToolClient</span>
+                <span class="tr-tool-chip">buscar_documentos()</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Evidência Documental Auditada</span>
+                <div class="tr-evidence-box">
+                  PROC-DEMO-001 · doc_id: 102
+                  <span>Página Física 2 · Offset [40:180]</span>
+                </div>
+              </div>
+              <div>
+                <span class="tr-col-label">Veredito Factual</span>
+                <span class="status-verified">Soberania On-Premise</span>
+              </div>
+            </div>
+
+            <div class="telemetry-run-row" data-phase="fase2">
+              <div>
+                <span class="tr-col-label">Run ID (UUID)</span>
+                <div class="tr-uuid">#run-5a08f2</div>
+                <span class="tr-phase-tag">FASE 2 · NUVEM</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Executor / Agente</span>
+                <span class="badge-agent langgraph">LangGraph (State DAG)</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Classe de Modelo</span>
+                <div class="tr-model-name">Modelo Referência Nuvem</div>
+              </div>
+              <div>
+                <span class="tr-col-label">Endpoint ToolClient</span>
+                <span class="tr-tool-chip">ler_documento()</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Evidência Documental Auditada</span>
+                <div class="tr-evidence-box">
+                  PROC-DEMO-001 · doc_id: 101
+                  <span>Página Física 1 · Offset [0:140]</span>
+                </div>
+              </div>
+              <div>
+                <span class="tr-col-label">Veredito Factual</span>
+                <span class="status-verified">Baseline Auditado</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="telemetry-footer-bar">
+            <span>Contrato: <code>contracts/models.py → ExperimentRun</code> · Rubrica Binária (0 ou 1) · Prazo Final:
+              10/12/2026</span>
+            <a href="resultados.html" class="telemetry-footer-link">Abrir Painel de Resultados &amp; Protocolo Completo
+              →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER: Neon Cobalt Inner-Glow Frame + Cropped Watermark (Ref Image 3 Bottom Right) -->
+  <footer class="scale-frame-footer">
+    <div class="scale-frame-top">
+      <span>✦ CENTRO INTEGRADO EM INTELIGÊNCIA ARTIFICIAL (CIIA)</span>
+
+      <span>AMBIENTE 100% EXPERIMENTAL · LGPD SAFE</span>
+    </div>
+
+    <div class="scale-frame-links">
+      <div class="scale-col">
+        <h5>Escopo Experimental</h5>
+        <ul>
+          <li>Fase 1: Comparativo de Orquestração</li>
+          <li>Fase 2: Viabilidade de Modelos Locais</li>
+          <li>Exportações Manuais do SEI</li>
+          <li>Dados Tratados ou Sintéticos</li>
+        </ul>
+      </div>
+      <div class="scale-col">
+        <h5>Métricas Oficiais</h5>
+        <ul>
+          <li>Taxa de Sucesso com Fundamentação</li>
+          <li>Precisão no Uso de Ferramentas (TUA)</li>
+          <li>Latência &amp; Número de Passos</li>
+          <li>Custo por Tarefa Concluída (CTCE)</li>
+        </ul>
+      </div>
+      <div class="scale-col">
+        <h5>Barramento ToolClient</h5>
+        <ul>
+          <li>consultar_processo / buscar_documentos</li>
+          <li>ler_documento / consultar_requisitos</li>
+          <li>registrar_pendencia (Futura)</li>
+          <li>salvar_minuta (Futura)</li>
+        </ul>
+      </div>
+      <div class="scale-col">
+        <h5>Modelos Avaliados</h5>
+        <ul>
+          <li>Hermes (Loop ReAct Dinâmico)</li>
+          <li>LangGraph (Grafo de Estados)</li>
+          <li>Locais: Qwen 2.5 &amp; Llama 3.1</li>
+          <li>Nuvem: GPT-4o &amp; Claude 3.5</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="scale-watermark">CIIA & UnDF</div>
+  </footer>
+
+  <!-- INTERACTIVE VISUAL EFFECTS SCRIPTS -->
+  <script>
+    /* ==========================================================================
+       DASHBOARD TABLE FILTER (Interactive Harness Preview)
+       ========================================================================== */
+    function filterRuns(phase, btn) {
+      document.querySelectorAll('.dash-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const rows = document.querySelectorAll('#telemetryTable .telemetry-run-row');
+      rows.forEach(row => {
+        if (phase === 'all' || row.getAttribute('data-phase') === phase) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    /* ==========================================================================
+       1. HERO BOKEH & RISING BIOLUMINESCENT PARTICLES ON THE ECLIPSE ARC
+       ========================================================================== */
+    (function initHeroBokeh() {
+      const canvas = document.getElementById('heroBokehCanvas');
+      const ctx = canvas.getContext('2d');
+      let w = 0, h = 0, dpr = 1;
+      const orbs = [];
+
+      function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        w = rect.width; h = rect.height;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = w * dpr; canvas.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        orbs.length = 0;
+        for (let i = 0; i < 65; i++) {
+          orbs.push({
+            x: Math.random() * w,
+            y: Math.random() * h * 0.75,
+            r: 0.8 + Math.random() * 2.4,
+            vy: -0.15 - Math.random() * 0.35,
+            alpha: 0.2 + Math.random() * 0.65,
+            phase: Math.random() * Math.PI * 2
+          });
+        }
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function animate(now) {
+        const t = now * 0.001;
+        ctx.clearRect(0, 0, w, h);
+        for (let i = 0; i < orbs.length; i++) {
+          const o = orbs[i];
+          o.y += o.vy;
+          if (o.y < 10) {
+            o.y = h * 0.7;
+            o.x = Math.random() * w;
+          }
+          const a = o.alpha * (0.5 + 0.5 * Math.sin(t * 2 + o.phase));
+          ctx.beginPath();
+          ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(191, 217, 255, ${a.toFixed(3)})`;
+          ctx.fill();
+        }
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    })();
+
+    /* ==========================================================================
+       2. 3D REFRACTING GLASS MONOLITH OVER CAUSTIC WATER RIPPLES (Ref Image 2)
+       ========================================================================== */
+    (function initMonolithCanvas() {
+      const canvas = document.getElementById('monolithCanvas');
+      const ctx = canvas.getContext('2d');
+      let w = 0, h = 0, dpr = 1;
+
+      function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        w = rect.width; h = rect.height;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = w * dpr; canvas.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function animate(now) {
+        const t = now * 0.0015;
+        ctx.clearRect(0, 0, w, h);
+
+        const cx = w * 0.52;
+        const baseY = h * 0.80;
+        const slabW = Math.min(w * 0.44, 130);
+        const slabH = Math.min(h * 0.66, 250);
+        const depthX = 22;
+        const depthY = -12;
+
+        // 1. Caustic Water Ripples at the base
+        for (let i = 0; i < 6; i++) {
+          const prog = ((t * 0.4 + i / 6) % 1);
+          const rx = slabW * (0.65 + prog * 1.15);
+          const ry = 10 + prog * 26;
+          const alpha = (1 - prog) * 0.42;
+          ctx.beginPath();
+          ctx.ellipse(cx, baseY + 6, rx, ry, 0, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(191, 217, 255, ${alpha.toFixed(3)})`;
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+        }
+
+        const x0 = cx - slabW * 0.5;
+        const y0 = baseY - slabH;
+
+        // 2. Back Extruded 3D Glass Faces
+        ctx.fillStyle = 'rgba(147, 197, 253, 0.10)';
+        ctx.strokeStyle = 'rgba(224, 242, 254, 0.45)';
+        ctx.lineWidth = 1.1;
+
+        // Top Face
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x0 + depthX, y0 + depthY);
+        ctx.lineTo(x0 + slabW + depthX, y0 + depthY);
+        ctx.lineTo(x0 + slabW, y0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Right Side Face
+        const sideGrad = ctx.createLinearGradient(x0 + slabW, y0, x0 + slabW + depthX, baseY);
+        sideGrad.addColorStop(0, 'rgba(191, 217, 255, 0.32)');
+        sideGrad.addColorStop(1, 'rgba(29, 94, 255, 0.14)');
+        ctx.fillStyle = sideGrad;
+        ctx.beginPath();
+        ctx.moveTo(x0 + slabW, y0);
+        ctx.lineTo(x0 + slabW + depthX, y0 + depthY);
+        ctx.lineTo(x0 + slabW + depthX, baseY + depthY);
+        ctx.lineTo(x0 + slabW, baseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 3. Front Glass Face
+        const frontGrad = ctx.createLinearGradient(x0, y0, x0 + slabW, baseY);
+        frontGrad.addColorStop(0, 'rgba(255, 255, 255, 0.24)');
+        frontGrad.addColorStop(0.45, 'rgba(96, 165, 250, 0.12)');
+        frontGrad.addColorStop(1, 'rgba(15, 42, 105, 0.38)');
+        ctx.fillStyle = frontGrad;
+        ctx.fillRect(x0, y0, slabW, slabH);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.strokeRect(x0, y0, slabW, slabH);
+
+        // 4. Internal Glowing Neural/Fracture Filaments inside the Glass Slab
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(x0, y0, slabW, slabH);
+        ctx.clip();
+
+        const midX = x0 + slabW * 0.52;
+        const midY = y0 + slabH * 0.52;
+        const pulse = 0.75 + 0.25 * Math.sin(t * 2.2);
+
+        const branches = [
+          [[0, 0], [-18, -35], [-8, -68]],
+          [[0, 0], [20, -28], [32, -55]],
+          [[0, 0], [-24, 18], [-35, 48]],
+          [[0, 0], [14, 34], [26, 74]],
+          [[-18, -35], [-34, -22]],
+          [[14, 34], [-8, 58]]
+        ];
+
+        ctx.strokeStyle = `rgba(255, 255, 255, ${(0.85 * pulse).toFixed(3)})`;
+        ctx.shadowColor = '#60a5fa';
+        ctx.shadowBlur = 12;
+        ctx.lineWidth = 1.4;
+
+        branches.forEach(br => {
+          ctx.beginPath();
+          br.forEach((pt, idx) => {
+            const px = midX + pt[0] + Math.sin(t + idx) * 1.2;
+            const py = midY + pt[1] + Math.cos(t + idx) * 1.2;
+            if (idx === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          });
+          ctx.stroke();
+        });
+        ctx.restore();
+
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    })();
+
+    /* ==========================================================================
+       3. 3D HOLOGRAPHIC NEURAL BRAIN CONSTELLATION (Ref Image 4 Middle Slide)
+       ========================================================================== */
+    (function initNeuralBrain() {
+      const canvas = document.getElementById('neuralBrainCanvas');
+      const ctx = canvas.getContext('2d');
+      let w = 0, h = 0, dpr = 1;
+      const nodes = [];
+      const edges = [];
+
+      function buildBrain() {
+        nodes.length = 0;
+        edges.length = 0;
+        const count = 88;
+        for (let i = 0; i < count; i++) {
+          // Two-hemisphere brain-like ellipsoid distribution
+          const u = Math.random() * Math.PI * 2;
+          const v = Math.acos(2 * Math.random() - 1);
+          const r = 0.72 + 0.28 * Math.random();
+          let x = r * Math.sin(v) * Math.cos(u) * 1.35;
+          let y = r * Math.cos(v) * 0.88 - 0.1 * Math.pow(Math.sin(v) * Math.cos(u), 2);
+          let z = r * Math.sin(v) * Math.sin(u) * 0.95;
+          nodes.push({ x, y, z, pulse: Math.random() * Math.PI * 2 });
+        }
+
+        for (let i = 0; i < count; i++) {
+          for (let j = i + 1; j < count; j++) {
+            const d = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y, nodes[i].z - nodes[j].z);
+            if (d < 0.52) {
+              edges.push([i, j]);
+            }
+          }
+        }
+      }
+
+      function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        w = rect.width; h = rect.height;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = w * dpr; canvas.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        buildBrain();
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function animate(now) {
+        const t = now * 0.0007;
+        ctx.clearRect(0, 0, w, h);
+
+        const cx = w * 0.5;
+        const cy = h * 0.52;
+        const scale = Math.min(w * 0.2, h * 0.42);
+
+        // Sweeping Orbital Rings around the Neural Brain
+        ctx.save();
+        ctx.translate(cx, cy + 18);
+        ctx.scale(1, 0.24);
+        for (let r = 1; r <= 3; r++) {
+          ctx.beginPath();
+          ctx.arc(0, 0, scale * (1.4 + r * 0.45), 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(96, 165, 250, ${(0.28 / r).toFixed(3)})`;
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        const cosA = Math.cos(t), sinA = Math.sin(t);
+        const projected = nodes.map(n => {
+          const rx = n.x * cosA - n.z * sinA;
+          const rz = n.z * cosA + n.x * sinA;
+          const depth = (rz + 1.6) / 3.2;
+          return {
+            px: cx + rx * scale,
+            py: cy + n.y * scale,
+            depth,
+            pulse: n.pulse
+          };
+        });
+
+        // Draw Synaptic Edges
+        ctx.lineWidth = 0.85;
+        for (let i = 0; i < edges.length; i++) {
+          const [a, b] = edges[i];
+          const pa = projected[a], pb = projected[b];
+          const alpha = Math.max(0.05, Math.min(0.55, (pa.depth + pb.depth) * 0.22));
+          ctx.strokeStyle = `rgba(96, 165, 250, ${alpha.toFixed(3)})`;
+          ctx.beginPath();
+          ctx.moveTo(pa.px, pa.py);
+          ctx.lineTo(pb.px, pb.py);
+          ctx.stroke();
+        }
+
+        // Draw Glowing Nodes
+        for (let i = 0; i < projected.length; i++) {
+          const p = projected[i];
+          const glow = 0.6 + 0.4 * Math.sin(now * 0.003 + p.pulse);
+          const r = 1.4 + p.depth * 1.8;
+          ctx.beginPath();
+          ctx.arc(p.px, p.py, r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(224, 242, 254, ${(p.depth * glow).toFixed(3)})`;
+          ctx.fill();
+        }
+
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    })();
+
+    /* ==========================================================================
+       4. HOLOGRAPHIC HUD PORTAL CORE (Ref Image 4 Bottom Slide - "COMMON PLATFORM")
+       ========================================================================== */
+    (function initHudCore() {
+      const canvas = document.getElementById('hudCoreCanvas');
+      const ctx = canvas.getContext('2d');
+      let w = 0, h = 0, dpr = 1;
+
+      function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        w = rect.width; h = rect.height;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = w * dpr; canvas.height = h * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function animate(now) {
+        const t = now * 0.001;
+        ctx.clearRect(0, 0, w, h);
+
+        const cx = w * 0.5;
+        const cy = h * 0.5;
+        const maxR = Math.min(w, h) * 0.43;
+
+        // Ambient Radial Core Glow
+        const grad = ctx.createRadialGradient(cx, cy, maxR * 0.1, cx, cy, maxR * 1.1);
+        grad.addColorStop(0, 'rgba(59, 130, 246, 0.42)');
+        grad.addColorStop(0.6, 'rgba(29, 94, 255, 0.18)');
+        grad.addColorStop(1, 'rgba(2, 5, 16, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, maxR * 1.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Outer Segmented Telemetry Ring
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(t * 0.35);
+        ctx.strokeStyle = 'rgba(147, 197, 253, 0.55)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([18, 10, 4, 10]);
+        ctx.beginPath();
+        ctx.arc(0, 0, maxR * 0.96, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        // Counter-Rotating Tick Ring
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-t * 0.5);
+        const ticks = 48;
+        for (let i = 0; i < ticks; i++) {
+          const a = (i / ticks) * Math.PI * 2;
+          const r1 = maxR * 0.80;
+          const r2 = i % 4 === 0 ? maxR * 0.87 : maxR * 0.83;
+          ctx.beginPath();
+          ctx.moveTo(Math.cos(a) * r1, Math.sin(a) * r1);
+          ctx.lineTo(Math.cos(a) * r2, Math.sin(a) * r2);
+          ctx.strokeStyle = i % 4 === 0 ? 'rgba(255,255,255,0.75)' : 'rgba(96,165,250,0.35)';
+          ctx.lineWidth = 1.3;
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // Bright Inner Portal Ring
+        ctx.beginPath();
+        ctx.arc(cx, cy, maxR * 0.67, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(191, 217, 255, 0.85)';
+        ctx.lineWidth = 2.2;
+        ctx.shadowColor = '#3b82f6';
+        ctx.shadowBlur = 16;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        requestAnimationFrame(animate);
+      }
+      requestAnimationFrame(animate);
+    })();
+  </script>
+</body>
+
+</html>

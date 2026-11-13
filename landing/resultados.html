@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Estrutura do Protocolo &amp; Critérios do Leaderboard: Benchmark CIIA/UnDF (Hermes vs. LangGraph no SEI)</title>
+  <title>Estrutura do Protocolo &amp; Critérios do Leaderboard: Benchmark CIIA & UnDF (Hermes vs. LangGraph no SEI)
+  </title>
   <!-- Google Fonts: Plus Jakarta Sans (UI/Display), Cormorant Garamond (Editorial Glass Slide Accents), JetBrains Mono (Telemetry/Code) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1745,9 +1746,7 @@
   <header class="navbar">
     <div class="navbar-inner">
       <a href="index.html" class="logo">
-        <img src="ciia_logo.png" alt="CIIA / UnDF" class="logo-img" />
-
-        <span class="logo-sub">BENCHLM · SEI</span>
+        <img src="ciialogo.png" alt="CIIA & UnDF" class="logo-img" />
       </a>
 
       <ul class="nav-menu">
@@ -1760,7 +1759,7 @@
 
       <div class="nav-actions">
         <div class="nav-search-pill" onclick="document.getElementById('modelSearchInput').focus()">
-          <span>🔍 Buscar modelo ou orquestrador</span>
+          <span> Buscar modelo ou agente</span>
           <span class="kbd-tag">⌘K</span>
         </div>
         <a href="index.html" class="btn-pill-white">← Visão Geral</a>
@@ -1779,17 +1778,22 @@
       <div class="hero-split-grid">
         <!-- Left Description Column -->
         <div class="hero-left">
-          <div class="beta-pill">
-            <span class="pulse-dot"></span>
-            <span>ESTRUTURA METODOLÓGICA · PROTOCOLO CIENTÍFICO CIIA/UnDF</span>
+          <div class="beta-pill"
+            style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24;">
+            <span class="pulse-dot" style="background: #fbbf24; box-shadow: 0 0 10px #fbbf24;"></span>
+            <span>EM PRODUÇÃO · DADOS FINAIS APÓS O TÉRMINO DO BENCHMARK</span>
           </div>
 
           <h1 class="hero-title">
-            Critérios de Avaliação &amp; Formato do Leaderboard Oficial
+            Painel Oficial de Resultados do Benchmark CIIA & UnDF
           </h1>
 
-          <div class="hero-quote-rule">
-            Desenho experimental para avaliação comparativa e pareada entre <strong>Hermes (Loop ReAct)</strong> e <strong>LangGraph (State DAG)</strong> sobre processos administrativos em formato SEI.
+          <div class="hero-quote-rule"
+            style="border-left-color: #fbbf24; background: rgba(245, 158, 11, 0.05); padding: 14px 18px; border-radius: 0 10px 10px 0;">
+            <strong>Aviso de Transparência:</strong> Este painel está em <strong>produção</strong> e em fase de
+            preparação experimental. Todos os dados consolidados, taxas de acerto factual, medições de latência e custos
+            serão disponibilizados publicamente para consulta aberta e auditoria <strong>após o término do benchmark, a
+              conclusão de todos os nossos testes controlados e a finalização do ciclo de desenvolvimento</strong>.
           </div>
 
           <p class="hero-subtitle">
@@ -1818,7 +1822,8 @@
               SR %<span class="unit">Meta Factual</span>
             </div>
             <div class="brc-model-name">Taxa de Sucesso com Fundamentação Estrita</div>
-            <div class="brc-model-sub">Nota 1 atribuída apenas com resposta exata, página física e offset comprovados pelo avaliador.</div>
+            <div class="brc-model-sub">Nota 1 atribuída apenas com resposta exata, página física e offset comprovados
+              pelo avaliador.</div>
           </div>
 
           <div class="brc-divider"></div>
@@ -1856,7 +1861,8 @@
               <span class="trust-badge green">Binária Rígida (0 ou 1)</span>
             </div>
             <p>
-              Resposta textual bem redigida sem citação exata de <code>document_id</code> e <code>pagina</code> física ou com
+              Resposta textual bem redigida sem citação exata de <code>document_id</code> e <code>pagina</code> física
+              ou com
               alucinação em processo parcial recebe <strong>nota zero</strong>.
             </p>
           </div>
@@ -1867,7 +1873,8 @@
               <span class="trust-badge blue">Harness Cego e Padronizado</span>
             </div>
             <p>
-              Nenhum dado decorre de auto-relato. As execuções rodam pareadas no mesmo barramento <code>ToolClient</code>
+              Nenhum dado decorre de auto-relato. As execuções rodam pareadas no mesmo barramento
+              <code>ToolClient</code>
               com parâmetros controlados e <code>run_id</code> único por sessão.
             </p>
           </div>
@@ -1904,9 +1911,12 @@
         </div>
 
         <div class="leaders-view-pills">
-          <button class="view-pill-btn active" onclick="highlightLeaderMode('all', this)">Visão Geral dos Perfis</button>
-          <button class="view-pill-btn" onclick="highlightLeaderMode('sovereign', this)">Foco Soberania Local (LGPD)</button>
-          <button class="view-pill-btn" onclick="highlightLeaderMode('orchestration', this)">Foco Fase 1 (Orquestração)</button>
+          <button class="view-pill-btn active" onclick="highlightLeaderMode('all', this)">Visão Geral dos
+            Perfis</button>
+          <button class="view-pill-btn" onclick="highlightLeaderMode('sovereign', this)">Foco Soberania Local
+            (LGPD)</button>
+          <button class="view-pill-btn" onclick="highlightLeaderMode('orchestration', this)">Foco Fase 1
+            (Orquestração)</button>
         </div>
       </div>
 
@@ -1933,52 +1943,38 @@
             <div class="lc-metrics-list">
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Sucesso Verificado (SR)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 90%;"></div>
-                </div>
-                <span class="lc-metric-val">Factual</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Precisão ToolClient (TUA)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 90%;"></div>
-                </div>
-                <span class="lc-metric-val">HTTP 200</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Citação Exata (Doc/Pág)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 90%;"></div>
-                </div>
-                <span class="lc-metric-val">Offset</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Humildade (Autos Parciais)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 90%;"></div>
-                </div>
-                <span class="lc-metric-val">Sem Alucinar</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Checklist (Requisitos)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 90%;"></div>
-                </div>
-                <span class="lc-metric-val">Normativo</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Eficiência de Passos</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">Auditada</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Escrita Idempotente</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 80%;"></div>
-                </div>
-                <span class="lc-metric-val">Contrato</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Soberania Local (LGPD)</span>
@@ -1989,7 +1985,8 @@
           </div>
 
           <div class="lc-footer">
-            <span class="lc-status-dot"><i style="background:#34d399; box-shadow:0 0 8px #34d399;"></i> Baseline Teórico de Raciocínio</span>
+            <span class="lc-status-dot"><i style="background:#34d399; box-shadow:0 0 8px #34d399;"></i> Baseline Teórico
+              de Raciocínio</span>
             <a href="#tabela" class="lc-details-link">Critérios →</a>
           </div>
         </article>
@@ -2016,65 +2013,50 @@
             <div class="lc-metrics-list">
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Sucesso Verificado (SR)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">Factual</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Precisão ToolClient (TUA)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">HTTP 200</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Citação Exata (Doc/Pág)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">Offset</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Humildade (Autos Parciais)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">Sem Alucinar</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Checklist (Requisitos)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">Normativo</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Eficiência de Passos</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 80%;"></div>
-                </div>
-                <span class="lc-metric-val">Auditada</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Escrita Idempotente</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 80%;"></div>
-                </div>
-                <span class="lc-metric-val">Contrato</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Soberania Local (LGPD)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill emerald" style="width: 100%;"></div>
-                </div>
-                <span class="lc-metric-val">100% Local</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">100% Local</span>
               </div>
             </div>
           </div>
 
           <div class="lc-footer">
-            <span class="lc-status-dot"><i style="background:#60a5fa; box-shadow:0 0 8px #60a5fa;"></i> Hardware Próprio · Zero Vazamento</span>
+            <span class="lc-status-dot"><i style="background:#60a5fa; box-shadow:0 0 8px #60a5fa;"></i> Hardware Próprio
+              · Zero Vazamento</span>
             <a href="#confronto" class="lc-details-link">Critérios →</a>
           </div>
         </article>
@@ -2101,63 +2083,50 @@
             <div class="lc-metrics-list">
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Sucesso Verificado (SR)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">Factual</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Precisão ToolClient (TUA)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">HTTP 200</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Citação Exata (Doc/Pág)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">Offset</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Humildade (Autos Parciais)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">Sem Alucinar</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Checklist (Requisitos)</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 85%;"></div>
-                </div>
-                <span class="lc-metric-val">Normativo</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Eficiência de Passos</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 80%;"></div>
-                </div>
-                <span class="lc-metric-val">Dinâmica</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Escrita Idempotente</span>
-                <div class="lc-bar-track">
-                  <div class="lc-bar-fill" style="width: 80%;"></div>
-                </div>
-                <span class="lc-metric-val">Contrato</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
               <div class="lc-metric-row">
                 <span class="lc-metric-name">Risco de Recursão</span>
                 <div class="lc-bar-dotted"></div>
-                <span class="lc-metric-val muted">Monitorado</span>
+                <span class="lc-metric-val muted">Em Produção</span>
               </div>
             </div>
           </div>
 
           <div class="lc-footer">
-            <span class="lc-status-dot"><i style="background:#fbbf24; box-shadow:0 0 8px #fbbf24;"></i> Loop Autônomo sem Roteiro Fixo</span>
+            <span class="lc-status-dot"><i style="background:#fbbf24; box-shadow:0 0 8px #fbbf24;"></i> Loop Autônomo
+              sem Roteiro Fixo</span>
             <a href="#tabela" class="lc-details-link">Critérios →</a>
           </div>
         </article>
@@ -2172,7 +2141,8 @@
         <div class="leaders-heading-group">
           <h2>
             Estrutura da Matriz de Avaliação (14 Configurações Pareadas)
-            <span class="snapshot-date">Prévia dos campos e métricas estruturados para consolidação dos resultados</span>
+            <span class="snapshot-date">Prévia dos campos e métricas estruturados para consolidação dos
+              resultados</span>
           </h2>
         </div>
       </div>
@@ -2252,10 +2222,10 @@
           </div>
           <div class="htr-item">
             <p>
-              <strong>Limite Honesto (Escopo Experimental):</strong> Estes números são <strong>dados mockados de
-                simulação</strong> para estruturar a visualização do artigo do CIIA/UnDF. O
-              cálculo de CTCE local considera amortização de GPU/energia em servidor próprio vs. tarifação por token nas
-              APIs comerciais.
+              <strong>Status da Coleta (Painel em Produção):</strong> Não exibimos nenhum dado fictício ou simulado.
+              Esta matriz reflete a estrutura oficial de 14 configurações pareadas que serão submetidas ao protocolo.
+              Os números e métricas consolidadas serão publicados na íntegra para acesso público logo após o término
+              do benchmark e a conclusão de todas as rodadas experimentais.
             </p>
           </div>
         </div>
@@ -2270,7 +2240,8 @@
         <div class="leaders-heading-group">
           <h2>
             Fase 1 e Fase 2: Desenho Experimental e Hipóteses do Estudo
-            <span class="snapshot-date">Isolamento metodológico entre arquitetura de orquestração e capacidade da LLM</span>
+            <span class="snapshot-date">Isolamento metodológico entre arquitetura de orquestração e capacidade da
+              LLM</span>
           </h2>
         </div>
       </div>
@@ -2286,7 +2257,9 @@
             Grafo de Estados (LangGraph) vs. Loop Livre (Hermes)
           </h3>
           <p style="font-size: 13px; line-height: 1.6; color: var(--text-secondary);">
-            A investigação verifica se orquestradores estruturados com nós de validação contêm erros e alucinações de modelos com menor precisão em chamadas de ferramentas, ou se loops dinâmicos mantêm maior adaptabilidade na navegação de autos complexos.
+            A investigação verifica se orquestradores estruturados com nós de validação contêm erros e alucinações de
+            modelos com menor precisão em chamadas de ferramentas, ou se loops dinâmicos mantêm maior adaptabilidade na
+            navegação de autos complexos.
           </p>
 
           <div class="amort-bar-group">
@@ -2297,17 +2270,13 @@
               </div>
               <div class="dual-bar-row">
                 <span style="color:#a7f3d0;">Grafo de Estados</span>
-                <div class="dual-bar-track">
-                  <div class="dual-bar-fill lg" style="width:90%"></div>
-                </div>
-                <span>Pareado</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
               </div>
               <div class="dual-bar-row">
                 <span style="color:#93c5fd;">Loop Autônomo</span>
-                <div class="dual-bar-track">
-                  <div class="dual-bar-fill hm" style="width:90%"></div>
-                </div>
-                <span>Pareado</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
               </div>
             </div>
 
@@ -2318,17 +2287,13 @@
               </div>
               <div class="dual-bar-row">
                 <span style="color:#a7f3d0;">Grafo de Estados</span>
-                <div class="dual-bar-track">
-                  <div class="dual-bar-fill lg" style="width:85%"></div>
-                </div>
-                <span>Pareado</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
               </div>
               <div class="dual-bar-row">
                 <span style="color:#93c5fd;">Loop Autônomo</span>
-                <div class="dual-bar-track">
-                  <div class="dual-bar-fill hm" style="width:85%"></div>
-                </div>
-                <span>Pareado</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
               </div>
             </div>
 
@@ -2339,17 +2304,13 @@
               </div>
               <div class="dual-bar-row">
                 <span style="color:#a7f3d0;">Grafo de Estados</span>
-                <div class="dual-bar-track">
-                  <div class="dual-bar-fill lg" style="width:80%"></div>
-                </div>
-                <span>Pareado</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
               </div>
               <div class="dual-bar-row">
                 <span style="color:#93c5fd;">Loop Autônomo</span>
-                <div class="dual-bar-track">
-                  <div class="dual-bar-fill hm" style="width:80%"></div>
-                </div>
-                <span>Pareado</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
               </div>
             </div>
 
@@ -2360,17 +2321,13 @@
               </div>
               <div class="dual-bar-row">
                 <span style="color:#a7f3d0;">Grafo de Estados</span>
-                <div class="dual-bar-track">
-                  <div class="dual-bar-fill lg" style="width:75%"></div>
-                </div>
-                <span>Pareado</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
               </div>
               <div class="dual-bar-row">
                 <span style="color:#93c5fd;">Loop Autônomo</span>
-                <div class="dual-bar-track">
-                  <div class="dual-bar-fill hm" style="width:75%"></div>
-                </div>
-                <span>Pareado</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
               </div>
             </div>
           </div>
@@ -2394,7 +2351,8 @@
               <span>Baseline Comercial Criptografado</span>
             </div>
             <p>
-              Estabelecem o teto metodológico de raciocínio e conformidade textual com as instruções do processo administrativo, fornecendo o padrão comparativo para a avaliação.
+              Estabelecem o teto metodológico de raciocínio e conformidade textual com as instruções do processo
+              administrativo, fornecendo o padrão comparativo para a avaliação.
             </p>
           </div>
 
@@ -2404,7 +2362,8 @@
               <span style="background:rgba(16,185,129,0.2); color:#a7f3d0;">Servidor Próprio · 100% LGPD</span>
             </div>
             <p>
-              Avaliam a capacidade de modelos de pesos abertos executados localmente atingirem acurácia equivalente à da nuvem, mantendo o processo administrativo integralmente dentro da infraestrutura pública.
+              Avaliam a capacidade de modelos de pesos abertos executados localmente atingirem acurácia equivalente à da
+              nuvem, mantendo o processo administrativo integralmente dentro da infraestrutura pública.
             </p>
           </div>
 
@@ -2414,7 +2373,8 @@
               <span>Eficiência de Custo e Tool-Calling</span>
             </div>
             <p>
-              Investigam a viabilidade prática de modelos menores e especializados em chamada de ferramentas operarem com baixo custo computacional por processo concluído.
+              Investigam a viabilidade prática de modelos menores e especializados em chamada de ferramentas operarem
+              com baixo custo computacional por processo concluído.
             </p>
           </div>
         </div>
@@ -2585,35 +2545,42 @@
         <div class="finding-card vivid">
           <h4>01. Papel da Arquitetura de Orquestração</h4>
           <p>
-            Determinar empiricamente se a estruturação em grafo com validação explícita compensa limitações intrínsecas de modelos de linguagem, ou se a flexibilidade de loops livres alcança melhor navegação em tarefas de múltiplos passos.
+            Determinar empiricamente se a estruturação em grafo com validação explícita compensa limitações intrínsecas
+            de modelos de linguagem, ou se a flexibilidade de loops livres alcança melhor navegação em tarefas de
+            múltiplos passos.
           </p>
         </div>
 
         <div class="finding-card">
           <h4>02. Equação de Custo Computacional (CTCE)</h4>
           <p>
-            Mapear o custo real por parecer emitido com comprovação documental. A métrica CTCE pondera o custo total da infraestrutura ou tarifação de tokens pela taxa efetiva de sucesso auditado com evidência.
+            Mapear o custo real por parecer emitido com comprovação documental. A métrica CTCE pondera o custo total da
+            infraestrutura ou tarifação de tokens pela taxa efetiva de sucesso auditado com evidência.
           </p>
         </div>
 
         <div class="finding-card">
           <h4>03. Resistência a Alucinações em Autos Parciais</h4>
           <p>
-            Avaliar o comportamento dos agentes diante de exportações parciais do SEI. No setor público, a recusa informada de um parecer por ausência de certidão nos autos é uma resposta correta, enquanto uma aprovação inventada é falha crítica.
+            Avaliar o comportamento dos agentes diante de exportações parciais do SEI. No setor público, a recusa
+            informada de um parecer por ausência de certidão nos autos é uma resposta correta, enquanto uma aprovação
+            inventada é falha crítica.
           </p>
         </div>
 
         <div class="finding-card vivid">
           <h4>04. Soberania Tecnológica e LGPD</h4>
           <p>
-            Fornecer subsídios técnicos quantitativos para decisões de governança no setor público, demonstrando a viabilidade de servidores próprios para análise de processos sensíveis sem envio de dados a provedores externos.
+            Fornecer subsídios técnicos quantitativos para decisões de governança no setor público, demonstrando a
+            viabilidade de servidores próprios para análise de processos sensíveis sem envio de dados a provedores
+            externos.
           </p>
         </div>
       </div>
 
       <!-- About & Provenance Metadata Box (Directly Inspired by Screenshot 3) -->
       <div class="spec-section-box">
-        <h3>Sobre o Benchmark CIIA/UnDF &amp; Proveniência Experimental</h3>
+        <h3>Sobre o Benchmark CIIA & UnDF &amp; Proveniência Experimental</h3>
         <div class="spec-four-cols">
           <div class="spec-col-item">
 
@@ -2655,23 +2622,28 @@
       <!-- Questions / FAQ Section (Ref Image 3 Bottom) -->
       <div class="faq-list">
         <div class="faq-item">
-          <h5>O que exatamente o Benchmark CIIA/UnDF avalia?</h5>
+          <h5>O que exatamente o Benchmark CIIA & avalia?</h5>
           <p>
             Avalia a eficácia factual verificada (SR), a precisão no uso de ferramentas HTTP (TUA), a latência em passos
-            e o custo por tarefa concluída com evidência (CTCE) de agentes autônomos operando sobre processos administrativos
-            exportados do SEI, isolando a arquitetura de orquestração (Hermes vs. LangGraph) e a classe do modelo de linguagem.
+            e o custo por tarefa concluída com evidência (CTCE) de agentes autônomos operando sobre processos
+            administrativos
+            exportados do SEI, isolando a arquitetura de orquestração (Hermes vs. LangGraph) e a classe do modelo de
+            linguagem.
           </p>
         </div>
         <div class="faq-item">
           <h5>Por que a regra 'Sucesso Verificado ≠ Sucesso Declarado' é essencial?</h5>
           <p>
-            Na administração pública, uma resposta bem redigida não tem valor legal sem indicação precisa de folha e documento nos autos. Modelos podem declarar que o processo está regular, mas sem apontar a página física exata onde a comprovação se encontra, a nota é zero.
+            Na administração pública, uma resposta bem redigida não tem valor legal sem indicação precisa de folha e
+            documento nos autos. Modelos podem declarar que o processo está regular, mas sem apontar a página física
+            exata onde a comprovação se encontra, a nota é zero.
           </p>
         </div>
         <div class="faq-item">
           <h5>Como é garantida a paridade estrita entre os executores?</h5>
           <p>
-            Ambos os agentes consomem a mesma interface ToolClient, com as mesmas ferramentas HTTP, o mesmo corpus documental e orçamentos comparáveis de execução, sem atalhos pré-programados para a resposta.
+            Ambos os agentes consomem a mesma interface ToolClient, com as mesmas ferramentas HTTP, o mesmo corpus
+            documental e orçamentos comparáveis de execução, sem atalhos pré-programados para a resposta.
           </p>
         </div>
       </div>
@@ -2681,8 +2653,8 @@
   <!-- FOOTER: Neon Cobalt Inner-Glow Frame + Cropped Watermark (Lumine Signature) -->
   <footer class="scale-frame-footer">
     <div class="scale-frame-top">
-      <span>✦ CENTRO DE INOVAÇÃO EM INTELIGÊNCIA ARTIFICIAL (CIIA / UnDF)</span>
-      <span>PROTOCOLO EXPERIMENTAL &amp; LEADERBOARD MOCKADO</span>
+      <span>✦ CENTRO INTEGRADO DE INTELIGÊNCIA ARTIFICIAL (CIIA)</span>
+      <span>PAINEL EM PRODUÇÃO · DADOS FINAIS APÓS BENCHMARK</span>
       <span>AMBIENTE 100% EXPERIMENTAL · LGPD SAFE</span>
     </div>
 
@@ -2727,7 +2699,7 @@
       </div>
     </div>
 
-    <div class="scale-watermark">CIIA / UnDF</div>
+    <div class="scale-watermark">CIIA & UnDF </div>
   </footer>
 
   <!-- INTERACTIVE DATA & FILTERING SCRIPT -->

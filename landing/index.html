@@ -221,8 +221,8 @@
        ========================================================================== */
     .hero-section {
       position: relative;
-      padding-top: 155px;
-      padding-bottom: 90px;
+      padding-top: 120px;
+      padding-bottom: 28px;
       overflow: hidden;
     }
 
@@ -298,7 +298,7 @@
       z-index: 5;
       text-align: center;
       max-width: 850px;
-      margin: 85px auto 0 auto;
+      margin: 45px auto 0 auto;
     }
 
     .beta-pill {
@@ -313,7 +313,7 @@
       font-size: 12.5px;
       font-weight: 500;
       color: var(--ice-light);
-      margin-bottom: 26px;
+      margin-bottom: 20px;
       backdrop-filter: blur(8px);
     }
 
@@ -329,7 +329,7 @@
       font-weight: 700;
       line-height: 1.09;
       letter-spacing: -0.03em;
-      margin-bottom: 22px;
+      margin-bottom: 18px;
       background: linear-gradient(95deg, #ffffff 15%, #dbeafe 48%, #60a5fa 88%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -341,7 +341,7 @@
       line-height: 1.68;
       color: var(--text-secondary);
       max-width: 680px;
-      margin: 0 auto 36px auto;
+      margin: 0 auto 28px auto;
       font-weight: 400;
     }
 
@@ -355,7 +355,7 @@
       align-items: center;
       justify-content: center;
       gap: 16px;
-      margin-bottom: 68px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
     }
 
@@ -408,275 +408,314 @@
     }
 
     /* ==========================================================================
-       FLOATING GLASS DASHBOARD MOCKUP (Ref Image 1 Bottom Harness Console)
+       TELEMETRY SHOWCASE: COBALT & OBSIDIAN HUD EXECUTION CARDS
        ========================================================================== */
-    .dashboard-preview-wrap {
+    .telemetry-showcase-wrap {
       position: relative;
       z-index: 6;
-      max-width: 1120px;
+      max-width: 1180px;
       margin: 0 auto;
     }
 
-    /* Radiant bottom glow behind dashboard top edge */
-    .dashboard-preview-wrap::before {
-      content: "";
-      position: absolute;
-      top: -28px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 65%;
-      height: 55px;
-      background: radial-gradient(ellipse at center, rgba(147, 197, 253, 0.75) 0%, rgba(29, 94, 255, 0.35) 50%, transparent 75%);
-      filter: blur(16px);
-      pointer-events: none;
-    }
-
-    .dashboard-window {
-      background: linear-gradient(180deg, rgba(10, 20, 48, 0.92) 0%, rgba(4, 9, 24, 0.96) 100%);
-      border: 1px solid rgba(147, 197, 253, 0.32);
-      border-radius: 18px;
-      box-shadow:
-        0 24px 80px rgba(0, 0, 0, 0.8),
-        0 0 50px rgba(29, 94, 255, 0.22),
-        inset 0 1px 0 rgba(255, 255, 255, 0.35);
-      overflow: hidden;
-      backdrop-filter: blur(20px);
-    }
-
-    .dash-topbar {
-      height: 52px;
-      padding: 0 22px;
-      border-bottom: 1px solid rgba(120, 175, 255, 0.14);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-
-    .dash-breadcrumbs {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-    }
-
-    .dash-breadcrumbs strong {
-      color: var(--text-white);
-    }
-
-    .dash-search {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(120, 175, 255, 0.16);
-      padding: 5px 14px;
-      border-radius: 8px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    .dash-body {
+    .telemetry-kpi-strip {
       display: grid;
-      grid-template-columns: 195px 1fr 250px;
-      min-height: 320px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
     }
 
-    .dash-sidebar {
-      border-right: 1px solid rgba(120, 175, 255, 0.12);
-      padding: 20px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
+    .telemetry-kpi-card {
+      border-radius: 16px;
+      padding: 18px 20px;
+      background: linear-gradient(155deg, rgba(14, 28, 66, 0.88) 0%, rgba(5, 11, 28, 0.95) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.28);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.14);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.24s ease, border-color 0.24s ease;
     }
 
-    .dash-nav-group-title {
+    .telemetry-kpi-card.vivid {
+      background: radial-gradient(circle at 20% 15%, rgba(96, 165, 250, 0.42) 0%, rgba(29, 94, 255, 0.35) 55%, rgba(8, 22, 58, 0.95) 100%);
+      border-color: rgba(191, 217, 255, 0.55);
+      box-shadow: 0 16px 38px rgba(29, 94, 255, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.35);
+    }
+
+    .telemetry-kpi-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(147, 197, 253, 0.65);
+    }
+
+    .telemetry-kpi-tag {
+      font-family: var(--font-mono);
       font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      font-family: var(--font-mono);
+      letter-spacing: 0.1em;
+      color: var(--cyan-glow);
+      margin-bottom: 6px;
+      display: block;
     }
 
-    .dash-nav-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
+    .telemetry-kpi-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
     }
 
-    .dash-nav-item {
-      padding: 7px 10px;
-      border-radius: 7px;
+    .telemetry-kpi-sub {
       font-size: 12px;
       color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    .telemetry-hud-panel {
+      position: relative;
+      border-radius: 22px;
+      background:
+        radial-gradient(ellipse 60% 45% at 50% 0%, rgba(59, 130, 246, 0.22) 0%, transparent 70%),
+        linear-gradient(180deg, rgba(10, 20, 48, 0.94) 0%, rgba(4, 8, 22, 0.98) 100%);
+      border: 1px solid rgba(147, 197, 253, 0.38);
+      box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.75),
+        0 0 45px rgba(29, 94, 255, 0.2),
+        inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      padding: 28px 30px;
+      overflow: hidden;
+    }
+
+    .telemetry-top-controls {
       display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(120, 175, 255, 0.18);
+      flex-wrap: wrap;
+    }
+
+    .telemetry-console-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .telemetry-console-eyebrow {
+      display: inline-flex;
       align-items: center;
       gap: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #93c5fd;
     }
 
-    .dash-nav-item.active,
-    .dash-nav-item:hover {
-      background: rgba(59, 130, 246, 0.16);
-      color: var(--text-white);
-      border: 1px solid rgba(96, 165, 250, 0.28);
-    }
-
-    .dash-nav-item .dot {
-      width: 6px;
-      height: 6px;
+    .telemetry-console-eyebrow .live-dot {
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--cyan-glow);
-      box-shadow: 0 0 8px var(--cyan-glow);
+      background: #34d399;
+      box-shadow: 0 0 10px #34d399;
     }
 
-    .dash-main {
-      padding: 22px 24px;
-    }
-
-    .dash-main-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .dash-main-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-white);
+    .telemetry-console-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.01em;
     }
 
     .dash-filter-tabs {
       display: flex;
-      gap: 6px;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
     .dash-tab {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(120, 175, 255, 0.18);
-      color: var(--text-secondary);
+      background: rgba(15, 32, 74, 0.55);
+      border: 1px solid rgba(147, 197, 253, 0.25);
+      color: var(--ice-light);
       font-family: var(--font-mono);
-      font-size: 10.5px;
-      padding: 4px 10px;
-      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 500;
+      padding: 8px 16px;
+      border-radius: 999px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.22s ease;
+    }
+
+    .dash-tab:hover {
+      border-color: rgba(147, 197, 253, 0.6);
+      background: rgba(59, 130, 246, 0.2);
     }
 
     .dash-tab.active {
-      background: rgba(59, 130, 246, 0.25);
-      color: var(--text-white);
-      border-color: var(--cyan-glow);
-      box-shadow: 0 0 12px rgba(59, 130, 246, 0.35);
+      background: linear-gradient(180deg, #3b82f6 0%, #1d5eff 100%);
+      color: #ffffff;
+      border-color: #93c5fd;
+      box-shadow: 0 0 18px rgba(59, 130, 246, 0.5);
     }
 
-    .dash-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11.5px;
+    .telemetry-cards-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
-    .dash-table th {
-      text-align: left;
-      padding: 9px 10px;
+    .telemetry-run-row {
+      display: grid;
+      grid-template-columns: 135px 195px 175px 185px 1fr 175px;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      background: linear-gradient(90deg, rgba(13, 27, 64, 0.72) 0%, rgba(7, 15, 38, 0.86) 100%);
+      border: 1px solid rgba(96, 165, 250, 0.2);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .telemetry-run-row:hover {
+      transform: translateX(4px);
+      border-color: rgba(147, 197, 253, 0.55);
+      box-shadow: 0 8px 26px rgba(15, 40, 100, 0.45);
+      background: linear-gradient(90deg, rgba(20, 42, 96, 0.82) 0%, rgba(10, 22, 54, 0.92) 100%);
+    }
+
+    .tr-col-label {
+      display: block;
       font-family: var(--font-mono);
-      font-size: 10px;
+      font-size: 9.5px;
       text-transform: uppercase;
+      letter-spacing: 0.08em;
       color: var(--text-muted);
-      border-bottom: 1px solid rgba(120, 175, 255, 0.14);
-      font-weight: 500;
+      margin-bottom: 4px;
     }
 
-    .dash-table td {
-      padding: 11px 10px;
-      border-bottom: 1px solid rgba(120, 175, 255, 0.07);
-      color: var(--text-secondary);
+    .tr-uuid {
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #ffffff;
     }
 
-    .dash-table tr:hover td {
-      background: rgba(59, 130, 246, 0.06);
-      color: var(--text-white);
+    .tr-phase-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(59, 130, 246, 0.18);
+      color: #93c5fd;
+      margin-top: 4px;
     }
 
     .badge-agent {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 2px 8px;
+      padding: 5px 12px;
       border-radius: 999px;
-      font-size: 10px;
-      background: rgba(59, 130, 246, 0.16);
-      color: var(--ice-light);
-      border: 1px solid rgba(96, 165, 250, 0.32);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(59, 130, 246, 0.22);
+      color: #dbeafe;
+      border: 1px solid rgba(147, 197, 253, 0.45);
+      box-shadow: 0 0 14px rgba(59, 130, 246, 0.22);
     }
 
     .badge-agent.langgraph {
-      background: rgba(16, 185, 129, 0.14);
+      background: rgba(16, 185, 129, 0.18);
       color: #a7f3d0;
-      border-color: rgba(52, 211, 153, 0.35);
+      border-color: rgba(52, 211, 153, 0.45);
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.18);
+    }
+
+    .tr-model-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ice-light);
+    }
+
+    .tr-tool-chip {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 7px;
+      background: rgba(4, 10, 26, 0.75);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      color: #93c5fd;
+    }
+
+    .tr-evidence-box {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: #e2e8f0;
+      line-height: 1.45;
+    }
+
+    .tr-evidence-box span {
+      display: block;
+      font-size: 10.5px;
+      color: #93c5fd;
     }
 
     .status-verified {
       color: #60a5fa;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 600;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 8px;
+      background: rgba(59, 130, 246, 0.12);
+      border: 1px solid rgba(96, 165, 250, 0.28);
     }
 
     .status-verified::before {
       content: "";
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: #60a5fa;
-      box-shadow: 0 0 8px #60a5fa;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+      flex-shrink: 0;
     }
 
-    .dash-notifications {
-      border-left: 1px solid rgba(120, 175, 255, 0.12);
-      padding: 20px 18px;
+    .telemetry-footer-bar {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(120, 175, 255, 0.16);
       display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .notif-card {
-      background: rgba(12, 25, 58, 0.65);
-      border: 1px solid rgba(120, 175, 255, 0.15);
-      border-radius: 10px;
-      padding: 11px 12px;
-      font-size: 11.5px;
-    }
-
-    .notif-card strong {
-      display: block;
-      color: var(--ice-light);
-      font-size: 11px;
-      margin-bottom: 3px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
       font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
     }
 
-    .notif-card span {
-      color: var(--text-secondary);
-      font-size: 11px;
-      line-height: 1.4;
-      display: block;
+    .telemetry-footer-link {
+      color: #93c5fd;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .telemetry-footer-link:hover {
+      color: #ffffff;
     }
 
     /* ==========================================================================
        SECTION HEADINGS & COMMON UTILITIES
        ========================================================================== */
     .section-wrap {
-      padding: 110px 0;
+      padding: 46px 0;
       position: relative;
       z-index: 5;
     }
@@ -687,7 +726,7 @@
       text-transform: uppercase;
       letter-spacing: 0.14em;
       color: var(--cyan-glow);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -706,7 +745,7 @@
       font-weight: 700;
       letter-spacing: -0.025em;
       line-height: 1.15;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
       background: linear-gradient(90deg, #ffffff 0%, #bfd9ff 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -719,8 +758,8 @@
     .editorial-deck-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 32px;
-      margin-top: 44px;
+      gap: 28px;
+      margin-top: 26px;
     }
 
     /* Card Style 1: Ice-Blue Frosted Venn Strategy Card (Ref Image 2 Top Slide) */
@@ -1100,9 +1139,9 @@
     .parity-hud-grid {
       display: grid;
       grid-template-columns: 1fr 370px 1fr;
-      gap: 28px;
+      gap: 24px;
       align-items: center;
-      margin-top: 48px;
+      margin-top: 26px;
     }
 
     .parity-side-col {
@@ -1266,8 +1305,8 @@
        ========================================================================== */
     .stepped-pills-banner {
       border-radius: 22px;
-      padding: 44px 36px;
-      margin-bottom: 36px;
+      padding: 30px 32px;
+      margin-bottom: 24px;
       background:
         radial-gradient(ellipse 65% 80% at 80% 15%, rgba(96, 165, 250, 0.55) 0%, rgba(29, 94, 255, 0.28) 45%, rgba(4, 10, 28, 0.95) 85%),
         linear-gradient(135deg, #061230 0%, #030714 100%);
@@ -1286,7 +1325,7 @@
       align-items: center;
       justify-content: center;
       gap: 12px;
-      margin-top: 24px;
+      margin-top: 20px;
       flex-wrap: wrap;
     }
 
@@ -1306,6 +1345,187 @@
       transform: translateY(-10px);
       background: rgba(59, 130, 246, 0.35);
       border-color: #ffffff;
+    }
+
+    /* Hierarchy Top: General Coordinator Card */
+    .hierarchy-top-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .coordinator-card {
+      width: 100%;
+      max-width: 680px;
+      border-radius: 20px;
+      padding: 26px 32px;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.32) 0%, rgba(12, 26, 62, 0.92) 55%, rgba(4, 9, 24, 0.98) 100%);
+      border: 1.5px solid rgba(147, 197, 253, 0.55);
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.65),
+        0 0 35px rgba(29, 94, 255, 0.28),
+        inset 0 1px 2px rgba(255, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      gap: 26px;
+      position: relative;
+      z-index: 2;
+      transition: transform 0.28s ease, box-shadow 0.28s ease;
+    }
+
+    .coordinator-card:hover {
+      transform: translateY(-3px);
+      box-shadow:
+        0 24px 56px rgba(0, 0, 0, 0.72),
+        0 0 45px rgba(59, 130, 246, 0.38),
+        inset 0 1px 2px rgba(255, 255, 255, 0.45);
+    }
+
+    .coordinator-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .coordinator-avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: center top;
+      border: 3px solid #93c5fd;
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.55);
+      background: #0a1535;
+      display: block;
+    }
+
+    .coordinator-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.25);
+      border: 1px solid rgba(147, 197, 253, 0.5);
+      color: #dbeafe;
+      margin-bottom: 8px;
+    }
+
+    .coordinator-info h3 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .coordinator-role {
+      font-size: 14px;
+      font-weight: 600;
+      color: #93c5fd;
+      margin-bottom: 8px;
+    }
+
+    .coordinator-desc {
+      font-size: 13px;
+      line-height: 1.55;
+      color: rgba(226, 232, 240, 0.85);
+    }
+
+    /* Visual Hierarchy Connector Lines */
+    .hierarchy-connector {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      position: relative;
+    }
+
+    .hierarchy-stem {
+      width: 2px;
+      height: 28px;
+      background: linear-gradient(180deg, rgba(147, 197, 253, 0.75) 0%, rgba(59, 130, 246, 0.35) 100%);
+    }
+
+    .hierarchy-branch-label {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--ice-light);
+      background: rgba(8, 17, 42, 0.92);
+      border: 1px solid rgba(96, 165, 250, 0.35);
+      padding: 5px 16px;
+      border-radius: 999px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Manager Profile inside each Team Bento Card */
+    .bento-manager-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      margin: 14px 0 14px 0;
+      border-radius: 12px;
+      background: rgba(4, 10, 28, 0.42);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+    }
+
+    .bento-team-card.obsidian-dark .bento-manager-profile {
+      background: rgba(18, 33, 74, 0.45);
+      border: 1px solid rgba(96, 165, 250, 0.25);
+    }
+
+    .bento-manager-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: center top;
+      border: 2px solid rgba(191, 217, 255, 0.85);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      flex-shrink: 0;
+      background: #09132c;
+    }
+
+    .bento-manager-meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .bento-manager-tag {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #93c5fd;
+      margin-bottom: 2px;
+    }
+
+    .bento-team-card.cobalt-vivid .bento-manager-tag {
+      color: #dbeafe;
+    }
+
+    .bento-manager-name {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .bento-manager-sub {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.75);
+      margin-top: 2px;
     }
 
     /* Alternating Cobalt / Obsidian Checkerboard Bento (Ref Image 3 Middle Right Slide) */
@@ -1475,13 +1695,13 @@
 
     /* Responsive Breakpoints */
     @media (max-width: 1080px) {
-      .dash-body {
-        grid-template-columns: 1fr;
+      .telemetry-kpi-strip {
+        grid-template-columns: repeat(2, 1fr);
       }
 
-      .dash-sidebar,
-      .dash-notifications {
-        display: none;
+      .telemetry-run-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
       }
 
       .editorial-deck-grid,
@@ -1512,8 +1732,16 @@
         display: none;
       }
 
-      .crystal-monolith-card {
+      .crystal-monolith-card,
+      .telemetry-kpi-strip,
+      .telemetry-run-row {
         grid-template-columns: 1fr;
+      }
+
+      .coordinator-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 24px 20px;
       }
 
       .pedestals-strip,
@@ -1538,16 +1766,17 @@
   <header class="navbar">
     <div class="navbar-inner">
       <a href="#top" class="logo">
-        <img src="ciia_logo.png" alt="" class="logo-img" />
-        <span class="logo-sub">SEI BENCHMARK</span>
+        <img src="ciialogo.png" alt="" class="logo-img" />
+
       </a>
       <ul class="nav-menu">
-        <li><a href="#problema">1. O Problema</a></li>
-        <li><a href="#paridade">2. Paridade Estrita</a></li>
-        <li><a href="#equipes">3. Equipes</a></li>
+        <li><a href="#equipes">1. Equipes</a></li>
+        <li><a href="#problema">2. O Problema</a></li>
+        <li><a href="#paridade">3. Paridade Estrita</a></li>
         <li><a href="#telemetria">4. Telemetria</a></li>
       </ul>
       <div class="nav-actions">
+        <a href="/team" class="btn-lumine-ghost" style="padding: 8px 18px; font-size: 12.5px; border-radius: 999px;">Docs das Equipes</a>
         <a href="resultados.html" class="btn-pill-white">Resultados &amp; Protocolo</a>
       </div>
     </div>
@@ -1576,24 +1805,226 @@
         </h1>
 
         <p class="hero-subtitle">
-          Um benchmark científico experimental conduzido pelo <strong>Centro de Inovação em Inteligência Artificial
+          Um benchmark científico experimental conduzido pelo <strong>Centro Integrado de Inteligência Artificial
             (CIIA / UnDF)</strong> para avaliar agentes autônomos de IA no setor público sobre processos administrativos
           exportados do <strong>SEI</strong> sem conexão com o sistema real e com rastreabilidade rigorosa de página e
           documento.
         </p>
 
         <div class="hero-cta-group">
-          <a href="#problema" class="btn-lumine-primary">Explorar as Fases</a>
-          <a href="#telemetria" class="btn-lumine-ghost">Ver Telemetria do Harness</a>
+          <a href="#equipes" class="btn-lumine-primary">Conhecer Coordenação &amp; Equipes</a>
+          <a href="#problema" class="btn-lumine-ghost">Explorar as Fases</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- SECTION 01: O PROBLEMA & A PERGUNTA CIENTÍFICA (Ref Image 2 + Ref Image 4) -->
+  <!-- SECTION 01: ESTRUTURA DE EQUIPES DO BENCHMARK -->
+  <section id="equipes" class="section-wrap">
+    <div class="container">
+      <div class="stepped-pills-banner">
+        <span class="section-eyebrow" style="margin-bottom: 8px;">1. Como o Projeto se Divide</span>
+        <h2 class="section-title" style="margin-bottom: 6px;">Coordenação &amp; Estrutura de Equipes</h2>
+        <p style="color: var(--ice-blue); font-size: 14px; max-width: 620px;">
+          Do tratamento de exportações do SEI à orquestração dos agentes e avaliação com evidência documental auditada.
+        </p>
+      </div>
+
+      <!-- HIERARCHY TOP: Coordenador Geral do Projeto & CIIA -->
+      <div class="hierarchy-top-wrap">
+        <article class="coordinator-card">
+          <div class="coordinator-avatar-wrap">
+            <img src="fotos_equipe/ricardo%20foto.png" alt="Ricardo Sampaio" class="coordinator-avatar" />
+          </div>
+          <div class="coordinator-info">
+            <span class="coordinator-badge-pill">✦ COORDENAÇÃO GERAL · CIIA &amp; BENCHMARK</span>
+            <h3>Ricardo Sampaio</h3>
+            <div class="coordinator-role">Coordenador Geral do Projeto e do CIIA</div>
+            <p class="coordinator-desc">
+              Supervisão científica, governança institucional e diretrizes estratégicas do estudo experimental entre
+              arquiteturas de agentes autônomos sobre o SEI.
+            </p>
+          </div>
+        </article>
+
+        <div class="hierarchy-connector">
+          <div class="hierarchy-stem"></div>
+          <div class="hierarchy-branch-label">Gerentes de Área &amp; 6 Frentes Técnicas</div>
+          <div class="hierarchy-stem"></div>
+        </div>
+      </div>
+
+      <!-- Alternating Cobalt & Obsidian Bento Grid (Ref Image 3) -->
+      <div class="cobalt-bento-grid">
+        <article class="bento-team-card cobalt-vivid">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 01</span>
+              <span class="bento-team-num">CORPUS SEI</span>
+            </div>
+            <h3 class="bento-team-title">Data &amp; RAG (Documentos)</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/foto_andre1.PNG" alt="André Vital" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">André Vital</span>
+                <span class="bento-manager-sub">Extração, RAG &amp; Conformidade LGPD</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Trata exportações do SEI, segmenta textos em páginas e chunks rastreáveis com offsets determinísticos e
+              realiza a ingestão com integridade transacional na base de dados.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">Pipeline Textual</span>
+            <span class="bento-chip">Chunks Rastreáveis</span>
+            <span class="bento-chip">Armazenamento Factual</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card obsidian-dark">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 02</span>
+              <span class="bento-team-num">FASTAPI</span>
+            </div>
+            <h3 class="bento-team-title">Backend &amp; Tools</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/foto_Roger.PNG" alt="Roger Quinelato" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">Roger Quinelato</span>
+                <span class="bento-manager-sub">Arquitetura de API, Contratos &amp; Banco</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Implementa os 6 endpoints REST consumidos via ToolClient, com validação Pydantic estrita, controle de
+              idempotência e isolamento por run_id.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">FastAPI &amp; Pydantic</span>
+            <span class="bento-chip">ToolClient</span>
+            <span class="bento-chip">Idempotência</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card cobalt-vivid">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 03</span>
+              <span class="bento-team-num">LOOP REACT</span>
+            </div>
+            <h3 class="bento-team-title">Hermes</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/gustavo_img.jpeg" alt="Gustavo Antônio" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">Gustavo Antônio</span>
+                <span class="bento-manager-sub">Arquitetura Hermes &amp; Agente Autônomo</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Desenvolve o adaptador do Hermes sobre a interface comum, operando em loop dinâmico de tool calling e
+              extração obrigatória de evidências documentais.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">Hermes Adapter</span>
+            <span class="bento-chip">Loop Dinâmico</span>
+            <span class="bento-chip">Citação de Provas</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card obsidian-dark">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 04</span>
+              <span class="bento-team-num">STATE GRAPH</span>
+            </div>
+            <h3 class="bento-team-title">LangGraph</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/foto_joao_enomoto.PNG" alt="João Enomoto" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">João Enomoto</span>
+                <span class="bento-manager-sub">Orquestração em Grafos &amp; Estados</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Modela o agente em nós e arestas de estado com fluxo de validação estruturado, tolerância a falhas de
+              ferramentas e controle de recursão.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">LangGraph Adapter</span>
+            <span class="bento-chip">Grafo Dirigido</span>
+            <span class="bento-chip">Controle de Estados</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card cobalt-vivid">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 05</span>
+              <span class="bento-team-num">CONTAINERS</span>
+            </div>
+            <h3 class="bento-team-title">AI Infra</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/foto_joao_enomoto.PNG" alt="João Enomoto" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">João Enomoto</span>
+                <span class="bento-manager-sub">DevOps, Containers &amp; Infraestrutura</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Provê isolamento por containers Docker, automação de CI/CD, rotinas de ambiente limpo entre rodadas e
+              orquestração do portal institucional.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">Docker Compose</span>
+            <span class="bento-chip">CI / Automação</span>
+            <span class="bento-chip">Isolamento Limpo</span>
+          </div>
+        </article>
+
+        <article class="bento-team-card obsidian-dark">
+          <div>
+            <div class="bento-card-head">
+              <span class="bento-team-num">EQUIPE 06</span>
+              <span class="bento-team-num">HARNESS &amp; PAPER</span>
+            </div>
+            <h3 class="bento-team-title">Metodologia &amp; Evaluation</h3>
+            <div class="bento-manager-profile">
+              <img src="fotos_equipe/gustavo_img.jpeg" alt="Gustavo Antônio" class="bento-manager-avatar" />
+              <div class="bento-manager-meta">
+                <span class="bento-manager-tag">Gerente da Equipe</span>
+                <span class="bento-manager-name">Gustavo Antônio</span>
+                <span class="bento-manager-sub">Protocolo Científico &amp; Avaliação</span>
+              </div>
+            </div>
+            <p class="bento-team-desc">
+              Estrutura o protocolo científico, cataloga o conjunto de tarefas factuais, apura métricas de fundamentação
+              e redige a análise para o artigo acadêmico.
+            </p>
+          </div>
+          <div class="bento-chip-row">
+            <span class="bento-chip">tasks.json</span>
+            <span class="bento-chip">runner.py</span>
+            <span class="bento-chip">Artigo Científico</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 02: O PROBLEMA & A PERGUNTA CIENTÍFICA (Ref Image 2 + Ref Image 4) -->
   <section id="problema" class="section-wrap">
     <div class="container">
-      <span class="section-eyebrow">1. O Problema &amp; A Pergunta Científica</span>
+      <span class="section-eyebrow">2. O Problema &amp; A Pergunta Científica</span>
       <h2 class="section-title">Isolando a Orquestração da Capacidade do Modelo</h2>
 
       <!-- Editorial Slide Pair (Inspired by Ref Image 2: Frosted Venn & Crystal Monolith) -->
@@ -1602,7 +2033,7 @@
         <div class="frosted-venn-card">
           <div>
             <div class="slide-meta-bar">
-              <span>CIIA / UNDF · METODOLOGIA EXPERIMENTAL</span>
+              <span>CIIA e UNDF · METODOLOGIA EXPERIMENTAL</span>
               <span class="slide-dots"></span>
             </div>
             <h3 class="editorial-serif-heading">
@@ -1762,10 +2193,10 @@
     </div>
   </section>
 
-  <!-- SECTION 02: A REGRA DE OURO: PARIDADE EXPERIMENTAL ESTRITA (Ref Image 4) -->
+  <!-- SECTION 03: A REGRA DE OURO: PARIDADE EXPERIMENTAL ESTRITA (Ref Image 4) -->
   <section id="paridade" class="section-wrap">
     <div class="container">
-      <span class="section-eyebrow">2. A Regra de Ouro</span>
+      <span class="section-eyebrow">3. A Regra de Ouro</span>
       <h2 class="section-title">Paridade Experimental Estrita</h2>
 
       <!-- Central Circular HUD Core flanked by the 4 Golden Rules -->
@@ -1799,7 +2230,7 @@
           <canvas id="hudCoreCanvas"></canvas>
           <div class="portal-center-label">
             <span class="tag">BARRAMENTO ÚNICO</span>
-            <strong>COMMON TOOLCLIENT<br>PLATFORM</strong>
+            <strong>FERRAMENTAS<br>PADRONIZADAS</strong>
           </div>
         </div>
 
@@ -1858,260 +2289,204 @@
     </div>
   </section>
 
-  <!-- SECTION 04: COMO O PROJETO SE DIVIDE: 6 EQUIPES (Ref Image 3 Cobalt Bento) -->
-  <!-- SECTION 03: ESTRUTURA DE EQUIPES DO BENCHMARK -->
-  <section id="equipes" class="section-wrap">
+  <!-- SECTION 04: TELEMETRIA & EXECUÇÕES CONTROLADAS DO HARNESS (Cobalt & Obsidian HUD Showcase) -->
+  <section id="telemetria" class="section-wrap">
     <div class="container">
-      <div class="stepped-pills-banner">
-        <span class="section-eyebrow" style="margin-bottom: 8px;">3. Como o Projeto se Divide</span>
-        <h2 class="section-title" style="margin-bottom: 6px;">Estrutura de Equipes do Benchmark</h2>
-        <p style="color: var(--ice-blue); font-size: 14px; max-width: 620px;">
-          Do tratamento de exportações do SEI à orquestração dos agentes e avaliação com evidência documental auditada.
-        </p>
-        <div class="stepped-pills-row">
-          <div class="step-glass-pill">Rastreável (Doc/Página)</div>
-          <div class="step-glass-pill">Isolado por UUID</div>
-          <div class="step-glass-pill">Publicável &amp; Auditável</div>
-        </div>
-      </div>
-
-      <!-- Alternating Cobalt & Obsidian Bento Grid (Ref Image 3) -->
-      <div class="cobalt-bento-grid">
-        <article class="bento-team-card cobalt-vivid">
-          <div>
-            <div class="bento-card-head">
-              <span class="bento-team-num">EQUIPE 01</span>
-              <span class="bento-team-num">CORPUS SEI</span>
-            </div>
-            <h3 class="bento-team-title">Data &amp; RAG (Documentos)</h3>
-            <p class="bento-team-desc">
-              Trata exportações do SEI, segmenta textos em páginas e chunks rastreáveis com offsets determinísticos e realiza a ingestão com integridade transacional na base de dados.
-            </p>
-          </div>
-          <div class="bento-chip-row">
-            <span class="bento-chip">Pipeline Textual</span>
-            <span class="bento-chip">Chunks Rastreáveis</span>
-            <span class="bento-chip">Armazenamento Factual</span>
-          </div>
-        </article>
-
-        <article class="bento-team-card obsidian-dark">
-          <div>
-            <div class="bento-card-head">
-              <span class="bento-team-num">EQUIPE 02</span>
-              <span class="bento-team-num">FASTAPI</span>
-            </div>
-            <h3 class="bento-team-title">Backend &amp; Tools</h3>
-            <p class="bento-team-desc">
-              Implementa os 6 endpoints REST consumidos via ToolClient, com validação Pydantic estrita, controle de idempotência e isolamento por run_id.
-            </p>
-          </div>
-          <div class="bento-chip-row">
-            <span class="bento-chip">FastAPI &amp; Pydantic</span>
-            <span class="bento-chip">ToolClient</span>
-            <span class="bento-chip">Idempotência</span>
-          </div>
-        </article>
-
-        <article class="bento-team-card cobalt-vivid">
-          <div>
-            <div class="bento-card-head">
-              <span class="bento-team-num">EQUIPE 03</span>
-              <span class="bento-team-num">LOOP REACT</span>
-            </div>
-            <h3 class="bento-team-title">Hermes</h3>
-            <p class="bento-team-desc">
-              Desenvolve o adaptador do Hermes sobre a interface comum, operando em loop dinâmico de tool calling e extração obrigatória de evidências documentais.
-            </p>
-          </div>
-          <div class="bento-chip-row">
-            <span class="bento-chip">Hermes Adapter</span>
-            <span class="bento-chip">Loop Dinâmico</span>
-            <span class="bento-chip">Citação de Provas</span>
-          </div>
-        </article>
-
-        <article class="bento-team-card obsidian-dark">
-          <div>
-            <div class="bento-card-head">
-              <span class="bento-team-num">EQUIPE 04</span>
-              <span class="bento-team-num">STATE GRAPH</span>
-            </div>
-            <h3 class="bento-team-title">LangGraph</h3>
-            <p class="bento-team-desc">
-              Modela o agente em nós e arestas de estado com fluxo de validação estruturado, tolerância a falhas de ferramentas e controle de recursão.
-            </p>
-          </div>
-          <div class="bento-chip-row">
-            <span class="bento-chip">LangGraph Adapter</span>
-            <span class="bento-chip">Grafo Dirigido</span>
-            <span class="bento-chip">Controle de Estados</span>
-          </div>
-        </article>
-
-        <article class="bento-team-card cobalt-vivid">
-          <div>
-            <div class="bento-card-head">
-              <span class="bento-team-num">EQUIPE 05</span>
-              <span class="bento-team-num">CONTAINERS</span>
-            </div>
-            <h3 class="bento-team-title">AI Infra</h3>
-            <p class="bento-team-desc">
-              Provê isolamento por containers Docker, automação de CI/CD, rotinas de ambiente limpo entre rodadas e orquestração do portal institucional.
-            </p>
-          </div>
-          <div class="bento-chip-row">
-            <span class="bento-chip">Docker Compose</span>
-            <span class="bento-chip">CI / Automação</span>
-            <span class="bento-chip">Isolamento Limpo</span>
-          </div>
-        </article>
-
-        <article class="bento-team-card obsidian-dark">
-          <div>
-            <div class="bento-card-head">
-              <span class="bento-team-num">EQUIPE 06</span>
-              <span class="bento-team-num">HARNESS &amp; PAPER</span>
-            </div>
-            <h3 class="bento-team-title">Metodologia &amp; Evaluation</h3>
-            <p class="bento-team-desc">
-              Estrutura o protocolo científico, cataloga o conjunto de tarefas factuais, apura métricas de fundamentação e redige a análise para o artigo acadêmico.
-            </p>
-          </div>
-          <div class="bento-chip-row">
-            <span class="bento-chip">tasks.json</span>
-            <span class="bento-chip">runner.py</span>
-            <span class="bento-chip">Artigo Científico</span>
-          </div>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- SECTION 04: TELEMETRIA & EXECUÇÕES CONTROLADAS DO HARNESS (Parte Final do Benchmark) -->
-  <section id="telemetria" class="section-wrap" style="padding-top: 20px;">
-    <div class="container">
-      <div style="text-align: center; margin-bottom: 38px;">
+      <div style="text-align: center; margin-bottom: 26px;">
         <span class="section-eyebrow" style="justify-content: center;">4. Telemetria &amp; Execuções Controladas</span>
-        <h2 class="section-title" style="margin-top: 10px;">Amostra de Execução do Harness (runner.py)</h2>
-        <p style="color: var(--text-secondary); font-size: 14.5px; max-width: 660px; margin: 10px auto 0; line-height: 1.6;">
-          Visão dos registros de telemetria produzidos pelo harness determinístico. Auditoria cega de evidências com validação de <code>document_id</code>, página física e offsets antes da consolidação de resultados.
+        <h2 class="section-title" style="margin-top: 6px;">Amostra de Execução do Harness (runner.py)</h2>
+        <p
+          style="color: var(--text-secondary); font-size: 14.5px; max-width: 680px; margin: 8px auto 0; line-height: 1.6;">
+          Estrutura dos registros de telemetria produzidos pelo harness determinístico. Auditoria cega de evidências com
+          validação de <code>document_id</code>, página física e offsets antes da consolidação de resultados.
         </p>
       </div>
 
-      <!-- Interactive Harness Preview Window (Ref Image 1 Bottom UI) -->
-      <div class="dashboard-preview-wrap">
-        <div class="dashboard-window">
-          <div class="dash-topbar">
-            <div class="dash-breadcrumbs">
-              <span>✦ CIIA/UnDF</span>
-              <span>/</span>
-              <span>runner.py</span>
-              <span>/</span>
-              <strong>Execuções Controladas (Air-Gapped SEI Corpus)</strong>
-            </div>
-            <div class="dash-search">
-              <span>🔍 Filtrar por ToolContext(run_id)</span>
+      <div class="telemetry-showcase-wrap">
+        <!-- Top 4 KPI / Architecture Cards -->
+        <div class="telemetry-kpi-strip">
+          <div class="telemetry-kpi-card vivid">
+            <span class="telemetry-kpi-tag">Fase 1 · Orquestração</span>
+            <div class="telemetry-kpi-val">360 Execuções</div>
+            <div class="telemetry-kpi-sub">60 tarefas × 2 agentes × 3 repetições pareadas sob o mesmo modelo.</div>
+          </div>
+
+          <div class="telemetry-kpi-card">
+            <span class="telemetry-kpi-tag">Fase 2 · Soberania LGPD</span>
+            <div class="telemetry-kpi-val">1.080 Execuções</div>
+            <div class="telemetry-kpi-sub">Modelos abertos locais (Qwen/Llama) vs. fronteira comercial em nuvem.</div>
+          </div>
+
+          <div class="telemetry-kpi-card">
+            <span class="telemetry-kpi-tag">Isolamento de Sessão</span>
+            <div class="telemetry-kpi-val">UUID por Run</div>
+            <div class="telemetry-kpi-sub">Cada chamada exige <code>ToolContext</code> isolado sem vazamento de estado.
             </div>
           </div>
 
-          <div class="dash-body">
-            <!-- Left Sidebar -->
-            <aside class="dash-sidebar">
-              <div>
-                <div class="dash-nav-group-title">Escopo do Projeto</div>
-                <ul class="dash-nav-list">
-                  <li class="dash-nav-item active"><span class="dot"></span> Visão Geral (SEI)</li>
-                  <li class="dash-nav-item">Fase 1 · 360 Runs</li>
-                  <li class="dash-nav-item">Fase 2 · 1.080 Runs</li>
-                  <li class="dash-nav-item">ToolClient (6 REST)</li>
-                </ul>
-              </div>
-              <div>
-                <div class="dash-nav-group-title">Salvaguardas</div>
-                <ul class="dash-nav-list">
-                  <li class="dash-nav-item">Zero Conexão SEI Real</li>
-                  <li class="dash-nav-item">Dados Sintéticos / LGPD</li>
-                  <li class="dash-nav-item">Prazo: 10/12/2026</li>
-                </ul>
-              </div>
-            </aside>
+          <div class="telemetry-kpi-card">
+            <span class="telemetry-kpi-tag">Salvaguarda SEI</span>
+            <div class="telemetry-kpi-val">100% Air-Gapped</div>
+            <div class="telemetry-kpi-sub">Zero conexão com o SEI real; corpus estático auditável com hash SHA-256.
+            </div>
+          </div>
+        </div>
 
-            <!-- Center Execution Table -->
-            <div class="dash-main">
-              <div class="dash-main-header">
-                <span class="dash-main-title">Amostra de Telemetria do Harness (tasks.json → runner.py)</span>
-                <div class="dash-filter-tabs">
-                  <button class="dash-tab active" onclick="filterRuns('all', this)">Todas as Fases</button>
-                  <button class="dash-tab" onclick="filterRuns('fase1', this)">Fase 1 (Orquestração)</button>
-                  <button class="dash-tab" onclick="filterRuns('fase2', this)">Fase 2 (Soberania LLM)</button>
+        <!-- Main HUD Telemetry Console -->
+        <div class="telemetry-hud-panel">
+          <span class="hud-cross tl">+</span>
+          <span class="hud-cross tr">+</span>
+          <span class="hud-cross bl">+</span>
+          <span class="hud-cross br">+</span>
+
+          <div class="telemetry-top-controls">
+            <div class="telemetry-console-title-group">
+              <div class="telemetry-console-eyebrow">
+                <span class="live-dot"></span>
+                <span>HARNESS DETERMINÍSTICO · EVALUATION/TASKS.JSON → EXPERIMENTRUN</span>
+              </div>
+              <div class="telemetry-console-title">Rastreabilidade de Chamadas &amp; Auditoria de Evidências</div>
+            </div>
+
+            <div class="dash-filter-tabs">
+              <button class="dash-tab active" onclick="filterRuns('all', this)">Todas as Fases</button>
+              <button class="dash-tab" onclick="filterRuns('fase1', this)">Fase 1 (Orquestração)</button>
+              <button class="dash-tab" onclick="filterRuns('fase2', this)">Fase 2 (Soberania LLM)</button>
+            </div>
+          </div>
+
+          <!-- Horizontal Execution Cards -->
+          <div class="telemetry-cards-stack" id="telemetryTable">
+            <div class="telemetry-run-row" data-phase="fase1">
+              <div>
+                <span class="tr-col-label">Run ID (UUID)</span>
+                <div class="tr-uuid">#run-8f92a1</div>
+                <span class="tr-phase-tag">FASE 1 · PAREADO</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Executor / Agente</span>
+                <span class="badge-agent">Hermes (Loop ReAct)</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Classe de Modelo</span>
+                <div class="tr-model-name">Modelo Fixo Pareado</div>
+              </div>
+              <div>
+                <span class="tr-col-label">Endpoint ToolClient</span>
+                <span class="tr-tool-chip">ler_documento()</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Evidência Documental Auditada</span>
+                <div class="tr-evidence-box">
+                  PROC-DEMO-001 · doc_id: 101
+                  <span>Página Física 1 · Offset [0:140]</span>
                 </div>
               </div>
-
-              <table class="dash-table" id="telemetryTable">
-                <thead>
-                  <tr>
-                    <th>Run ID (UUID)</th>
-                    <th>Executor / Orquestrador</th>
-                    <th>Modelo Base</th>
-                    <th>Endpoint ToolClient</th>
-                    <th>Evidência Auditada</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr data-phase="fase1">
-                    <td>#run-8f92a1</td>
-                    <td><span class="badge-agent">Hermes (Loop ReAct)</span></td>
-                    <td>Modelo Fixo Pareado</td>
-                    <td>ler_documento()</td>
-                    <td>PROC-DEMO-001 / doc: 101 · Pág. 1, off: 0-140</td>
-                    <td><span class="status-verified">Auditoria: Aprovado (1.0)</span></td>
-                  </tr>
-                  <tr data-phase="fase1">
-                    <td>#run-3c41e9</td>
-                    <td><span class="badge-agent langgraph">LangGraph (State DAG)</span></td>
-                    <td>Modelo Fixo Pareado</td>
-                    <td>consultar_processo()</td>
-                    <td>PROC-DEMO-001 / metadados conferidos</td>
-                    <td><span class="status-verified">Auditoria: Aprovado (1.0)</span></td>
-                  </tr>
-                  <tr data-phase="fase2">
-                    <td>#run-7d19b4</td>
-                    <td><span class="badge-agent">Hermes (Loop ReAct)</span></td>
-                    <td>Modelo Aberto Local</td>
-                    <td>buscar_documentos()</td>
-                    <td>PROC-DEMO-001 / doc: 102 · Pág. 2, off: 40-180</td>
-                    <td><span class="status-verified">Soberania On-Premise</span></td>
-                  </tr>
-                  <tr data-phase="fase2">
-                    <td>#run-5a08f2</td>
-                    <td><span class="badge-agent langgraph">LangGraph (State DAG)</span></td>
-                    <td>Modelo Referência Nuvem</td>
-                    <td>ler_documento()</td>
-                    <td>PROC-DEMO-001 / doc: 101 · Pág. 1, off: 0-140</td>
-                    <td><span class="status-verified">Baseline Auditado</span></td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <span class="tr-col-label">Veredito Factual</span>
+                <span class="status-verified">Auditado (1.0)</span>
+              </div>
             </div>
 
-            <!-- Right Notifications Column -->
-            <aside class="dash-notifications">
-              <div class="dash-nav-group-title">Diretrizes de Execução</div>
-              <div class="notif-card">
-                <strong>1. O que é o Projeto?</strong>
-                <span>Avaliação de agentes autônomos no setor público sobre exportações manuais do SEI.</span>
+            <div class="telemetry-run-row" data-phase="fase1">
+              <div>
+                <span class="tr-col-label">Run ID (UUID)</span>
+                <div class="tr-uuid">#run-3c41e9</div>
+                <span class="tr-phase-tag">FASE 1 · PAREADO</span>
               </div>
-              <div class="notif-card">
-                <strong>Isolamento por Sessão</strong>
-                <span>Cada rodada recebe UUID único e isolamento de estado na execução.</span>
+              <div>
+                <span class="tr-col-label">Executor / Agente</span>
+                <span class="badge-agent langgraph">LangGraph (State DAG)</span>
               </div>
-              <div class="notif-card">
-                <strong>Prazo Planejado</strong>
-                <span>Entrega final do experimento e artigo em 10/12/2026.</span>
+              <div>
+                <span class="tr-col-label">Classe de Modelo</span>
+                <div class="tr-model-name">Modelo Fixo Pareado</div>
               </div>
-            </aside>
+              <div>
+                <span class="tr-col-label">Endpoint ToolClient</span>
+                <span class="tr-tool-chip">consultar_processo()</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Evidência Documental Auditada</span>
+                <div class="tr-evidence-box">
+                  PROC-DEMO-001 · Metadados do Processo
+                  <span>Catálogo de Documentos Conferido</span>
+                </div>
+              </div>
+              <div>
+                <span class="tr-col-label">Veredito Factual</span>
+                <span class="status-verified">Auditado (1.0)</span>
+              </div>
+            </div>
+
+            <div class="telemetry-run-row" data-phase="fase2">
+              <div>
+                <span class="tr-col-label">Run ID (UUID)</span>
+                <div class="tr-uuid">#run-7d19b4</div>
+                <span class="tr-phase-tag">FASE 2 · LOCAL LGPD</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Executor / Agente</span>
+                <span class="badge-agent">Hermes (Loop ReAct)</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Classe de Modelo</span>
+                <div class="tr-model-name">Modelo Aberto Local</div>
+              </div>
+              <div>
+                <span class="tr-col-label">Endpoint ToolClient</span>
+                <span class="tr-tool-chip">buscar_documentos()</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Evidência Documental Auditada</span>
+                <div class="tr-evidence-box">
+                  PROC-DEMO-001 · doc_id: 102
+                  <span>Página Física 2 · Offset [40:180]</span>
+                </div>
+              </div>
+              <div>
+                <span class="tr-col-label">Veredito Factual</span>
+                <span class="status-verified">Soberania On-Premise</span>
+              </div>
+            </div>
+
+            <div class="telemetry-run-row" data-phase="fase2">
+              <div>
+                <span class="tr-col-label">Run ID (UUID)</span>
+                <div class="tr-uuid">#run-5a08f2</div>
+                <span class="tr-phase-tag">FASE 2 · NUVEM</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Executor / Agente</span>
+                <span class="badge-agent langgraph">LangGraph (State DAG)</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Classe de Modelo</span>
+                <div class="tr-model-name">Modelo Referência Nuvem</div>
+              </div>
+              <div>
+                <span class="tr-col-label">Endpoint ToolClient</span>
+                <span class="tr-tool-chip">ler_documento()</span>
+              </div>
+              <div>
+                <span class="tr-col-label">Evidência Documental Auditada</span>
+                <div class="tr-evidence-box">
+                  PROC-DEMO-001 · doc_id: 101
+                  <span>Página Física 1 · Offset [0:140]</span>
+                </div>
+              </div>
+              <div>
+                <span class="tr-col-label">Veredito Factual</span>
+                <span class="status-verified">Baseline Auditado</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="telemetry-footer-bar">
+            <span>Contrato: <code>contracts/models.py → ExperimentRun</code> · Rubrica Binária (0 ou 1) · Prazo Final:
+              10/12/2026</span>
+            <a href="resultados.html" class="telemetry-footer-link">Abrir Painel de Resultados &amp; Protocolo Completo
+              →</a>
           </div>
         </div>
       </div>
@@ -2121,7 +2496,7 @@
   <!-- FOOTER: Neon Cobalt Inner-Glow Frame + Cropped Watermark (Ref Image 3 Bottom Right) -->
   <footer class="scale-frame-footer">
     <div class="scale-frame-top">
-      <span>✦ CENTRO DE INOVAÇÃO EM INTELIGÊNCIA ARTIFICIAL (CIIA / UnDF)</span>
+      <span>✦ CENTRO INTEGRADO EM INTELIGÊNCIA ARTIFICIAL (CIIA)</span>
 
       <span>AMBIENTE 100% EXPERIMENTAL · LGPD SAFE</span>
     </div>
@@ -2165,7 +2540,7 @@
       </div>
     </div>
 
-    <div class="scale-watermark">CIIA / UnDF</div>
+    <div class="scale-watermark">CIIA & UnDF</div>
   </footer>
 
   <!-- INTERACTIVE VISUAL EFFECTS SCRIPTS -->
@@ -2176,7 +2551,7 @@
     function filterRuns(phase, btn) {
       document.querySelectorAll('.dash-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      const rows = document.querySelectorAll('#telemetryTable tbody tr');
+      const rows = document.querySelectorAll('#telemetryTable .telemetry-run-row');
       rows.forEach(row => {
         if (phase === 'all' || row.getAttribute('data-phase') === phase) {
           row.style.display = '';

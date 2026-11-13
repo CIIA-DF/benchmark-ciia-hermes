@@ -1,0 +1,3057 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estrutura do Protocolo &amp; Critérios do Leaderboard: Benchmark CIIA & UnDF (Hermes vs. LangGraph no SEI)
+  </title>
+  <!-- Google Fonts: Plus Jakarta Sans (UI/Display), Cormorant Garamond (Editorial Glass Slide Accents), JetBrains Mono (Telemetry/Code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,600&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #020510;
+      --bg-navy: #050b1e;
+      --bg-card: rgba(9, 18, 44, 0.68);
+      --bg-card-solid: #071026;
+      --bg-elevated: rgba(14, 28, 66, 0.55);
+      --cobalt-core: #1d5eff;
+      --cobalt-bright: #3b82f6;
+      --cyan-glow: #60a5fa;
+      --ice-blue: #bfd9ff;
+      --ice-light: #e6f0ff;
+      --emerald-glow: #34d399;
+      --amber-glow: #fbbf24;
+      --rose-glow: #f87171;
+      --text-white: #ffffff;
+      --text-secondary: #94a9c9;
+      --text-muted: #587099;
+      --border-glass: rgba(120, 175, 255, 0.18);
+      --border-bright: rgba(147, 197, 253, 0.45);
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-serif: 'Cormorant Garamond', Georgia, serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-deep);
+      color: var(--text-white);
+    }
+
+    body {
+      background-color: var(--bg-deep);
+      color: var(--text-white);
+      font-family: var(--font-sans);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+    }
+
+    /* ==========================================================================
+       GLOBAL AMBIENT LIGHT LEAKS & VERTICAL RAY COLUMNS (Lumine Signature)
+       ========================================================================== */
+    .ambient-rays {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background:
+        radial-gradient(ellipse 75% 45% at 50% -8%, rgba(29, 94, 255, 0.30), transparent 70%),
+        radial-gradient(ellipse 50% 40% at 85% 35%, rgba(59, 130, 246, 0.10), transparent 70%),
+        repeating-linear-gradient(90deg,
+          rgba(59, 130, 246, 0.0) 0px,
+          rgba(59, 130, 246, 0.0) 78px,
+          rgba(96, 165, 250, 0.028) 80px,
+          rgba(59, 130, 246, 0.0) 82px);
+    }
+
+    .container {
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 0 36px;
+      position: relative;
+      z-index: 5;
+    }
+
+    /* ==========================================================================
+       TOP NAVIGATION BAR (BenchLM Structure + Lumine Glass Style)
+       ========================================================================== */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(2, 5, 16, 0.78);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1px solid rgba(120, 175, 255, 0.14);
+    }
+
+    .navbar-inner {
+      max-width: 1260px;
+      margin: 0 auto;
+      padding: 0 36px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-white);
+      font-weight: 700;
+      font-size: 15.5px;
+      letter-spacing: 0.03em;
+      flex-shrink: 0;
+    }
+
+    .logo-img {
+      height: 32px;
+      width: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.5));
+    }
+
+    .logo-star {
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #ffffff 0%, #60a5fa 45%, transparent 75%);
+      border-radius: 50%;
+      box-shadow: 0 0 18px #3b82f6;
+      position: relative;
+    }
+
+    .logo-star::before,
+    .logo-star::after {
+      content: "";
+      position: absolute;
+      background: #ffffff;
+      border-radius: 2px;
+    }
+
+    .logo-star::before {
+      width: 16px;
+      height: 2px;
+    }
+
+    .logo-star::after {
+      width: 2px;
+      height: 16px;
+    }
+
+    .logo-sub {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--cyan-glow);
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.16);
+      border: 1px solid rgba(96, 165, 250, 0.35);
+    }
+
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      list-style: none;
+      height: 100%;
+    }
+
+    .nav-menu li {
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-menu a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      height: 100%;
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+      transition: color 0.2s ease, text-shadow 0.2s ease;
+    }
+
+    .nav-menu a:hover,
+    .nav-menu a.active {
+      color: var(--text-white);
+      text-shadow: 0 0 12px rgba(96, 165, 250, 0.65);
+    }
+
+    .nav-menu a.active::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #60a5fa, #ffffff, #60a5fa);
+      box-shadow: 0 0 12px #60a5fa;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .nav-search-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 12px;
+      border-radius: 9px;
+      background: rgba(9, 20, 48, 0.7);
+      border: 1px solid rgba(120, 175, 255, 0.22);
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s ease;
+    }
+
+    .nav-search-pill:hover {
+      border-color: var(--cyan-glow);
+      color: var(--text-white);
+    }
+
+    .kbd-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 5px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(147, 197, 253, 0.25);
+      color: var(--ice-blue);
+    }
+
+    .btn-pill-white {
+      background: linear-gradient(180deg, #ffffff 0%, #dbeafe 100%);
+      color: #030718;
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 999px;
+      text-decoration: none;
+      box-shadow: 0 0 22px rgba(96, 165, 250, 0.45), inset 0 1px 0 #ffffff;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-pill-white:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 32px rgba(96, 165, 250, 0.8), inset 0 1px 0 #ffffff;
+    }
+
+    /* ==========================================================================
+       HERO SECTION: BENCHLM SPLIT HEADER + ECLIPSE GLOW + BEST REPORTED CARD
+       (Inspired by Screenshot 1 & Screenshot 3 "LiveClaw" Top Layout)
+       ========================================================================== */
+    .hero-benchmark {
+      position: relative;
+      padding-top: 128px;
+      padding-bottom: 56px;
+      overflow: hidden;
+    }
+
+    .eclipse-backdrop {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1200px;
+      height: 500px;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.72;
+    }
+
+    .eclipse-crown-flare {
+      position: absolute;
+      top: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 360px;
+      height: 110px;
+      background: radial-gradient(ellipse at center, #ffffff 0%, #93c5fd 32%, rgba(29, 94, 255, 0.42) 62%, transparent 78%);
+      filter: blur(16px);
+    }
+
+    .eclipse-arc {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1080px;
+      height: 920px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 0%, rgba(16, 37, 92, 0.45) 0%, rgba(3, 7, 22, 0.95) 52%, var(--bg-deep) 70%);
+      box-shadow:
+        0 -2px 10px rgba(255, 255, 255, 0.85),
+        0 -8px 32px rgba(96, 165, 250, 0.8),
+        0 -24px 80px rgba(29, 94, 255, 0.65),
+        inset 0 3px 22px rgba(147, 197, 253, 0.45);
+      mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 28%, rgba(0, 0, 0, 0) 48%);
+      -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 1) 28%, rgba(0, 0, 0, 0) 48%);
+    }
+
+    .hero-split-grid {
+      position: relative;
+      z-index: 5;
+      display: grid;
+      grid-template-columns: 1.35fr 0.85fr;
+      gap: 36px;
+      align-items: stretch;
+      margin-top: 24px;
+    }
+
+    .hero-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .beta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(15, 32, 75, 0.78);
+      border: 1px solid rgba(147, 197, 253, 0.38);
+      box-shadow: 0 0 24px rgba(59, 130, 246, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--ice-light);
+      margin-bottom: 20px;
+      width: fit-content;
+      letter-spacing: 0.04em;
+    }
+
+    .beta-pill .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald-glow);
+      box-shadow: 0 0 10px var(--emerald-glow);
+    }
+
+    .hero-title {
+      font-size: clamp(32px, 4.4vw, 54px);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin-bottom: 18px;
+      background: linear-gradient(95deg, #ffffff 15%, #dbeafe 55%, #60a5fa 92%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-quote-rule {
+      border-left: 2px solid var(--cyan-glow);
+      padding-left: 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ice-blue);
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .hero-subtitle {
+      font-size: 15.5px;
+      line-height: 1.68;
+      color: var(--text-secondary);
+      max-width: 660px;
+    }
+
+    .hero-subtitle strong {
+      color: var(--ice-light);
+      font-weight: 600;
+    }
+
+    .hero-meta-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .meta-tag-chip {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      background: rgba(12, 26, 62, 0.72);
+      border: 1px solid rgba(120, 175, 255, 0.22);
+      color: var(--ice-blue);
+    }
+
+    .meta-tag-chip strong {
+      color: #ffffff;
+    }
+
+    /* Right Hero Card: "Best Reported / Gold Standard vs Best Local" (Ref Image 3 Top-Right Card) */
+    .best-reported-card {
+      background: linear-gradient(165deg, rgba(14, 30, 72, 0.88) 0%, rgba(5, 11, 28, 0.96) 100%);
+      border: 1px solid rgba(147, 197, 253, 0.38);
+      border-radius: 20px;
+      padding: 28px 30px;
+      box-shadow:
+        0 24px 65px rgba(0, 0, 0, 0.75),
+        0 0 40px rgba(29, 94, 255, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .best-reported-card::before {
+      content: "";
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.28) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .brc-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brc-pill {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(52, 211, 153, 0.14);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: #a7f3d0;
+    }
+
+    .brc-score-big {
+      font-size: clamp(46px, 5vw, 62px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.02;
+      margin: 10px 0 6px 0;
+      background: linear-gradient(90deg, #ffffff 20%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brc-score-big span.unit {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--cyan-glow);
+      -webkit-text-fill-color: var(--cyan-glow);
+      margin-left: 4px;
+    }
+
+    .brc-model-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .brc-model-sub {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      margin-top: 2px;
+    }
+
+    .brc-divider {
+      height: 1px;
+      background: rgba(120, 175, 255, 0.16);
+      margin: 18px 0;
+    }
+
+    .brc-sovereign-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(29, 94, 255, 0.14);
+      border: 1px solid rgba(96, 165, 250, 0.3);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .brc-sovereign-row .left-info span {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--cyan-glow);
+      letter-spacing: 0.06em;
+    }
+
+    .brc-sovereign-row .left-info strong {
+      font-size: 13px;
+      color: #ffffff;
+    }
+
+    .brc-sovereign-row .right-score {
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 700;
+      color: #a7f3d0;
+    }
+
+    .brc-footer-note {
+      margin-top: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .brc-footer-note::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan-glow);
+      box-shadow: 0 0 8px var(--cyan-glow);
+    }
+
+    /* ==========================================================================
+       TRUST & VERIFICATION BANNER ("Should you trust a LiveClaw score?" - Ref 3)
+       ========================================================================== */
+    .trust-banner-card {
+      margin-top: 24px;
+      background: rgba(8, 17, 42, 0.76);
+      border: 1px solid rgba(120, 175, 255, 0.22);
+      border-radius: 16px;
+      padding: 24px 28px;
+      backdrop-filter: blur(14px);
+    }
+
+    .trust-banner-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(120, 175, 255, 0.14);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .trust-banner-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .trust-banner-sub {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    .trust-columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      padding-top: 18px;
+    }
+
+    .trust-col-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .trust-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-weight: 600;
+    }
+
+    .trust-badge.green {
+      background: rgba(16, 185, 129, 0.16);
+      color: #6ee7b7;
+      border: 1px solid rgba(52, 211, 153, 0.35);
+    }
+
+    .trust-badge.blue {
+      background: rgba(59, 130, 246, 0.18);
+      color: var(--ice-light);
+      border: 1px solid rgba(96, 165, 250, 0.38);
+    }
+
+    .trust-badge.amber {
+      background: rgba(245, 158, 11, 0.16);
+      color: #fde68a;
+      border: 1px solid rgba(251, 191, 36, 0.38);
+    }
+
+    .trust-col p {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ice-light);
+      font-weight: 500;
+    }
+
+    .trust-footnote {
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(120, 175, 255, 0.1);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ==========================================================================
+       CURRENT BENCHMARK LEADERS :  3 BIG VERTICAL CARDS WITH METRIC BARS
+       (Directly Inspired by Screenshot 1: Gemini 4 / Claude Opus / GPT-6 Cards)
+       ========================================================================== */
+    .section-block {
+      padding: 64px 0 32px 0;
+      position: relative;
+      z-index: 5;
+    }
+
+    .leaders-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .leaders-heading-group h2 {
+      font-size: clamp(22px, 2.5vw, 30px);
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .leaders-heading-group h2 span.snapshot-date {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-secondary);
+    }
+
+    .leaders-view-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .view-pill-btn {
+      background: rgba(10, 22, 52, 0.75);
+      border: 1px solid rgba(120, 175, 255, 0.22);
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      padding: 7px 14px;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .view-pill-btn.active,
+    .view-pill-btn:hover {
+      background: rgba(29, 94, 255, 0.28);
+      color: #ffffff;
+      border-color: var(--cyan-glow);
+      box-shadow: 0 0 18px rgba(59, 130, 246, 0.35);
+    }
+
+    .leaders-three-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .leader-card {
+      background: linear-gradient(180deg, rgba(10, 22, 54, 0.86) 0%, rgba(4, 10, 26, 0.95) 100%);
+      border: 1px solid rgba(147, 197, 253, 0.26);
+      border-radius: 18px;
+      padding: 26px 24px 20px 24px;
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .leader-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(147, 197, 253, 0.6);
+      box-shadow: 0 24px 65px rgba(0, 0, 0, 0.8), 0 0 35px rgba(29, 94, 255, 0.28);
+    }
+
+    .leader-card.rank-1 {
+      border-color: rgba(96, 165, 250, 0.52);
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.7), 0 0 35px rgba(29, 94, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+
+    .lc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .lc-brand-group {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .lc-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 11px;
+      background: rgba(29, 94, 255, 0.2);
+      border: 1px solid rgba(147, 197, 253, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 14px;
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(59, 130, 246, 0.3);
+      flex-shrink: 0;
+    }
+
+    .lc-icon-box.sovereign {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: rgba(52, 211, 153, 0.45);
+      color: #a7f3d0;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.28);
+    }
+
+    .lc-icon-box.hermes {
+      background: rgba(245, 158, 11, 0.16);
+      border-color: rgba(251, 191, 36, 0.45);
+      color: #fde68a;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+    }
+
+    .lc-title-wrap h3 {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.25;
+      margin-bottom: 5px;
+    }
+
+    .lc-tier-badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+    }
+
+    .lc-tier-badge.supported {
+      background: rgba(52, 211, 153, 0.14);
+      color: #6ee7b7;
+      border: 1px solid rgba(52, 211, 153, 0.35);
+    }
+
+    .lc-tier-badge.sovereign {
+      background: rgba(59, 130, 246, 0.2);
+      color: #93c5fd;
+      border: 1px solid rgba(96, 165, 250, 0.45);
+    }
+
+    .lc-tier-badge.estimated {
+      background: rgba(251, 191, 36, 0.14);
+      color: #fcd34d;
+      border: 1px solid rgba(251, 191, 36, 0.35);
+    }
+
+    .lc-provider-rank {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    .lc-score-box {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .lc-score-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      display: block;
+    }
+
+    .lc-score-num {
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: #ffffff;
+    }
+
+    .lc-score-num span.dec {
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .lc-ci-range {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      display: block;
+    }
+
+    /* Metric Rows inside Leader Card (Screenshot 1 Style) */
+    .lc-metrics-list {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      margin: 6px 0 22px 0;
+    }
+
+    .lc-metric-row {
+      display: grid;
+      grid-template-columns: 148px 1fr 48px;
+      align-items: center;
+      gap: 12px;
+      font-size: 12.5px;
+    }
+
+    .lc-metric-name {
+      color: var(--ice-light);
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .lc-bar-track {
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(147, 197, 253, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .lc-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #1d5eff 0%, #60a5fa 100%);
+      box-shadow: 0 0 10px rgba(96, 165, 250, 0.65);
+    }
+
+    .lc-bar-fill.emerald {
+      background: linear-gradient(90deg, #059669 0%, #34d399 100%);
+      box-shadow: 0 0 10px rgba(52, 211, 153, 0.55);
+    }
+
+    .lc-bar-dotted {
+      height: 2px;
+      width: 100%;
+      background-image: radial-gradient(circle, rgba(148, 169, 201, 0.45) 1px, transparent 1px);
+      background-size: 8px 2px;
+      background-repeat: repeat-x;
+    }
+
+    .lc-metric-val {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .lc-metric-val.muted {
+      font-size: 9.5px;
+      font-weight: 400;
+      color: var(--text-muted);
+      line-height: 1.15;
+    }
+
+    .lc-footer {
+      padding-top: 14px;
+      border-top: 1px solid rgba(120, 175, 255, 0.12);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11.5px;
+      color: var(--text-secondary);
+    }
+
+    .lc-status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+    }
+
+    .lc-status-dot i {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .lc-details-link {
+      color: var(--ice-light);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 11.5px;
+      transition: color 0.2s ease;
+    }
+
+    .lc-details-link:hover {
+      color: var(--cyan-glow);
+    }
+
+    /* ==========================================================================
+       FULL INTERACTIVE BENCHMARK SCORE TABLE (Ref Image 3 "Benchmark score table")
+       ========================================================================== */
+    .table-panel-card {
+      background: linear-gradient(180deg, rgba(9, 19, 46, 0.88) 0%, rgba(4, 9, 24, 0.96) 100%);
+      border: 1px solid rgba(147, 197, 253, 0.28);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.75);
+      margin-top: 24px;
+    }
+
+    .table-filters-row {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 22px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .filter-input,
+    .filter-select {
+      width: 100%;
+      background: rgba(4, 10, 28, 0.85);
+      border: 1px solid rgba(120, 175, 255, 0.25);
+      color: #ffffff;
+      padding: 10px 13px;
+      border-radius: 10px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .filter-input:focus,
+    .filter-select:focus {
+      border-color: var(--cyan-glow);
+      box-shadow: 0 0 14px rgba(59, 130, 246, 0.3);
+    }
+
+    .row-count-badge {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      padding: 10px 4px;
+      white-space: nowrap;
+    }
+
+    .table-scroll-wrap {
+      overflow-x: auto;
+    }
+
+    .bench-score-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    .bench-score-table thead th {
+      text-align: left;
+      padding: 12px 14px;
+      background: rgba(16, 34, 80, 0.45);
+      border-top: 1px solid rgba(120, 175, 255, 0.18);
+      border-bottom: 1px solid rgba(120, 175, 255, 0.18);
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ice-blue);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .bench-score-table thead th:hover {
+      color: #ffffff;
+    }
+
+    .bench-score-table tbody tr {
+      border-bottom: 1px solid rgba(120, 175, 255, 0.09);
+      transition: background 0.18s ease;
+    }
+
+    .bench-score-table tbody tr:hover {
+      background: rgba(59, 130, 246, 0.09);
+    }
+
+    .bench-score-table td {
+      padding: 15px 14px;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+
+    .rank-cell {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--text-secondary);
+      width: 52px;
+    }
+
+    .model-config-cell strong {
+      display: block;
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .model-config-cell span.provider-meta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .orch-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .orch-pill.langgraph {
+      background: rgba(16, 185, 129, 0.14);
+      color: #a7f3d0;
+      border: 1px solid rgba(52, 211, 153, 0.38);
+    }
+
+    .orch-pill.hermes {
+      background: rgba(59, 130, 246, 0.16);
+      color: #bfdbfe;
+      border: 1px solid rgba(96, 165, 250, 0.38);
+    }
+
+    .score-bar-cell {
+      min-width: 220px;
+    }
+
+    .score-inline-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .score-inline-track {
+      flex: 1;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(147, 197, 253, 0.12);
+      overflow: hidden;
+    }
+
+    .score-inline-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #1d5eff, #60a5fa);
+      box-shadow: 0 0 10px rgba(96, 165, 250, 0.6);
+    }
+
+    .score-inline-val {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      min-width: 58px;
+      text-align: right;
+    }
+
+    .score-declared-sub {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .mono-metric {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ice-light);
+    }
+
+    .weight-tag {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .weight-tag.open {
+      background: rgba(52, 211, 153, 0.12);
+      color: #6ee7b7;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .weight-tag.closed {
+      background: rgba(148, 163, 184, 0.12);
+      color: #cbd5e1;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+    }
+
+    /* "How to read this leaderboard" Callout (Ref Image 3) */
+    .how-to-read-box {
+      margin-top: 24px;
+      padding: 20px 24px;
+      border-radius: 14px;
+      background: rgba(12, 26, 62, 0.55);
+      border: 1px solid rgba(120, 175, 255, 0.18);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .how-to-read-box h4 {
+      grid-column: 1 / -1;
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: -8px;
+    }
+
+    .htr-item p {
+      font-size: 12.8px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .htr-item p strong {
+      color: var(--ice-light);
+    }
+
+    /* ==========================================================================
+       FASE 1 VS FASE 2: DUELO DE MODELOS & HIPÓTESE DO AMORTECIMENTO (LANGGRAPH)
+       ========================================================================== */
+    .duel-grid {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 28px;
+      margin-top: 28px;
+    }
+
+    .amortization-card {
+      background: radial-gradient(circle at 80% 15%, rgba(29, 94, 255, 0.26) 0%, rgba(6, 14, 36, 0.94) 70%);
+      border: 1px solid rgba(147, 197, 253, 0.32);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.65);
+    }
+
+    .amort-bar-group {
+      margin-top: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .amort-model-block {
+      background: rgba(4, 10, 26, 0.65);
+      border: 1px solid rgba(120, 175, 255, 0.16);
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+
+    .amort-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .amort-delta {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.16);
+      color: #6ee7b7;
+      border: 1px solid rgba(52, 211, 153, 0.35);
+    }
+
+    .dual-bar-row {
+      display: grid;
+      grid-template-columns: 115px 1fr 52px;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      margin-top: 6px;
+    }
+
+    .dual-bar-track {
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      overflow: hidden;
+    }
+
+    .dual-bar-fill.lg {
+      height: 100%;
+      background: linear-gradient(90deg, #059669, #34d399);
+      border-radius: 999px;
+    }
+
+    .dual-bar-fill.hm {
+      height: 100%;
+      background: linear-gradient(90deg, #1d5eff, #60a5fa);
+      border-radius: 999px;
+    }
+
+    /* 3 Categories Analytical Matrix Card */
+    .categories-matrix-card {
+      background: linear-gradient(165deg, rgba(12, 25, 58, 0.85) 0%, rgba(4, 9, 24, 0.96) 100%);
+      border: 1px solid rgba(147, 197, 253, 0.28);
+      border-radius: 20px;
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .cat-tier-box {
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: rgba(6, 14, 36, 0.72);
+      border: 1px solid rgba(120, 175, 255, 0.2);
+    }
+
+    .cat-tier-box.highlight-cn {
+      border-color: rgba(52, 211, 153, 0.45);
+      background: radial-gradient(circle at 95% 10%, rgba(16, 185, 129, 0.14), rgba(6, 14, 36, 0.85));
+    }
+
+    .cat-tier-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .cat-tier-head h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .cat-tier-head span {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 5px;
+      background: rgba(59, 130, 246, 0.18);
+      color: var(--ice-light);
+    }
+
+    .cat-models-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 8px 0;
+    }
+
+    .cat-models-chips code {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(147, 197, 253, 0.22);
+      color: var(--ice-light);
+    }
+
+    .cat-tier-box p {
+      font-size: 12.2px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+    }
+
+    /* ==========================================================================
+       "HOW THE SCORE IS BUILT" :  AS 4 PARTES FUNDAMENTAIS DO BENCHMARK
+       (Directly Inspired by Screenshot 2: Three Status Tiers + Categories Grid)
+       ========================================================================== */
+    .status-tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 24px;
+      margin-bottom: 36px;
+    }
+
+    .tier-explain-card {
+      background: rgba(9, 19, 46, 0.76);
+      border: 1px solid rgba(120, 175, 255, 0.22);
+      border-radius: 16px;
+      padding: 22px 24px;
+    }
+
+    .tier-dot-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .tier-dot-title i {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+    }
+
+    .tier-explain-card .tier-sub {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--cyan-glow);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .tier-explain-card p {
+      font-size: 12.8px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* 4 Pillars Grid (Screenshot 2 "Categories & weights" 2x2 Layout) */
+    .four-pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+    }
+
+    .pillar-card {
+      background: linear-gradient(155deg, rgba(12, 26, 62, 0.82) 0%, rgba(4, 10, 26, 0.95) 100%);
+      border: 1px solid rgba(147, 197, 253, 0.28);
+      border-radius: 18px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pillar-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .pillar-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--cyan-glow);
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.16);
+      border: 1px solid rgba(96, 165, 250, 0.35);
+    }
+
+    .pillar-weight {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .pillar-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .pillar-card p {
+      font-size: 13px;
+      line-height: 1.62;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .pillar-code-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .pillar-code-tags span {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: rgba(3, 8, 22, 0.75);
+      border: 1px solid rgba(120, 175, 255, 0.22);
+      color: var(--ice-blue);
+    }
+
+    /* ==========================================================================
+       ACHADOS ESPERADOS DO ARTIGO + ABOUT & PROVENANCE + FAQ (Screenshot 3 Bottom)
+       ========================================================================== */
+    .findings-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .finding-card {
+      border-radius: 16px;
+      padding: 26px;
+      background: rgba(9, 20, 48, 0.75);
+      border: 1px solid rgba(120, 175, 255, 0.24);
+      transition: transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    .finding-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--cyan-glow);
+    }
+
+    .finding-card.vivid {
+      background: radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.35), rgba(12, 32, 82, 0.88));
+      border-color: rgba(147, 197, 253, 0.5);
+    }
+
+    .finding-card h4 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .finding-card p {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+    }
+
+    .finding-card.vivid p {
+      color: var(--ice-light);
+    }
+
+    /* Metadata Spec Strip ("About" & "Freshness and provenance" from Screenshot 3) */
+    .spec-section-box {
+      margin-top: 42px;
+      background: rgba(7, 15, 38, 0.75);
+      border: 1px solid rgba(120, 175, 255, 0.18);
+      border-radius: 18px;
+      padding: 28px 32px;
+    }
+
+    .spec-section-box h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 20px;
+    }
+
+    .spec-four-cols {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(120, 175, 255, 0.14);
+      margin-bottom: 18px;
+    }
+
+    .spec-col-item {
+      border-left: 2px solid rgba(96, 165, 250, 0.35);
+      padding-left: 12px;
+    }
+
+    .spec-col-item span {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .spec-col-item strong {
+      font-size: 13.5px;
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    /* Questions / FAQ List (Screenshot 3 Bottom) */
+    .faq-list {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .faq-item {
+      background: rgba(8, 17, 42, 0.7);
+      border: 1px solid rgba(120, 175, 255, 0.16);
+      border-radius: 12px;
+      padding: 18px 22px;
+    }
+
+    .faq-item h5 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+
+    .faq-item p {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* ==========================================================================
+       FOOTER: NEON COBALT INNER-GLOW FRAME + WATERMARK (Lumine Signature)
+       ========================================================================== */
+    .scale-frame-footer {
+      margin: 56px 36px 44px 36px;
+      border-radius: 26px;
+      background: #030714;
+      border: 2px solid rgba(147, 197, 253, 0.7);
+      box-shadow:
+        0 0 60px rgba(29, 94, 255, 0.45),
+        inset 0 0 85px rgba(59, 130, 246, 0.65),
+        inset 0 0 25px rgba(191, 217, 255, 0.45);
+      padding: 40px 48px 0 48px;
+      position: relative;
+      overflow: hidden;
+      z-index: 5;
+    }
+
+    .scale-frame-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ice-light);
+      padding-bottom: 36px;
+      border-bottom: 1px solid rgba(147, 197, 253, 0.22);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .scale-frame-links {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      padding: 38px 0;
+    }
+
+    .scale-col h5 {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--cyan-glow);
+      margin-bottom: 14px;
+    }
+
+    .scale-col ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .scale-col ul li {
+      font-size: 12.5px;
+      color: var(--ice-light);
+      opacity: 0.85;
+    }
+
+    .scale-watermark {
+      font-size: clamp(56px, 11.5vw, 152px);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 0.82;
+      text-align: center;
+      margin-top: 10px;
+      margin-bottom: -14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(147, 197, 253, 0.65) 55%, rgba(29, 94, 255, 0.15) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 1120px) {
+
+      .hero-split-grid,
+      .leaders-three-grid,
+      .duel-grid,
+      .four-pillars-grid,
+      .findings-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .trust-columns,
+      .status-tiers-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-filters-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .spec-four-cols,
+      .scale-frame-links {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 760px) {
+
+      .container,
+      .navbar-inner {
+        padding: 0 20px;
+      }
+
+      .nav-menu,
+      .nav-search-pill {
+        display: none;
+      }
+
+      .table-filters-row,
+      .how-to-read-box,
+      .spec-four-cols,
+      .scale-frame-links {
+        grid-template-columns: 1fr;
+      }
+
+      .scale-frame-footer {
+        margin: 24px 16px;
+        padding: 28px 24px 0 24px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Ambient Vertical Light Rays -->
+  <div class="ambient-rays"></div>
+
+  <!-- Top Navigation Bar (BenchLM Structure + Lumine Aesthetic) -->
+  <header class="navbar">
+    <div class="navbar-inner">
+      <a href="index.html" class="logo">
+        <img src="ciialogo.png" alt="CIIA & UnDF" class="logo-img" />
+      </a>
+
+      <ul class="nav-menu">
+        <li><a href="#leaderboard" class="active">Critérios &amp; Métricas</a></li>
+        <li><a href="#tabela">Estrutura da Tabela</a></li>
+        <li><a href="#confronto">Desenho Experimental</a></li>
+        <li><a href="#protocolo">Rubrica Binária &amp; 4 Pilares</a></li>
+        <li><a href="#achados">Achados Esperados &amp; FAQ</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <div class="nav-search-pill" onclick="document.getElementById('modelSearchInput').focus()">
+          <span> Buscar modelo ou agente</span>
+          <span class="kbd-tag">⌘K</span>
+        </div>
+        <a href="index.html" class="btn-pill-white">← Visão Geral</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION: Split Benchmark Header + "Best Reported" Highlight Card (Ref Image 1 & 3) -->
+  <section id="leaderboard" class="hero-benchmark">
+    <div class="eclipse-backdrop">
+      <div class="eclipse-crown-flare"></div>
+      <div class="eclipse-arc"></div>
+    </div>
+
+    <div class="container">
+      <div class="hero-split-grid">
+        <!-- Left Description Column -->
+        <div class="hero-left">
+          <div class="beta-pill"
+            style="background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.4); color: #fbbf24;">
+            <span class="pulse-dot" style="background: #fbbf24; box-shadow: 0 0 10px #fbbf24;"></span>
+            <span>EM PRODUÇÃO · DADOS FINAIS APÓS O TÉRMINO DO BENCHMARK</span>
+          </div>
+
+          <h1 class="hero-title">
+            Painel Oficial de Resultados do Benchmark CIIA & UnDF
+          </h1>
+
+          <div class="hero-quote-rule"
+            style="border-left-color: #fbbf24; background: rgba(245, 158, 11, 0.05); padding: 14px 18px; border-radius: 0 10px 10px 0;">
+            <strong>Aviso de Transparência:</strong> Este painel está em <strong>produção</strong> e em fase de
+            preparação experimental. Todos os dados consolidados, taxas de acerto factual, medições de latência e custos
+            serão disponibilizados publicamente para consulta aberta e auditoria <strong>após o término do benchmark, a
+              conclusão de todos os nossos testes controlados e a finalização do ciclo de desenvolvimento</strong>.
+          </div>
+
+          <p class="hero-subtitle">
+            Ao contrário de avaliações baseadas em auto-relato, o benchmark do <strong>CIIA / UnDF</strong> adota uma
+            <strong>Rubrica Factual Rígida (0 ou 1)</strong>: o agente só pontua se responder com exatidão
+            <em>e</em> comprovar o parecer citando o <code>document_id</code>, a <code>pagina</code> física exata e os
+            <code>offsets</code> reais nos autos.
+          </p>
+
+          <div class="hero-meta-strip">
+            <div class="meta-tag-chip">Fase 1: <strong>Comparativo de Orquestração</strong></div>
+            <div class="meta-tag-chip">Fase 2: <strong>Soberania On-Premise e Custos</strong></div>
+            <div class="meta-tag-chip">Barramento: <strong>6 Endpoints REST (FastAPI)</strong></div>
+            <div class="meta-tag-chip">Ambiente: <strong>Isolado / LGPD Safe</strong></div>
+          </div>
+        </div>
+
+        <!-- Right Card: Best Reported & Sovereign Local Leader (Ref Image 3 Top-Right Card) -->
+        <div class="best-reported-card">
+          <div>
+            <div class="brc-eyebrow">
+              <span>Métrica Primária do Benchmark</span>
+              <span class="brc-pill">SR Auditado</span>
+            </div>
+            <div class="brc-score-big">
+              SR %<span class="unit">Meta Factual</span>
+            </div>
+            <div class="brc-model-name">Taxa de Sucesso com Fundamentação Estrita</div>
+            <div class="brc-model-sub">Nota 1 atribuída apenas com resposta exata, página física e offset comprovados
+              pelo avaliador.</div>
+          </div>
+
+          <div class="brc-divider"></div>
+
+          <div class="brc-sovereign-row">
+            <div class="left-info">
+              <span>★ Critério de Soberania Local (100% On-Premise / LGPD)</span>
+              <strong>Viabilidade de Modelos Abertos em Servidor Próprio</strong>
+            </div>
+            <div class="right-score">Auditado</div>
+          </div>
+
+          <div class="brc-footer-note">
+            Critérios definidos antes da coleta · Corpus congelado v1.0 (SHA-256)
+          </div>
+        </div>
+      </div>
+
+      <!-- TRUST & PROVENANCE BANNER ("Should you trust a LiveClaw score?" - Ref Image 3) -->
+      <div class="trust-banner-card">
+        <div class="trust-banner-top">
+          <div class="trust-banner-title">
+            <span>🛡️ Como interpretar a confiabilidade deste Leaderboard?</span>
+          </div>
+          <div class="trust-banner-sub">
+            Regra de Ouro CIIA: <strong>Sucesso Verificado ≠ Sucesso Declarado</strong> (Auditoria cega por página
+            física e offset)
+          </div>
+        </div>
+
+        <div class="trust-columns">
+          <div class="trust-col">
+            <div class="trust-col-head">
+              <span>Rubrica Factual</span>
+              <span class="trust-badge green">Binária Rígida (0 ou 1)</span>
+            </div>
+            <p>
+              Resposta textual bem redigida sem citação exata de <code>document_id</code> e <code>pagina</code> física
+              ou com
+              alucinação em processo parcial recebe <strong>nota zero</strong>.
+            </p>
+          </div>
+
+          <div class="trust-col">
+            <div class="trust-col-head">
+              <span>Origem das Execuções</span>
+              <span class="trust-badge blue">Harness Cego e Padronizado</span>
+            </div>
+            <p>
+              Nenhum dado decorre de auto-relato. As execuções rodam pareadas no mesmo barramento
+              <code>ToolClient</code>
+              com parâmetros controlados e <code>run_id</code> único por sessão.
+            </p>
+          </div>
+
+          <div class="trust-col">
+            <div class="trust-col-head">
+              <span>Isolamento &amp; Estado</span>
+              <span class="trust-badge amber">Ambiente Controlado</span>
+            </div>
+            <p>
+              Corpus imutável com rastreabilidade determinística por <code>corpus_version</code>, busca textual estrita
+              e zero conexão com o SEI real em produção.
+            </p>
+          </div>
+        </div>
+
+        <div class="trust-footnote">
+          Status de verificação extraído do harness <code>runner.py</code>. Erros HTTP 422 (Pydantic) ou chamadas
+          redundantes descontam diretamente na métrica TUA (Tool Use Accuracy).
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: CURRENT LEADERS :  3 BIG VERTICAL CARDS WITH HORIZONTAL BARS (Ref Image 1) -->
+  <section class="section-block">
+    <div class="container">
+      <div class="leaders-topbar">
+        <div class="leaders-heading-group">
+          <h2>
+            Perfis de Avaliação do Benchmark SEI
+            <span class="snapshot-date">Estrutura de Matriz Experimental Pareada</span>
+          </h2>
+        </div>
+
+        <div class="leaders-view-pills">
+          <button class="view-pill-btn active" onclick="highlightLeaderMode('all', this)">Visão Geral dos
+            Perfis</button>
+          <button class="view-pill-btn" onclick="highlightLeaderMode('sovereign', this)">Foco Soberania Local
+            (LGPD)</button>
+          <button class="view-pill-btn" onclick="highlightLeaderMode('orchestration', this)">Foco Fase 1
+            (Orquestração)</button>
+        </div>
+      </div>
+
+      <div class="leaders-three-grid" id="leadersCardsContainer">
+        <!-- LEADER CARD 01: Baseline de Referência (Nuvem + Grafo) -->
+        <article class="leader-card rank-1" data-card-type="cloud">
+          <div>
+            <div class="lc-header">
+              <div class="lc-brand-group">
+                <div class="lc-icon-box">REF</div>
+                <div class="lc-title-wrap">
+                  <h3>Modelo Referência + Grafo</h3>
+                  <span class="lc-tier-badge supported">BASELINE · NUVEM</span>
+                  <div class="lc-provider-rank">Teto de Capacidade Cognitiva · 01</div>
+                </div>
+              </div>
+              <div class="lc-score-box">
+                <span class="lc-score-label">Métrica Primária</span>
+                <div class="lc-score-num">SR<span class="dec">%</span></div>
+                <span class="lc-ci-range">Aguardando Coleta</span>
+              </div>
+            </div>
+
+            <div class="lc-metrics-list">
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Sucesso Verificado (SR)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Precisão ToolClient (TUA)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Citação Exata (Doc/Pág)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Humildade (Autos Parciais)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Checklist (Requisitos)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Eficiência de Passos</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Escrita Idempotente</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Soberania Local (LGPD)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Nuvem Externa</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="lc-footer">
+            <span class="lc-status-dot"><i style="background:#34d399; box-shadow:0 0 8px #34d399;"></i> Baseline Teórico
+              de Raciocínio</span>
+            <a href="#tabela" class="lc-details-link">Critérios →</a>
+          </div>
+        </article>
+
+        <!-- LEADER CARD 02: Soberania On-Premise Local -->
+        <article class="leader-card" data-card-type="sovereign">
+          <div>
+            <div class="lc-header">
+              <div class="lc-brand-group">
+                <div class="lc-icon-box sovereign">LOC</div>
+                <div class="lc-title-wrap">
+                  <h3>Modelo Aberto + Grafo</h3>
+                  <span class="lc-tier-badge sovereign">SOBERANIA · ON-PREMISE</span>
+                  <div class="lc-provider-rank">Execução 100% Local / LGPD · 02</div>
+                </div>
+              </div>
+              <div class="lc-score-box">
+                <span class="lc-score-label">Métrica Primária</span>
+                <div class="lc-score-num">SR<span class="dec">%</span></div>
+                <span class="lc-ci-range">Aguardando Coleta</span>
+              </div>
+            </div>
+
+            <div class="lc-metrics-list">
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Sucesso Verificado (SR)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Precisão ToolClient (TUA)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Citação Exata (Doc/Pág)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Humildade (Autos Parciais)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Checklist (Requisitos)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Eficiência de Passos</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Escrita Idempotente</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Soberania Local (LGPD)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">100% Local</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="lc-footer">
+            <span class="lc-status-dot"><i style="background:#60a5fa; box-shadow:0 0 8px #60a5fa;"></i> Hardware Próprio
+              · Zero Vazamento</span>
+            <a href="#confronto" class="lc-details-link">Critérios →</a>
+          </div>
+        </article>
+
+        <!-- LEADER CARD 03: Exploração Livre em Loop ReAct -->
+        <article class="leader-card" data-card-type="hermes">
+          <div>
+            <div class="lc-header">
+              <div class="lc-brand-group">
+                <div class="lc-icon-box hermes">R·A</div>
+                <div class="lc-title-wrap">
+                  <h3>Modelo Pareado + Loop ReAct</h3>
+                  <span class="lc-tier-badge estimated">ORQUESTRAÇÃO LIVRE · REACT</span>
+                  <div class="lc-provider-rank">Decisão Dinâmica de Chamadas · 03</div>
+                </div>
+              </div>
+              <div class="lc-score-box">
+                <span class="lc-score-label">Métrica Primária</span>
+                <div class="lc-score-num">SR<span class="dec">%</span></div>
+                <span class="lc-ci-range">Aguardando Coleta</span>
+              </div>
+            </div>
+
+            <div class="lc-metrics-list">
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Sucesso Verificado (SR)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Precisão ToolClient (TUA)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Citação Exata (Doc/Pág)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Humildade (Autos Parciais)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Checklist (Requisitos)</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Eficiência de Passos</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Escrita Idempotente</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+              <div class="lc-metric-row">
+                <span class="lc-metric-name">Risco de Recursão</span>
+                <div class="lc-bar-dotted"></div>
+                <span class="lc-metric-val muted">Em Produção</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="lc-footer">
+            <span class="lc-status-dot"><i style="background:#fbbf24; box-shadow:0 0 8px #fbbf24;"></i> Loop Autônomo
+              sem Roteiro Fixo</span>
+            <a href="#tabela" class="lc-details-link">Critérios →</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: FULL INTERACTIVE BENCHMARK SCORE TABLE (Ref Image 3 "Benchmark score table") -->
+  <section id="tabela" class="section-block">
+    <div class="container">
+      <div class="leaders-topbar">
+        <div class="leaders-heading-group">
+          <h2>
+            Estrutura da Matriz de Avaliação (14 Configurações Pareadas)
+            <span class="snapshot-date">Prévia dos campos e métricas estruturados para consolidação dos
+              resultados</span>
+          </h2>
+        </div>
+      </div>
+
+      <div class="table-panel-card">
+        <!-- Filter Controls (Ref Image 3) -->
+        <div class="table-filters-row">
+          <div class="filter-group">
+            <label for="modelSearchInput">Buscar Modelo ou Arquitetura</label>
+            <input type="text" id="modelSearchInput" class="filter-input"
+              placeholder="Ex: Qwen 2.5, DeepSeek-R1, Claude, Hermes 3..." oninput="applyTableFilters()" />
+          </div>
+
+          <div class="filter-group">
+            <label for="orchSelect">Paradigma de Orquestração (Fase 1)</label>
+            <select id="orchSelect" class="filter-select" onchange="applyTableFilters()">
+              <option value="all">Ambos (LangGraph &amp; Hermes)</option>
+              <option value="LangGraph">LangGraph (Grafo de Estados)</option>
+              <option value="Hermes">Hermes (Loop Autônomo ReAct)</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="catSelect">Categoria Analítica (Fase 2)</label>
+            <select id="catSelect" class="filter-select" onchange="applyTableFilters()">
+              <option value="all">Todas as 3 Categorias</option>
+              <option value="cloud">High-End Comerciais (Nuvem)</option>
+              <option value="cn-local">Open-Weights Chineses (Local)</option>
+              <option value="west-local">Open-Weights Ocidentais (Local)</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="accessSelect">Acesso aos Pesos / LGPD</label>
+            <select id="accessSelect" class="filter-select" onchange="applyTableFilters()">
+              <option value="all">Todos os pesos</option>
+              <option value="Open">Open-Weights (100% Local LGPD)</option>
+              <option value="Closed">API Fechada (Nuvem Criptografada)</option>
+            </select>
+          </div>
+
+          <div class="row-count-badge" id="rowCountDisplay">14 de 14 configurações</div>
+        </div>
+
+        <!-- Score Table -->
+        <div class="table-scroll-wrap">
+          <table class="bench-score-table" id="benchmarkDataTable">
+            <thead>
+              <tr>
+                <th onclick="sortTable('rank')">Rank ↕</th>
+                <th onclick="sortTable('model')">Modelo / Configuração ↕</th>
+                <th onclick="sortTable('orchestrator')">Orquestrador ↕</th>
+                <th onclick="sortTable('sr')">Sucesso Verificado (SR %) ↕</th>
+                <th onclick="sortTable('tua')">Precisão ToolClient (TUA) ↕</th>
+                <th onclick="sortTable('humility')">Autos Parciais (Sem Alucinar) ↕</th>
+                <th onclick="sortTable('steps')">Passos / Latência ↕</th>
+                <th onclick="sortTable('ctce')">CTCE (1k Processos SEI) ↕</th>
+                <th>Pesos / LGPD</th>
+              </tr>
+            </thead>
+            <tbody id="benchmarkTableBody">
+              <!-- Populated dynamically via JS below for instant sorting and filtering -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- How to read this leaderboard (Ref Image 3) -->
+        <div class="how-to-read-box">
+          <h4>Como ler este Leaderboard Científico</h4>
+          <div class="htr-item">
+            <p>
+              <strong>Recibo do Operador (Sucesso Verificado ≠ Declarado):</strong> A coluna principal exibe apenas a
+              <em>Taxa de Sucesso Verificado (SR)</em>, auditada por código determinístico e revisão cega sobre o
+              <code>document_id</code>, <code>pagina</code> e <code>offsets</code>. Abaixo de cada barra consta a taxa
+              "Declarada" pelo próprio agente, revelando o índice de excesso de confiança (alucinação de conclusão).
+            </p>
+          </div>
+          <div class="htr-item">
+            <p>
+              <strong>Status da Coleta (Painel em Produção):</strong> Não exibimos nenhum dado fictício ou simulado.
+              Esta matriz reflete a estrutura oficial de 14 configurações pareadas que serão submetidas ao protocolo.
+              Os números e métricas consolidadas serão publicados na íntegra para acesso público logo após o término
+              do benchmark e a conclusão de todas as rodadas experimentais.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: DESENHO EXPERIMENTAL & HIPÓTESES DE PESQUISA -->
+  <section id="confronto" class="section-block">
+    <div class="container">
+      <div class="leaders-topbar">
+        <div class="leaders-heading-group">
+          <h2>
+            Fase 1 e Fase 2: Desenho Experimental e Hipóteses do Estudo
+            <span class="snapshot-date">Isolamento metodológico entre arquitetura de orquestração e capacidade da
+              LLM</span>
+          </h2>
+        </div>
+      </div>
+
+      <div class="duel-grid">
+        <!-- Left Card: Pergunta Experimental 1 -->
+        <div class="amortization-card">
+          <div class="brc-eyebrow">
+            <span>Fase 1: Orquestração Pareada</span>
+            <span class="brc-pill">Hipótese Central</span>
+          </div>
+          <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 8px 0;">
+            Grafo de Estados (LangGraph) vs. Loop Livre (Hermes)
+          </h3>
+          <p style="font-size: 13px; line-height: 1.6; color: var(--text-secondary);">
+            A investigação verifica se orquestradores estruturados com nós de validação contêm erros e alucinações de
+            modelos com menor precisão em chamadas de ferramentas, ou se loops dinâmicos mantêm maior adaptabilidade na
+            navegação de autos complexos.
+          </p>
+
+          <div class="amort-bar-group">
+            <div class="amort-model-block">
+              <div class="amort-head">
+                <span>Modelos de Grande Porte (Fronteira em Nuvem)</span>
+                <span class="amort-delta">Baseline de Raciocínio</span>
+              </div>
+              <div class="dual-bar-row">
+                <span style="color:#a7f3d0;">Grafo de Estados</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
+              </div>
+              <div class="dual-bar-row">
+                <span style="color:#93c5fd;">Loop Autônomo</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
+              </div>
+            </div>
+
+            <div class="amort-model-block">
+              <div class="amort-head">
+                <span>Modelos Abertos de Grande Porte (Local On-Premise)</span>
+                <span class="amort-delta">Paridade com Nuvem</span>
+              </div>
+              <div class="dual-bar-row">
+                <span style="color:#a7f3d0;">Grafo de Estados</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
+              </div>
+              <div class="dual-bar-row">
+                <span style="color:#93c5fd;">Loop Autônomo</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
+              </div>
+            </div>
+
+            <div class="amort-model-block">
+              <div class="amort-head">
+                <span>Modelos Abertos de Médio Porte (Eficiência de Hardware)</span>
+                <span class="amort-delta">Ponto Crítico de Validação</span>
+              </div>
+              <div class="dual-bar-row">
+                <span style="color:#a7f3d0;">Grafo de Estados</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
+              </div>
+              <div class="dual-bar-row">
+                <span style="color:#93c5fd;">Loop Autônomo</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
+              </div>
+            </div>
+
+            <div class="amort-model-block" style="border-color: rgba(52, 211, 153, 0.45);">
+              <div class="amort-head">
+                <span>Modelos Abertos Compactos (Hardware Mínimo)</span>
+                <span class="amort-delta">Tolerância a Falhas de Ferramentas</span>
+              </div>
+              <div class="dual-bar-row">
+                <span style="color:#a7f3d0;">Grafo de Estados</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
+              </div>
+              <div class="dual-bar-row">
+                <span style="color:#93c5fd;">Loop Autônomo</span>
+                <div class="lc-bar-dotted" style="flex: 1; height: 10px;"></div>
+                <span style="font-size:11px; color:var(--text-muted);">Em Produção</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Card: The 3 Analytical Model Categories -->
+        <div class="categories-matrix-card">
+          <div>
+            <div class="brc-eyebrow">
+              <span>Fase 2: Soberania &amp; Viabilidade Econômica</span>
+              <span>Classes de Modelos</span>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 700; margin: 10px 0 6px 0;">
+              Modelos Locais On-Premise vs. Nuvem Comercial
+            </h3>
+          </div>
+
+          <div class="cat-tier-box">
+            <div class="cat-tier-head">
+              <h4>1. Modelos de Referência em Nuvem</h4>
+              <span>Baseline Comercial Criptografado</span>
+            </div>
+            <p>
+              Estabelecem o teto metodológico de raciocínio e conformidade textual com as instruções do processo
+              administrativo, fornecendo o padrão comparativo para a avaliação.
+            </p>
+          </div>
+
+          <div class="cat-tier-box highlight-cn">
+            <div class="cat-tier-head">
+              <h4>2. Modelos Abertos de Alto Desempenho (On-Premise)</h4>
+              <span style="background:rgba(16,185,129,0.2); color:#a7f3d0;">Servidor Próprio · 100% LGPD</span>
+            </div>
+            <p>
+              Avaliam a capacidade de modelos de pesos abertos executados localmente atingirem acurácia equivalente à da
+              nuvem, mantendo o processo administrativo integralmente dentro da infraestrutura pública.
+            </p>
+          </div>
+
+          <div class="cat-tier-box">
+            <div class="cat-tier-head">
+              <h4>3. Modelos Abertos Otimizados e Especializados</h4>
+              <span>Eficiência de Custo e Tool-Calling</span>
+            </div>
+            <p>
+              Investigam a viabilidade prática de modelos menores e especializados em chamada de ferramentas operarem
+              com baixo custo computacional por processo concluído.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: HOW THE SCORE IS BUILT & AS 4 PARTES FUNDAMENTAIS (Ref Image 2) -->
+  <section id="protocolo" class="section-block">
+    <div class="container">
+      <div class="leaders-topbar">
+        <div class="leaders-heading-group">
+          <h2>
+            Como a Pontuação é Construída: As 4 Partes do Protocolo Experimental
+            <span class="snapshot-date">Metodologia Reproduzível para Publicação Científica</span>
+          </h2>
+        </div>
+      </div>
+
+      <!-- Three Status Tiers (Directly Inspired by Screenshot 2 Top Cards) -->
+      <div class="status-tiers-grid">
+        <div class="tier-explain-card">
+          <div class="tier-dot-title">
+            <i style="background:#34d399; box-shadow:0 0 10px #34d399;"></i>
+            <span>Sucesso Verificado (Nota 1)</span>
+          </div>
+          <span class="tier-sub">Evidência Documental Comprovada</span>
+          <p>
+            A resposta final está factualmente correta <strong>e</strong> cita explicitamente o <code>document_id</code>
+            e a <code>pagina</code> física exata onde o avaliador independente confirma o trecho via
+            <code>start/end offsets</code>.
+          </p>
+        </div>
+
+        <div class="tier-explain-card">
+          <div class="tier-dot-title">
+            <i style="background:#fbbf24; box-shadow:0 0 10px #fbbf24;"></i>
+            <span>Sucesso Declarado Sem Prova (Nota 0)</span>
+          </div>
+          <span class="tier-sub">Penalização por Falta de Fundamentação</span>
+          <p>
+            O agente responde corretamente à pergunta administrativa, mas omite o documento/página física ou cita uma
+            página incorreta. No setor público, parecer sem fonte nos autos é invalidado.
+          </p>
+        </div>
+
+        <div class="tier-explain-card">
+          <div class="tier-dot-title">
+            <i style="background:#f87171; box-shadow:0 0 10px #f87171;"></i>
+            <span>Alucinação ou Falha de ToolClient (Nota 0)</span>
+          </div>
+          <span class="tier-sub">Invenção de Fatos ou Estouro de Recursão</span>
+          <p>
+            O agente inventa aprovação inexistente em processo exportado parcialmente, sofre loop infinito de
+            ferramentas ou acumula erros HTTP 422 de validação Pydantic no backend.
+          </p>
+        </div>
+      </div>
+
+      <!-- 4 Fundamental Blocks of the Benchmark (2x2 Grid from Screenshot 2) -->
+      <div class="four-pillars-grid">
+        <div class="pillar-card">
+          <div>
+            <div class="pillar-head">
+              <span class="pillar-num">PARTE 1 · CORPUS &amp; RAG</span>
+              <span class="pillar-weight">Rastreabilidade SHA-256</span>
+            </div>
+            <h3>O Corpus Administrativo e Indexação Rastreável</h3>
+            <p>
+              Documentos administrativos do padrão SEI (editais, despachos, notas técnicas, termos de referência e
+              certidões) extraídos via OCR (Tesseract) e congelados por <code>corpus_version</code>. O agente não pode
+              "adivinhar" o que não está nos autos.
+            </p>
+          </div>
+          <div class="pillar-code-tags">
+            <span>process_id</span>
+            <span>document_id</span>
+            <span>pagina</span>
+            <span>start/end offsets</span>
+            <span>sha256</span>
+            <span>corpus_version</span>
+          </div>
+        </div>
+
+        <div class="pillar-card">
+          <div>
+            <div class="pillar-head">
+              <span class="pillar-num">PARTE 2 · BACKEND REST</span>
+              <span class="pillar-weight">6 Endpoints FastAPI + Pydantic</span>
+            </div>
+            <h3>O Catálogo Unificado de Ferramentas (ToolClient)</h3>
+            <p>
+              Ambos os orquestradores conversam exclusivamente via HTTP com o mesmo backend padronizado, sem ranking
+              semântico "mágico" (busca textual por substring exata) e com chave de idempotência rígida nas ferramentas
+              de escrita.
+            </p>
+          </div>
+          <div class="pillar-code-tags">
+            <span>consultar_processo</span>
+            <span>buscar_documentos</span>
+            <span>ler_documento</span>
+            <span>consultar_requisitos</span>
+            <span>registrar_pendencia</span>
+            <span>salvar_minuta</span>
+          </div>
+        </div>
+
+        <div class="pillar-card">
+          <div>
+            <div class="pillar-head">
+              <span class="pillar-num">PARTE 3 · ORQUESTRAÇÃO</span>
+              <span class="pillar-weight">ReAct Dinâmico vs. Grafo Dirigido</span>
+            </div>
+            <h3>Os Dois Paradigmas: Hermes vs. LangGraph</h3>
+            <p>
+              <strong>Hermes (Loop Autônomo ReAct):</strong> tool-calling livre onde o modelo decide quando parar,
+              refazer buscas vazias e redigir a resposta.<br>
+              <strong>LangGraph (Grafo de Estados):</strong> pipeline determinístico (<code>LLMNode</code> →
+              <code>ToolNode</code> → <code>ValidationNode</code>) com arestas condicionais e limite fixo de recursão.
+            </p>
+          </div>
+          <div class="pillar-code-tags">
+            <span>Hermes ReAct Loop</span>
+            <span>LLMNode</span>
+            <span>ToolNode</span>
+            <span>ValidationNode</span>
+            <span>Recursion Limit</span>
+          </div>
+        </div>
+
+        <div class="pillar-card">
+          <div>
+            <div class="pillar-head">
+              <span class="pillar-num">PARTE 4 · EVALUATION HARNESS</span>
+              <span class="pillar-weight">runner.py · tasks.json</span>
+            </div>
+            <h3>O Harness de Medição e Rubricas Factuais</h3>
+            <p>
+              Orquestrador neutro (<code>runner.py</code>) que instancia rodadas pareadas, injeta sementes idênticas,
+              temperatura zero e isolamento estrito via <code>ToolContext(run_id=UUID)</code>, apurando SR, TUA,
+              Latência/Passos e CTCE.
+            </p>
+          </div>
+          <div class="pillar-code-tags">
+            <span>Sucesso Verificado (SR)</span>
+            <span>Acurácia de Ferramentas (TUA)</span>
+            <span>Latência &amp; Passos</span>
+            <span>CTCE ($/Tarefa)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION: ACHADOS ESPERADOS, METADATA & QUESTIONS (Ref Image 3 Bottom) -->
+  <section id="achados" class="section-block">
+    <div class="container">
+      <div class="leaders-topbar">
+        <div class="leaders-heading-group">
+          <h2>
+            O que o Confronto Vai Revelar (Achados Esperados do Artigo)
+            <span class="snapshot-date">Impacto Prático para o GDF, UnDF e Administração Pública</span>
+          </h2>
+        </div>
+      </div>
+
+      <div class="findings-grid">
+        <div class="finding-card vivid">
+          <h4>01. Papel da Arquitetura de Orquestração</h4>
+          <p>
+            Determinar empiricamente se a estruturação em grafo com validação explícita compensa limitações intrínsecas
+            de modelos de linguagem, ou se a flexibilidade de loops livres alcança melhor navegação em tarefas de
+            múltiplos passos.
+          </p>
+        </div>
+
+        <div class="finding-card">
+          <h4>02. Equação de Custo Computacional (CTCE)</h4>
+          <p>
+            Mapear o custo real por parecer emitido com comprovação documental. A métrica CTCE pondera o custo total da
+            infraestrutura ou tarifação de tokens pela taxa efetiva de sucesso auditado com evidência.
+          </p>
+        </div>
+
+        <div class="finding-card">
+          <h4>03. Resistência a Alucinações em Autos Parciais</h4>
+          <p>
+            Avaliar o comportamento dos agentes diante de exportações parciais do SEI. No setor público, a recusa
+            informada de um parecer por ausência de certidão nos autos é uma resposta correta, enquanto uma aprovação
+            inventada é falha crítica.
+          </p>
+        </div>
+
+        <div class="finding-card vivid">
+          <h4>04. Soberania Tecnológica e LGPD</h4>
+          <p>
+            Fornecer subsídios técnicos quantitativos para decisões de governança no setor público, demonstrando a
+            viabilidade de servidores próprios para análise de processos sensíveis sem envio de dados a provedores
+            externos.
+          </p>
+        </div>
+      </div>
+
+      <!-- About & Provenance Metadata Box (Directly Inspired by Screenshot 3) -->
+      <div class="spec-section-box">
+        <h3>Sobre o Benchmark CIIA & UnDF &amp; Proveniência Experimental</h3>
+        <div class="spec-four-cols">
+          <div class="spec-col-item">
+
+          </div>
+          <div class="spec-col-item">
+            <span>Escopo de Tarefas</span>
+            <strong>60 Tarefas SEI (360 → 1.080 Runs)</strong>
+          </div>
+          <div class="spec-col-item">
+            <span>Formato da Rubrica</span>
+            <strong>Binária Verificada (Doc + Pág + Offset)</strong>
+          </div>
+          <div class="spec-col-item">
+            <span>Nível de Dificuldade</span>
+            <strong>Multi-step Agentic REST + Auditoria</strong>
+          </div>
+        </div>
+
+        <div class="spec-four-cols" style="border-bottom:none; padding-bottom:0; margin-bottom:0;">
+          <div class="spec-col-item">
+            <span>Versão do Corpus</span>
+            <strong>SEI Export Frozen v1.0 (SHA-256)</strong>
+          </div>
+          <div class="spec-col-item">
+            <span>Isolamento de Sessão</span>
+            <strong>ToolContext(run_id=UUID) + Docker Reset</strong>
+          </div>
+          <div class="spec-col-item">
+            <span>Segurança &amp; LGPD</span>
+            <strong>Air-Gapped (Dados Tratados / Sintéticos)</strong>
+          </div>
+          <div class="spec-col-item">
+            <span>Entregável Principal</span>
+            <strong>Artigo Científico Reproduzível</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Questions / FAQ Section (Ref Image 3 Bottom) -->
+      <div class="faq-list">
+        <div class="faq-item">
+          <h5>O que exatamente o Benchmark CIIA & avalia?</h5>
+          <p>
+            Avalia a eficácia factual verificada (SR), a precisão no uso de ferramentas HTTP (TUA), a latência em passos
+            e o custo por tarefa concluída com evidência (CTCE) de agentes autônomos operando sobre processos
+            administrativos
+            exportados do SEI, isolando a arquitetura de orquestração (Hermes vs. LangGraph) e a classe do modelo de
+            linguagem.
+          </p>
+        </div>
+        <div class="faq-item">
+          <h5>Por que a regra 'Sucesso Verificado ≠ Sucesso Declarado' é essencial?</h5>
+          <p>
+            Na administração pública, uma resposta bem redigida não tem valor legal sem indicação precisa de folha e
+            documento nos autos. Modelos podem declarar que o processo está regular, mas sem apontar a página física
+            exata onde a comprovação se encontra, a nota é zero.
+          </p>
+        </div>
+        <div class="faq-item">
+          <h5>Como é garantida a paridade estrita entre os executores?</h5>
+          <p>
+            Ambos os agentes consomem a mesma interface ToolClient, com as mesmas ferramentas HTTP, o mesmo corpus
+            documental e orçamentos comparáveis de execução, sem atalhos pré-programados para a resposta.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER: Neon Cobalt Inner-Glow Frame + Cropped Watermark (Lumine Signature) -->
+  <footer class="scale-frame-footer">
+    <div class="scale-frame-top">
+      <span>✦ CENTRO INTEGRADO DE INTELIGÊNCIA ARTIFICIAL (CIIA)</span>
+      <span>PAINEL EM PRODUÇÃO · DADOS FINAIS APÓS BENCHMARK</span>
+      <span>AMBIENTE 100% EXPERIMENTAL · LGPD SAFE</span>
+    </div>
+
+    <div class="scale-frame-links">
+      <div class="scale-col">
+        <h5>4 Partes do Protocolo</h5>
+        <ul>
+          <li>1. Corpus SEI &amp; Indexação SHA-256</li>
+          <li>2. Catálogo ToolClient (6 REST)</li>
+          <li>3. Hermes (ReAct) vs. LangGraph (DAG)</li>
+          <li>4. Harness runner.py &amp; Rubrica 0/1</li>
+        </ul>
+      </div>
+      <div class="scale-col">
+        <h5>Métricas Oficiais</h5>
+        <ul>
+          <li>Taxa de Sucesso Verificado (SR)</li>
+          <li>Acurácia de Ferramentas (TUA)</li>
+          <li>Humildade em Processos Parciais</li>
+          <li>Custo por Tarefa Concluída (CTCE)</li>
+        </ul>
+      </div>
+      <div class="scale-col">
+        <h5>Perfis Experimentais</h5>
+        <ul>
+          <li>Fase 1: Orquestração Pareada</li>
+          <li>Fase 2: Soberania On-Premise</li>
+          <li>Métrica Primária: SR Verificado</li>
+          <li>Isolamento Estrito por UUID</li>
+        </ul>
+      </div>
+      <div class="scale-col">
+        <h5>Navegação Rápida</h5>
+        <ul>
+          <li><a href="index.html" style="color:var(--cyan-glow); text-decoration:none;">← Voltar para Visão
+              Geral</a></li>
+          <li><a href="#leaderboard" style="color:var(--ice-light); text-decoration:none;">Topo do Leaderboard</a></li>
+          <li><a href="#tabela" style="color:var(--ice-light); text-decoration:none;">Tabela Completa (14 Configs)</a>
+          </li>
+          <li><a href="#protocolo" style="color:var(--ice-light); text-decoration:none;">Regras de Auditoria</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="scale-watermark">CIIA & UnDF </div>
+  </footer>
+
+  <!-- INTERACTIVE DATA & FILTERING SCRIPT -->
+  <script>
+    const benchmarkRows = [
+      {
+        rank: 1,
+        model: "Modelo Nuvem Referência A",
+        provider: "Configuração Pareada · Nuvem Comercial",
+        orchestrator: "LangGraph",
+        category: "cloud",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 1,
+        ctce: 1,
+        ctceLabel: "Aguardando",
+        access: "Closed"
+      },
+      {
+        rank: 2,
+        model: "Modelo Nuvem Referência A",
+        provider: "Configuração Pareada · Nuvem Comercial",
+        orchestrator: "Hermes",
+        category: "cloud",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 2,
+        ctce: 2,
+        ctceLabel: "Aguardando",
+        access: "Closed"
+      },
+      {
+        rank: 3,
+        model: "Modelo Nuvem Referência B",
+        provider: "Configuração Pareada · Nuvem Comercial",
+        orchestrator: "LangGraph",
+        category: "cloud",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 3,
+        ctce: 3,
+        ctceLabel: "Aguardando",
+        access: "Closed"
+      },
+      {
+        rank: 4,
+        model: "Modelo Nuvem Referência B",
+        provider: "Configuração Pareada · Nuvem Comercial",
+        orchestrator: "Hermes",
+        category: "cloud",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 4,
+        ctce: 4,
+        ctceLabel: "Aguardando",
+        access: "Closed"
+      },
+      {
+        rank: 5,
+        model: "Modelo Aberto Local 70B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "LangGraph",
+        category: "cn-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 5,
+        ctce: 5,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      },
+      {
+        rank: 6,
+        model: "Modelo Aberto Local 70B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "Hermes",
+        category: "cn-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 6,
+        ctce: 6,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      },
+      {
+        rank: 7,
+        model: "Modelo Aberto Local 32B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "LangGraph",
+        category: "cn-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 7,
+        ctce: 7,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      },
+      {
+        rank: 8,
+        model: "Modelo Aberto Local 32B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "Hermes",
+        category: "cn-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 8,
+        ctce: 8,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      },
+      {
+        rank: 9,
+        model: "Modelo Aberto Local 14B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "LangGraph",
+        category: "cn-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 9,
+        ctce: 9,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      },
+      {
+        rank: 10,
+        model: "Modelo Aberto Local 14B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "Hermes",
+        category: "cn-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 10,
+        ctce: 10,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      },
+      {
+        rank: 11,
+        model: "Modelo Especializado Tool-Calling 70B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "LangGraph",
+        category: "west-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 11,
+        ctce: 11,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      },
+      {
+        rank: 12,
+        model: "Modelo Especializado Tool-Calling 70B",
+        provider: "Configuração Pareada · On-Premise / LGPD",
+        orchestrator: "Hermes",
+        category: "west-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 12,
+        ctce: 12,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      },
+      {
+        rank: 13,
+        model: "Modelo Aberto Local 8B",
+        provider: "Configuração Pareada · Hardware Compacto",
+        orchestrator: "LangGraph",
+        category: "west-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 13,
+        ctce: 13,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      },
+      {
+        rank: 14,
+        model: "Modelo Aberto Local 8B",
+        provider: "Configuração Pareada · Hardware Compacto",
+        orchestrator: "Hermes",
+        category: "west-local",
+        sr: 100,
+        isPending: true,
+        declared: 100,
+        tua: 100,
+        humility: 100,
+        steps: "Aguardando Coleta",
+        stepsNum: 14,
+        ctce: 14,
+        ctceLabel: "Aguardando",
+        access: "Open"
+      }
+    ];
+
+    let currentSortKey = 'rank';
+    let currentSortAsc = true;
+
+    function renderTable(rows) {
+      const tbody = document.getElementById('benchmarkTableBody');
+      tbody.innerHTML = '';
+
+      rows.forEach(r => {
+        const tr = document.createElement('tr');
+        const orchClass = r.orchestrator === 'LangGraph' ? 'langgraph' : 'hermes';
+        const orchLabel = r.orchestrator === 'LangGraph' ? 'LangGraph (State DAG)' : 'Hermes (ReAct Loop)';
+        const accessClass = r.access === 'Open' ? 'open' : 'closed';
+        const accessLabel = r.access === 'Open' ? 'Open · Local LGPD' : 'Closed · Nuvem API';
+
+        tr.innerHTML = `
+          <td class="rank-cell">#${String(r.rank).padStart(2, '0')}</td>
+          <td class="model-config-cell">
+            <strong>${r.model}</strong>
+            <span class="provider-meta">${r.provider}</span>
+          </td>
+          <td>
+            <span class="orch-pill ${orchClass}">${orchLabel}</span>
+          </td>
+          <td class="score-bar-cell">
+            <div class="score-inline-wrap">
+              <span class="weight-tag open" style="font-size:11px;">Aguardando Coleta</span>
+            </div>
+            <div class="score-declared-sub">Fórmula: Factual (0 ou 1) · Auditado por Página e Offset</div>
+          </td>
+          <td class="mono-metric" style="color:var(--text-muted);">Sob Medição</td>
+          <td class="mono-metric" style="color:var(--text-muted);">Sob Medição</td>
+          <td class="mono-metric" style="color:var(--text-muted);">${r.steps}</td>
+          <td class="mono-metric" style="color:var(--text-muted);">${r.ctceLabel}</td>
+          <td><span class="weight-tag ${accessClass}">${accessLabel}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('rowCountDisplay').textContent = `${rows.length} de ${benchmarkRows.length} configurações`;
+    }
+
+    function applyTableFilters() {
+      const q = document.getElementById('modelSearchInput').value.toLowerCase().trim();
+      const orch = document.getElementById('orchSelect').value;
+      const cat = document.getElementById('catSelect').value;
+      const acc = document.getElementById('accessSelect').value;
+
+      const filtered = benchmarkRows.filter(r => {
+        const matchQ = !q || r.model.toLowerCase().includes(q) || r.provider.toLowerCase().includes(q) || r.orchestrator.toLowerCase().includes(q);
+        const matchOrch = orch === 'all' || r.orchestrator === orch;
+        const matchCat = cat === 'all' || r.category === cat;
+        const matchAcc = acc === 'all' || r.access === acc;
+        return matchQ && matchOrch && matchCat && matchAcc;
+      });
+
+      renderTable(filtered);
+    }
+
+    function sortTable(key) {
+      if (currentSortKey === key) {
+        currentSortAsc = !currentSortAsc;
+      } else {
+        currentSortKey = key;
+        currentSortAsc = (key === 'rank' || key === 'ctce' || key === 'steps');
+      }
+
+      benchmarkRows.sort((a, b) => {
+        let valA = key === 'steps' ? a.stepsNum : a[key];
+        let valB = key === 'steps' ? b.stepsNum : b[key];
+        if (typeof valA === 'string') {
+          return currentSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        }
+        return currentSortAsc ? valA - valB : valB - valA;
+      });
+
+      applyTableFilters();
+    }
+
+    function highlightLeaderMode(mode, btn) {
+      document.querySelectorAll('.view-pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const cards = document.querySelectorAll('#leadersCardsContainer .leader-card');
+      cards.forEach(c => {
+        c.style.opacity = '1';
+        c.style.transform = '';
+        if (mode === 'sovereign' && c.getAttribute('data-card-type') !== 'sovereign') {
+          c.style.opacity = '0.48';
+        } else if (mode === 'orchestration' && c.getAttribute('data-card-type') === 'sovereign') {
+          c.style.opacity = '0.55';
+        }
+      });
+    }
+
+    // Keyboard shortcut ⌘K or / to focus search
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const inp = document.getElementById('modelSearchInput');
+        inp.focus();
+        inp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+
+    // Initial render
+    renderTable(benchmarkRows);
+  </script>
+</body>
+
+</html>

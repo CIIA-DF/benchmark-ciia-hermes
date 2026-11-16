@@ -1,6 +1,7 @@
 """Adaptador Hermes com loop ReAct sobre a API OpenAI-compatible."""
 
 import hashlib
+import ipaddress
 import json
 import os
 import re
@@ -8,6 +9,7 @@ import subprocess
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -33,6 +35,12 @@ PROJECT_VERSION = "0.1.0"
 MODEL_TEMPERATURE = 0.0
 MODEL_SEED = 42
 _IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,120}$")
+TASKS_PATH = Path(__file__).resolve().parents[2] / "evaluation" / "tasks.json"
+TOKEN_PRICES_PER_MILLION = {
+    "gpt-4o-mini": (0.15, 0.60),
+    "openai/gpt-4o-mini": (0.15, 0.60),
+    "meta-llama/llama-3.1-70b-instruct": (0.35, 0.40),
+}
 
 
 class HermesAdapter(AgentAdapter):
@@ -169,11 +177,10 @@ class HermesAdapter(AgentAdapter):
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest()
-        if task_id is None:
-            task_id = f"task-{hashlib.sha256(task.encode('utf-8')).hexdigest()[:16]}"
+        task_id = _resolve_task_id(task, context, task_id)
         endpoint_id = f"endpoint-{hashlib.sha256(config.base_url.encode()).hexdigest()[:16]}"
         return ExperimentRun(
-            **context.model_dump(),
+            **context.model_dump(exclude={"task_id"}),
             task_id=task_id,
             split="development",
             executor="hermes",
@@ -194,11 +201,73 @@ class HermesAdapter(AgentAdapter):
             tool_calls=tool_calls,
             input_tokens=input_tokens if input_tokens_known else None,
             output_tokens=output_tokens if output_tokens_known else None,
+            cost_usd=_calculate_cost_usd(
+                config.model,
+                config.base_url,
+                input_tokens if input_tokens_known else None,
+                output_tokens if output_tokens_known else None,
+            ),
             agent_declared_success=bool(final_content.strip()),
             persisted_artifact_ids=[],
             verified_success=None,
             evaluator=None,
         )
+
+
+def _resolve_task_id(task: str, context: ToolContext, task_id: str | None) -> str:
+    if task_id is not None:
+        return task_id
+
+    context_task_id = getattr(context, "task_id", None)
+    if context_task_id is not None:
+        return context_task_id
+
+    with TASKS_PATH.open(encoding="utf-8") as tasks_file:
+        tasks = json.load(tasks_file)
+    if not isinstance(tasks, list):
+        raise ValueError(f"O arquivo {TASKS_PATH} deve conter uma lista de tarefas.")
+
+    matching_ids = [
+        item["task_id"]
+        for item in tasks
+        if isinstance(item, dict)
+        and item.get("prompt") == task
+        and isinstance(item.get("task_id"), str)
+        and item["task_id"]
+    ]
+    if len(matching_ids) > 1:
+        raise ValueError(f"Mais de uma tarefa corresponde ao prompt em {TASKS_PATH}.")
+    if matching_ids:
+        return matching_ids[0]
+
+    return f"task-{hashlib.sha256(task.encode('utf-8')).hexdigest()[:16]}"
+
+
+def _calculate_cost_usd(
+    model: str,
+    base_url: str,
+    input_tokens: int | None,
+    output_tokens: int | None,
+) -> float | None:
+    hostname = urlsplit(base_url).hostname
+    if hostname is not None and _is_loopback_host(hostname):
+        return 0.0
+
+    prices = TOKEN_PRICES_PER_MILLION.get(model)
+    if prices is None or input_tokens is None or output_tokens is None:
+        return None
+
+    input_price, output_price = prices
+    return (input_tokens * input_price + output_tokens * output_price) / 1_000_000
+
+
+def _is_loopback_host(hostname: str) -> bool:
+    if hostname.lower() == "localhost" or hostname.lower().endswith(".localhost"):
+        return True
+    try:
+        return ipaddress.ip_address(hostname).is_loopback
+    except ValueError:
+        return False
 
 
 def _git_commit() -> str:

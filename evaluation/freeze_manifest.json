@@ -1,0 +1,103 @@
+{
+  "manifest_version": "1.0.0",
+  "created_at": "2026-11-17T19:00:00Z",
+  "methodological_freeze": {
+    "status": "frozen_pilot",
+    "description": "Congelamento metodológico preliminar para piloto e baseline do benchmark pareado Hermes vs LangGraph.",
+    "code_commit": {
+      "frozen_commit": "219d9d66f4fcbdf2559530438cf56eecbeebf036",
+      "branch": "task/evaluation-tasks-piloto",
+      "ambiguity_notes": "O commit 219d9d6 representa a base da frente de avaliação agora atualizada com as 15 tarefas piloto do dev_set (DEV-001 a DEV-015). Os adaptadores operacionais dos agentes encontram-se em branches de desenvolvimento separadas e ainda não foram integrados à branch principal (main) nem a esta branch de avaliação: o adaptador Hermes está em origin/feat/hermes / origin/team/hermes, e o grafo LangGraph está em origin/task/langgraph-grafo. O repositório principal (main) contém apenas stubs nos diretórios agents/hermes e agents/langgraph. Um congelamento metodológico unificado final exigirá a integração de todas as frentes na branch main."
+    },
+    "environment": {
+      "python_version": ">=3.12,<3.13",
+      "uv_lock_sha256": "1b4351948d19b621fdbd0c4ab4004e72379dde99c76cc803b42be66f698afab0",
+      "relevant_dependencies": {
+        "fastapi": "0.142.0",
+        "httpx": "0.28.1",
+        "psycopg": "3.3.6",
+        "pydantic": "2.13.5",
+        "pytest": "9.1.1",
+        "pyyaml": "6.0.3",
+        "ruff": "0.16.9",
+        "sqlalchemy": "2.0.54",
+        "uvicorn": "0.54.0"
+      }
+    },
+    "corpus": {
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "demo-v1",
+      "process_id": "PROC-DEMO-001",
+      "notes": "Corpus 100% sintético homologado para desenvolvimento e piloto, contendo documentos fictícios (DOC-DEMO-001)."
+    },
+    "tasks": {
+      "dev_set": {
+        "split": "development",
+        "tasks_file": "evaluation/tasks.json",
+        "tasks_file_sha256": "e566662f2279bf37ed63c56810cfb38cbab101771bfb2e0f4e2e6b0afbb103fb",
+        "count_available": 15,
+        "count_target": 15,
+        "task_ids": [
+          "DEV-001",
+          "DEV-002",
+          "DEV-003",
+          "DEV-004",
+          "DEV-005",
+          "DEV-006",
+          "DEV-007",
+          "DEV-008",
+          "DEV-009",
+          "DEV-010",
+          "DEV-011",
+          "DEV-012",
+          "DEV-013",
+          "DEV-014",
+          "DEV-015"
+        ],
+        "status": "15 tarefas piloto incorporadas no catálogo de desenvolvimento dev_set (conforme origin/team/evaluation); congelamento definitivo e execução oficial dependem da homologação final com a coordenação."
+      },
+      "test_set_secret": {
+        "split": "test_set_secret",
+        "count_available": 5,
+        "count_target": 5,
+        "task_ids": [
+          "BLIND-001",
+          "BLIND-002",
+          "BLIND-003",
+          "BLIND-004",
+          "BLIND-005"
+        ],
+        "status": "5 tarefas cegas estruturadas em evaluation/test_set_secret/ (fora do versionamento público via .gitignore).",
+        "notes": "Conjunto cego reservado baseado em corpus 100% sintético próprio (PROC-BLIND-001 e PROC-BLIND-002). Conteúdo mantido fora de arquivos rastreados pelo Git para prevenir data leakage."
+      }
+    },
+    "adapter_prompts": {
+      "hermes": {
+        "source_branch": "origin/feat/hermes",
+        "source_file": "agents/hermes/adapter.py",
+        "prompt_variable": "SYSTEM_PROMPT",
+        "prompt_sha256": "4c3a60046f0c743fd29f60e746ea91565721387d9c6b745e196fdc801653d976",
+        "alternate_branch_reference": {
+          "source_branch": "origin/team/hermes",
+          "source_file": "agents/hermes/adapter.py",
+          "prompt_sha256": "6e1b10d28e880b8c0d82ac38a9f83a9619e2f78ba2eadcf8f3ce691f78839f0e"
+        },
+        "notes": "O prompt oficial da feature branch feat/hermes instrui citação estrita de documento/página física e tratamento de busca vazia. A branch team/hermes possui versão preliminar compactada."
+      },
+      "langgraph": {
+        "source_branch": "origin/task/langgraph-grafo",
+        "source_file": "agents/langgraph/graph.py",
+        "prompt_variable": "system_prompt (default in build_graph)",
+        "prompt_sha256": "00010522357b92625845289cbcafbf45281b42f39a9799a51aa89a9390491200",
+        "notes": "Prompt padrão parametrizado na função build_graph da branch task/langgraph-grafo."
+      }
+    },
+    "experimental_parameters": {
+      "repetitions_per_task": 5,
+      "pairing_mode": "paired_identical_conditions",
+      "model_endpoint": "fixed_in_execution_run",
+      "temperature": 0.0,
+      "max_tool_rounds": 10
+    }
+  }
+}

@@ -16,3 +16,7 @@ results/
 CLAUDE.local.md
 .claude/settings.local.json
 .DS_Store
+
+# Conjunto reservado / Blind test (Metodologia TASK E4)
+evaluation/test_set_secret/
+evaluation/test_set_secret*.json

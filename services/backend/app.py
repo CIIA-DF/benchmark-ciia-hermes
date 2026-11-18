@@ -2,6 +2,7 @@
 
 import logging
 from contextlib import asynccontextmanager
+from uuid import UUID
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -12,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from contracts.models import (
     DocumentResult,
+    ExperimentRun,
     ProcessResult,
     ReadInput,
     SearchInput,
@@ -20,7 +22,17 @@ from contracts.models import (
     ToolError,
     WriteInput,
 )
-from services.backend.storage import chunks, documents, initialize, make_engine, processes
+from services.backend.storage import (
+    chunks,
+    documents,
+    get_experiment_run,
+    get_experiment_run_revisions,
+    initialize,
+    make_engine,
+    processes,
+    save_experiment_run,
+    update_experiment_run,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +165,61 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         return DocumentResult(
             **query.model_dump(include=set(ToolContext.model_fields)), document=result
         )
+
+    @app.post("/experiments", response_model=ExperimentRun)
+    def record_experiment(run: ExperimentRun):
+        try:
+            return save_experiment_run(database, run)
+        except ValueError:
+            raise ToolFailure(
+                409,
+                ToolError(
+                    code="idempotency_conflict",
+                    message="run_id já registrado com conteúdo diferente.",
+                    run_id=run.run_id,
+                ),
+            ) from None
+
+    @app.get("/experiments/{run_id}", response_model=ExperimentRun)
+    def read_experiment(run_id: UUID):
+        run = get_experiment_run(database, str(run_id))
+        if run is None:
+            raise ToolFailure(
+                404,
+                ToolError(
+                    code="not_found",
+                    message="Execução experimental não encontrada.",
+                    run_id=run_id,
+                ),
+            )
+        return run
+
+    @app.put("/experiments/{run_id}", response_model=ExperimentRun)
+    def revise_experiment(run_id: UUID, run: ExperimentRun):
+        if run.run_id != run_id:
+            raise ToolFailure(
+                422,
+                ToolError(
+                    code="validation_error",
+                    message="run_id do caminho e do registro devem ser iguais.",
+                    run_id=run_id,
+                ),
+            )
+        try:
+            return update_experiment_run(database, run)
+        except ValueError:
+            raise ToolFailure(
+                409,
+                ToolError(
+                    code="idempotency_conflict",
+                    message="Revisão inválida ou conflito com o registro atual.",
+                    run_id=run_id,
+                ),
+            ) from None
+
+    @app.get("/experiments/{run_id}/revisions", response_model=list[ExperimentRun])
+    def experiment_history(run_id: UUID):
+        return get_experiment_run_revisions(database, str(run_id))
 
     def planned(context: ToolContext):
         raise ToolFailure(

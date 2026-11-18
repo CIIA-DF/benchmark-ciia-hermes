@@ -21,7 +21,7 @@ def main():
             "requirements_version": "demo-v1",
         },
     )
-    print(f"Teste de interface para {args.adapter}; integração com executor ainda pendente.")
+    print(f"Teste HTTP para {args.adapter}; o smoke não executa o agente nem chama um modelo.")
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
 

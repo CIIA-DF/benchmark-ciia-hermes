@@ -115,7 +115,7 @@ Há também uma [proposta de benchmark em duas camadas](docs/02-arquitetura/prop
 
 **Implementado:** corpus sintético paginado, chunks rastreáveis, ingestão transacional, consulta de processo, busca textual filtrada e leitura de documento; testes e comandos locais. Compose e CI estão preparados para PostgreSQL.
 
-**Pendente:** PDF/OCR, recuperação semântica, requisitos validados, ferramentas de escrita, autenticação, migrações, persistência de `ExperimentRun`, agentes reais, coleta experimental e implantação. O repositório e a versão do Hermes ainda precisam ser confirmados.
+**Pendente:** PDF/OCR, recuperação semântica, requisitos validados, ferramentas de escrita, autenticação/autorização, migrações gerais e implantação. O adaptador LangGraph, níveis, limites, checkpoint local e persistência revisável de `ExperimentRun` estão implementados nesta branch; a fábrica concreta do provedor/modelo, equivalência com Hermes e coleta comparativa ainda dependem de decisões e validação.
 
 > [!IMPORTANT]
 > **Ainda não há resultados comparativos.** Os [PDFs originais](docs/README.md) são propostas históricas e não comprovam marcos, implantação nem preços atuais. Veja [status e evidências](docs/01-overview/project-status.md) e o [backlog](docs/01-overview/backlog.md).

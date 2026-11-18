@@ -25,6 +25,10 @@ Documentos valida fontes; Backend comprova persistência; agentes instrumentam c
 
 Pastas: evaluation/, contratos de ExperimentRun em revisão conjunta, documentação científica.
 
+Os registros `ExperimentRun` agora são persistidos com histórico por revisão.
+Revisar se níveis, status, limites, latência acumulada e tokens disponíveis são
+suficientes para congelar o protocolo; sucesso verificado segue externo ao agente.
+
 ## Estudar e executar
 
 Desenho experimental pareado, rubricas, avaliação cega, unidades de análise, medidas repetidas, latência/tokens/custo e análise de erros.

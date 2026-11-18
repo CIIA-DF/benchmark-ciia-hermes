@@ -12,6 +12,14 @@ Preparar execução por grafo com estado e seleção dinâmica de ferramentas co
 
 Estado, nós, transições condicionais, limites de chamadas/tempo, encerramento e registros. Documentar decisões do adaptador.
 
+Escopo experimental inicial: tarefas administrativas de consulta do SEI usando
+somente consultar processo, buscar documentos e ler documentos. Os níveis de
+uso da IA são: (1) consulta assistida de uma etapa; (2) agente com seleção
+dinâmica e encadeamento de ferramentas; (3) agente retomável com checkpoint
+isolado por `run_id`. A definição completa e as limitações atuais estão no
+[README do agente](../../agents/langgraph/README.md), com limites aplicados pelo
+grafo e checkpoint obrigatório para o nível 3.
+
 Limites: Não impor sequência fixa que resolva previamente tarefas do benchmark. Não implementar ferramenta de negócio no grafo nem acessar banco diretamente.
 
 ## Entradas, saídas e dependências

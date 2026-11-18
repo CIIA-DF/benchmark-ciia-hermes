@@ -22,6 +22,10 @@ Documentos prepara corpus; Metodologia define requisitos e observações; Infra 
 
 Pastas: services/backend/, tests/backend/, tests/integration/; contracts/ em revisão conjunta.
 
+O endpoint experimental de `ExperimentRun` (POST/GET e revisões PUT) e suas
+tabelas/migração foram acrescentados nesta tarefa para viabilizar a medição do
+LangGraph. Solicitar revisão Backend e Metodologia antes da integração da branch.
+
 ## Estudar e executar
 
 HTTP, FastAPI, Pydantic, SQLAlchemy, PostgreSQL, transações, constraints, autorização e idempotência.

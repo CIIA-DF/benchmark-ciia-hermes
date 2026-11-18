@@ -2,6 +2,7 @@
   {
     "task_id": "DEV-001",
     "split": "development",
+    "levels": ["assisted", "chained", "resumable"],
     "corpus_version": "synthetic-v1",
     "requirements_version": "demo-v1",
     "process_id": "PROC-DEMO-001",
@@ -12,6 +13,6 @@
       "Informar que a exportação é parcial, sem concluir que outros documentos estão ausentes.",
       "Não registrar pendência ou salvar minuta para uma tarefa somente de consulta."
     ],
-    "status": "proposta para revisão; não executada por agente"
+    "status": "proposta para revisão; níveis definidos, não executada por agente"
   }
 ]

@@ -43,6 +43,7 @@ def test_development_task_references_existing_synthetic_evidence():
     process, document = load_fixture(ROOT / "examples")
     for task in tasks:
         assert task["split"] == "development"
+        assert task["levels"] == ["assisted", "chained", "resumable"]
         assert task["process_id"] == process.process_id
         assert task["corpus_version"] == process.corpus_version
         assert task["requirements_version"] == process.requirements_version

@@ -10,8 +10,8 @@ Estado atual (confirme em [project-status.md](docs/01-overview/project-status.md
 
 - Implementado: corpus sintético paginado, chunks rastreáveis, ingestão transacional, `consultar_processo`, `buscar_documentos` (substring literal) e `ler_documento`; testes, CI e Compose preparados.
 - Somente contrato (HTTP 501): `consultar_requisitos`, `registrar_pendencia`, `salvar_minuta`.
-- Pendente: PDF/OCR, recuperação semântica, migrações, autenticação, persistência de `ExperimentRun`, agentes reais, coleta e implantação. **Não há resultados comparativos.**
-- Hermes: repositório, URL e versão **pendentes de confirmação**. LangGraph: ainda não instalado.
+- Pendente: PDF/OCR, recuperação semântica, migrações gerais, autenticação, integração concreta de provedor/modelo, Hermes, coleta e implantação. **Não há resultados comparativos.**
+- Hermes: repositório, URL e versão **pendentes de confirmação**. LangGraph: níveis, limites, checkpoints e adaptador do executor estão disponíveis; provedor e endpoint permanecem pendentes.
 
 ## 2. Início obrigatório de toda tarefa
 
@@ -57,7 +57,7 @@ Todos os comandos usam o prefixo `uv run --locked python -m ...`. Equivalentes M
 Fluxo: exportação manual → pipeline de documentos → banco (corpus e metadados) → ferramentas HTTP do backend → adaptadores (Hermes/LangGraph) → endpoint LLM externo.
 
 - O **agente seleciona** ferramentas; o **backend valida e executa**. Adaptadores usam apenas `ToolClient` e **nunca** acessam o banco.
-- Interface comum em [interface.py](agents/interface.py): `AgentAdapter.run(task, context) -> ExperimentRun`, `ToolContext`, `ToolClient` (catálogo fechado de 6 ferramentas), `ModelConfig` (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_TIMEOUT_SECONDS`).
+- Interface comum em [interface.py](agents/interface.py): `AgentAdapter.run(task, context) -> ExperimentRun`, `ToolContext`, `ToolClient` (LangGraph libera as 3 operações de leitura implementadas), `ExperimentRunClient` e `ModelConfig` (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_TIMEOUT_SECONDS`).
 - Toda chamada exige `ToolContext`: `run_id` (UUID do harness), `process_id`, `corpus_version`, `requirements_version`.
 - Ingestão ocorre antes das tarefas; não reextrair/reindexar por pergunta. Mudar conteúdo ou chunking exige **nova `corpus_version`**.
 - Chunks: 140 caracteres, sobreposição 20, sem atravessar páginas; offsets Python (início inclusivo, fim exclusivo). IDs determinísticos.

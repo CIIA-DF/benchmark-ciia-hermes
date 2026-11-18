@@ -31,7 +31,7 @@ def inject_tool_context(arguments: dict[str, Any], context: ToolContext) -> dict
     A sobreposição é estrita: os valores do ToolContext autenticado sempre
     prevalecem sobre quaisquer campos homônimos enviados pelo LLM.
     """
-    context_dict = context.model_dump(mode="json")
+    context_dict = context.model_dump(mode="json", include=set(CONTEXT_FIELDS))
     return {**arguments, **context_dict}
 
 

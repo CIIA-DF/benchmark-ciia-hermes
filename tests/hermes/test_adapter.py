@@ -1,3 +1,4 @@
+import hashlib
 import json
 from types import SimpleNamespace
 from typing import Literal
@@ -6,7 +7,12 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from agents.hermes.adapter import SYSTEM_PROMPT, HermesAdapter
+from agents.hermes.adapter import (
+    SYSTEM_PROMPT,
+    HermesAdapter,
+    _calculate_cost_usd,
+    _resolve_task_id,
+)
 from agents.hermes.tools import inject_tool_context
 from agents.interface import ModelConfig, ToolClient
 from contracts.models import ExperimentRun, ToolContext
@@ -86,7 +92,7 @@ def test_hermes_adapter_exposes_required_run_signature():
     assert HermesAdapter.run.__annotations__ == {
         "task": str,
         "context": ToolContext,
-        "task_id": str,
+        "task_id": str | None,
         "split": Literal["development", "final"],
         "repetition": int,
         "return": ExperimentRun,
@@ -156,6 +162,15 @@ def test_hermes_adapter_runs_tool_calls_and_records_usage(monkeypatch):
     assert tool_client_urls == ["http://127.0.0.1:8000"]
     assert requests[0]["temperature"] == 0.0
     assert requests[0]["seed"] == 42
+
+
+def test_hermes_adapter_uses_supplied_task_id(monkeypatch):
+    responses = [{"choices": [{"message": {"role": "assistant", "content": "Concluído."}}]}]
+    _mock_openai_client(monkeypatch, responses)
+
+    result = HermesAdapter().run("Tarefa sintética.", _context(), task_id="DEV-001")
+
+    assert result.task_id == "DEV-001"
 
 
 def test_hermes_adapter_uses_supplied_parameters(monkeypatch):
@@ -282,6 +297,95 @@ def test_hermes_adapter_handles_backend_tool_error(monkeypatch):
     tool_content = json.loads(tool_message["content"])
     assert tool_content["error"]["code"] == "not_implemented"
     assert "ferramenta ainda não implementada" in tool_content["error"]["message"]
+
+
+def test_hermes_adapter_uses_task_id_from_context(monkeypatch, tmp_path):
+    class ContextWithTaskId(ToolContext):
+        task_id: str
+
+    context = ContextWithTaskId(**_context().model_dump(), task_id="DEV-CONTEXT-001")
+    monkeypatch.setattr("agents.hermes.adapter.TASKS_PATH", tmp_path / "missing.json")
+    responses = [{"choices": [{"message": {"role": "assistant", "content": "Concluído."}}]}]
+    _mock_openai_client(monkeypatch, responses)
+
+    result = HermesAdapter().run("Tarefa sintética.", context)
+
+    assert result.task_id == "DEV-CONTEXT-001"
+
+
+def test_hermes_adapter_resolves_task_id_from_catalog_when_called_positionally(
+    monkeypatch, tmp_path
+):
+    task_prompt = "Tarefa sintética do catálogo."
+    tasks_path = tmp_path / "tasks.json"
+    tasks_path.write_text(
+        json.dumps([{"task_id": "DEV-TEST-001", "prompt": task_prompt}]),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("agents.hermes.adapter.TASKS_PATH", tasks_path)
+    responses = [{"choices": [{"message": {"role": "assistant", "content": "Concluído."}}]}]
+    _mock_openai_client(monkeypatch, responses)
+
+    result = HermesAdapter().run(task_prompt, _context())
+
+    assert result.task_id == "DEV-TEST-001"
+
+
+def test_hermes_adapter_falls_back_to_hashed_task_id(monkeypatch, tmp_path):
+    tasks_path = tmp_path / "tasks.json"
+    tasks_path.write_text("[]", encoding="utf-8")
+    monkeypatch.setattr("agents.hermes.adapter.TASKS_PATH", tasks_path)
+    task_prompt = "Tarefa sem ID no catálogo."
+
+    result = _resolve_task_id(task_prompt, _context(), None)
+
+    assert result == f"task-{hashlib.sha256(task_prompt.encode()).hexdigest()[:16]}"
+
+
+@pytest.mark.parametrize(
+    ("model", "base_url", "input_tokens", "output_tokens", "expected"),
+    [
+        ("gpt-4o-mini", "https://api.example.test/v1", 1_000, 2_000, 0.00135),
+        ("openai/gpt-4o-mini", "https://api.example.test/v1", 1_000, 2_000, 0.00135),
+        (
+            "meta-llama/llama-3.1-70b-instruct",
+            "https://api.example.test/v1",
+            1_000_000,
+            1_000_000,
+            0.75,
+        ),
+        ("hermes3:8b", "http://localhost:11434/v1", None, None, 0.0),
+        ("unknown-model", "https://api.example.test/v1", 1, 1, None),
+        ("gpt-4o-mini", "https://api.example.test/v1", None, 10, None),
+    ],
+)
+def test_hermes_adapter_calculates_known_and_local_costs(
+    model, base_url, input_tokens, output_tokens, expected
+):
+    assert _calculate_cost_usd(model, base_url, input_tokens, output_tokens) == expected
+
+
+def test_hermes_adapter_records_cost_in_experiment_run(monkeypatch):
+    responses = [
+        {
+            "choices": [{"message": {"role": "assistant", "content": "Concluído."}}],
+            "usage": {"prompt_tokens": 1_000, "completion_tokens": 2_000},
+        }
+    ]
+    _mock_openai_client(monkeypatch, responses)
+    monkeypatch.setattr(
+        "agents.hermes.adapter._model_config_from_environment",
+        lambda: ModelConfig(
+            base_url="https://api.example.test/v1",
+            model="gpt-4o-mini",
+            api_key="test-key",
+            timeout_seconds=5,
+        ),
+    )
+
+    result = HermesAdapter().run("Tarefa sintética.", _context(), task_id="DEV-001")
+
+    assert result.cost_usd == 0.00135
 
 
 def test_hermes_adapter_uses_git_commit_when_environment_is_unset(monkeypatch):

@@ -13,7 +13,7 @@ Em Settings → General → Pull Requests, habilitar merge commits e desabilitar
 Configurar rulesets ou proteções equivalentes cobrindo main, production e as seis team/*:
 
 - Require a pull request before merging; ao menos uma aprovação humana, dispensar aprovações antigas quando mudanças relevantes chegarem e exigir resolução das conversas.
-- Require status checks: nomes exatos **quality** e **integration**, origem GitHub Actions.
+- Require status checks: nomes exatos **quality**, **integration** e **portal**, origem GitHub Actions.
 - Bloquear force push (non-fast-forward) e exclusão.
 - Manter revisão e checks obrigatórios sem bypass; a coordenação também segue o fluxo.
 - Revisão de CODEOWNERS quando o mapa real estiver preenchido.

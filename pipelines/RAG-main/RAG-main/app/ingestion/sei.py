@@ -100,8 +100,12 @@ def tipo_do_rotulo(rotulo: str) -> str | None:
 
 
 def numero_do_rotulo(rotulo: str) -> str | None:
-    """'Memorando 131' -> '131'; 'Termo de Aceite 19' -> '19'."""
-    m = re.search(r"\b(\d+)$", rotulo)
+    """'Memorando 131' -> '131'; 'Termo de Aceite 19' -> '19'.
+
+    Só vale quando o rótulo é "<palavras> <número>": em "Decreto n. 44.969,
+    de 19/09/2023" o número final é um ano, não o número do documento.
+    """
+    m = re.fullmatch(r"\D+\s(\d+)", rotulo)
     return m.group(1) if m else None
 
 
@@ -265,3 +269,123 @@ def limpar_texto(texto: str, documento_sei_id: str | None = None) -> TextoLimpo:
     limpo = re.sub(r"[ \t]+\n", "\n", limpo)
     limpo = re.sub(r"\n{3,}", "\n\n", limpo).strip()
     return TextoLimpo(limpo, reparados, desconhecidos)
+
+
+# --------------------------------------------------------------------------
+# Metadados do documento (RAG-02): assunto, data e unidade
+# --------------------------------------------------------------------------
+
+
+def _linhas_nao_vazias(texto: str, limite: int) -> list[str]:
+    linhas = [linha.strip() for linha in texto.replace("̶", "-").splitlines()]
+    return [linha for linha in linhas if linha][:limite]
+
+
+LINHAS_ASSUNTO = 40
+MAX_LINHAS_EXTRAS_ASSUNTO = 5
+PARAGRAFO_NUMERADO = re.compile(r"^\d+(\.\d+)*\.?$|^\d+\.\s")
+COMECA_CONTINUACAO = re.compile(r"^[a-zà-ú(\-–]")
+TERMINA_EM_CONECTIVO = re.compile(
+    r"\b(e|ou|de|da|do|das|dos|a|à|às|ao|aos|o|os|para|com|em|no|na|nos|nas|por|sobre)$|[-–]$"
+)
+
+
+def _assunto_continua(acumulado: str, proxima: str) -> bool:
+    """Decide se a próxima linha ainda faz parte do assunto (que pode quebrar)."""
+    if PARAGRAFO_NUMERADO.match(proxima):
+        return False
+    if acumulado.count('"') % 2 == 1 or acumulado.count("“") > acumulado.count("”"):
+        return True  # aspas abertas: o assunto ainda não terminou
+    if TERMINA_EM_CONECTIVO.search(acumulado):
+        return True  # "... às Pró-Reitorias de Pesquisa e" + próxima linha
+    if COMECA_CONTINUACAO.match(proxima):
+        return True  # "(NIAUnDF)", "- Instrução complementar", "aprovação de ..."
+    # Uma palavra solta ("NIAUnDF", "PRODRS.") costuma ser o fim do assunto,
+    # mas não uma saudação como "Prezado,".
+    return " " not in proxima and len(proxima) <= 25 and not proxima.endswith(",")
+
+
+def extrair_assunto(texto_primeira_pagina: str) -> str | None:
+    """Texto após "Assunto:" no início do documento, juntando as linhas quebradas."""
+    linhas = _linhas_nao_vazias(texto_primeira_pagina, LINHAS_ASSUNTO + MAX_LINHAS_EXTRAS_ASSUNTO)
+    for i, linha in enumerate(linhas[:LINHAS_ASSUNTO]):
+        m = re.match(r"(?i)^assunto\s*:\s*(.*)$", linha)
+        if not m:
+            continue
+        partes = [m.group(1)]
+        for proxima in linhas[i + 1 : i + 1 + MAX_LINHAS_EXTRAS_ASSUNTO]:
+            if not _assunto_continua(" ".join(partes), proxima):
+                break
+            partes.append(proxima)
+        assunto = re.sub(r"\s+", " ", " ".join(partes)).strip()
+        return assunto or None
+    return None
+
+
+MESES = {
+    "janeiro": 1,
+    "fevereiro": 2,
+    "março": 3,
+    "marco": 3,
+    "abril": 4,
+    "maio": 5,
+    "junho": 6,
+    "julho": 7,
+    "agosto": 8,
+    "setembro": 9,
+    "outubro": 10,
+    "novembro": 11,
+    "dezembro": 12,
+}
+LINHAS_DATA = 30
+DATA_CABECALHO = re.compile(
+    r"Bras[ií]lia(?:\s*-\s*DF)?\s*,?\s*(?P<dia>\d{1,2})\s+de\s+(?P<mes>[a-zç]+)\s+de\s+(?P<ano>\d{4})",
+    re.IGNORECASE,
+)
+DATA_ASSINATURA = re.compile(
+    r"assinado\s+eletronicamente\s+por[\s\S]{0,250}?\bem\s+(\d{2})/(\d{2})/(\d{4})",
+    re.IGNORECASE,
+)
+
+
+def _iso(ano: int, mes: int, dia: int) -> str | None:
+    if not (1 <= mes <= 12 and 1 <= dia <= 31):
+        return None
+    return f"{ano:04d}-{mes:02d}-{dia:02d}"
+
+
+def extrair_data(texto_primeira_pagina: str) -> str | None:
+    """Data do cabeçalho ("Brasília-DF, 07 de maio de 2024") em formato ISO."""
+    cabecalho = "\n".join(_linhas_nao_vazias(texto_primeira_pagina, LINHAS_DATA))
+    m = DATA_CABECALHO.search(cabecalho)
+    if not m:
+        return None
+    mes = MESES.get(m["mes"].lower())
+    return _iso(int(m["ano"]), mes, int(m["dia"])) if mes else None
+
+
+def extrair_data_assinatura(texto_documento: str) -> str | None:
+    """Data da primeira assinatura eletrônica do documento, em formato ISO."""
+    datas = [_iso(int(a), int(m), int(d)) for d, m, a in DATA_ASSINATURA.findall(texto_documento)]
+    datas = [data for data in datas if data]
+    return min(datas) if datas else None
+
+
+LINHAS_UNIDADE = 15
+SIGLA = r"[A-Z][A-Z0-9\-]*(?:/[A-Z0-9][A-Z0-9\-]*)+"
+CABECALHO_COM_SIGLA = re.compile(rf"^[A-Za-zÀ-ú .]+?\s*[-–]\s*(?P<sigla>{SIGLA})$")
+
+
+def extrair_unidade(texto_primeira_pagina: str, numero_documento: str | None) -> str | None:
+    """Unidade emissora (sigla SEI), ex.: "UNDF/REIT/CEINTER".
+
+    Vem do número oficial ("98/2024 - UNDF/REIT/CEINTER") ou, em documentos
+    sem número, da linha de cabeçalho ("Despacho - UNDF/REIT").
+    """
+    if numero_documento and " - " in numero_documento:
+        return numero_documento.split(" - ", 1)[1]
+    for linha in _linhas_nao_vazias(texto_primeira_pagina, LINHAS_UNIDADE):
+        m = CABECALHO_COM_SIGLA.match(re.sub(r"\s+", " ", linha))
+        if m:
+            return m["sigla"]
+    return None

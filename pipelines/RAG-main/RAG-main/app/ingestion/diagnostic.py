@@ -1,7 +1,7 @@
-"""Relatório de qualidade da ingestão.
+"""Relatório de qualidade da ingestão e do parsing.
 
-Gerado automaticamente ao fim de `python -m app.ingestion.loader`, ou
-refeito a partir dos JSONs já processados com:
+Gerado automaticamente ao fim de `python -m app.ingestion.parser`, ou
+refeito a partir dos *.documentos.jsonl já gravados com:
 
     python -m app.ingestion.diagnostic
 """
@@ -25,6 +25,7 @@ FLAGS_ALERTA = {
     "glifos_desconhecidos",
     "candidata_ocr",
 }
+METADADOS = ("numero_documento", "assunto", "data_documento", "data_assinatura", "unidade")
 
 
 def _relatorio_arquivo(resultado: dict) -> dict:
@@ -41,16 +42,18 @@ def _relatorio_arquivo(resultado: dict) -> dict:
                 "documento_sei_id": doc["documento_sei_id"],
                 "rotulo": doc["rotulo"],
                 "tipo_documento": doc["tipo_documento"],
-                "numero_documento": doc["numero_documento"],
+                **{campo: doc.get(campo) for campo in METADADOS},
                 "paginas": f"{doc['pagina_inicio']}-{doc['pagina_fim']}",
                 "total_paginas": len(doc["paginas"]),
                 "caracteres": sum(len(p["texto_limpo"]) for p in doc["paginas"]),
+                "alertas": doc.get("alertas", []),
             }
         )
 
     esperadas = set(range(1, resultado["total_paginas"] + 1))
     contagem = Counter(registradas)
-    ids = Counter(d["documento_sei_id"] for d in resultado["documentos"])
+    total = len(documentos)
+    cobertura = {campo: sum(1 for d in documentos if d[campo]) for campo in METADADOS}
 
     return {
         "arquivo": resultado["arquivo_origem"],
@@ -59,12 +62,10 @@ def _relatorio_arquivo(resultado: dict) -> dict:
         "paginas_registradas": len(registradas),
         "paginas_faltando": sorted(esperadas - set(registradas)),
         "paginas_duplicadas": sorted(p for p, n in contagem.items() if n > 1),
-        "total_documentos": len(documentos),
-        "documentos_sem_id": sum(1 for d in documentos if not d["documento_sei_id"]),
-        "documentos_id_repetido": sorted(i for i, n in ids.items() if i and n > 1),
-        "documentos_sem_numero": [d["rotulo"] for d in documentos if not d["numero_documento"]],
+        "total_documentos": total,
+        "cobertura_metadados": {c: f"{n}/{total}" for c, n in cobertura.items()},
+        "documentos_com_alerta": sum(1 for d in documentos if d["alertas"]),
         "paginas_por_flag": {f: sorted(p) for f, p in sorted(paginas_por_flag.items())},
-        "avisos": resultado.get("avisos", []),
         "documentos": documentos,
     }
 
@@ -77,19 +78,18 @@ def gerar_relatorio(resultados: list[dict], erros: list[dict]) -> dict:
             alertas.append(f"{a['arquivo']}: páginas faltando {a['paginas_faltando']}")
         if a["paginas_duplicadas"]:
             alertas.append(f"{a['arquivo']}: páginas duplicadas {a['paginas_duplicadas']}")
-        if a["documentos_id_repetido"]:
-            repetidos = a["documentos_id_repetido"]
-            alertas.append(f"{a['arquivo']}: documento SEI em blocos separados {repetidos}")
         for flag in sorted(FLAGS_ALERTA & a["paginas_por_flag"].keys()):
             alertas.append(f"{a['arquivo']}: {flag} nas páginas {a['paginas_por_flag'][flag]}")
-        alertas.extend(f"{a['arquivo']}: {aviso}" for aviso in a["avisos"])
+        for d in a["documentos"]:
+            for alerta in d["alertas"]:
+                alertas.append(f"{a['arquivo']}: {d['rotulo']} ({d['documento_sei_id']}): {alerta}")
     alertas.extend(f"{e['arquivo']}: ERRO {e['erro']}" for e in erros)
 
     return {
         "gerado_em": datetime.now().isoformat(timespec="seconds"),
         "totais": {
-            "pdfs_processados": len(arquivos),
-            "pdfs_com_erro": len(erros),
+            "arquivos_processados": len(arquivos),
+            "arquivos_com_erro": len(erros),
             "paginas": sum(a["total_paginas"] for a in arquivos),
             "documentos": sum(a["total_documentos"] for a in arquivos),
         },
@@ -110,24 +110,23 @@ def salvar_relatorio(relatorio: dict, pasta: Path = PASTA_REPORTS) -> Path:
 def imprimir_resumo(relatorio: dict) -> None:
     t = relatorio["totais"]
     print(
-        f"\n=== Ingestão: {t['pdfs_processados']} PDF(s), {t['paginas']} páginas, "
-        f"{t['documentos']} documentos, {t['pdfs_com_erro']} PDF(s) com erro ==="
+        f"\n=== {t['arquivos_processados']} processo(s), {t['paginas']} páginas, "
+        f"{t['documentos']} documentos, {t['arquivos_com_erro']} arquivo(s) com erro ==="
     )
     for a in relatorio["arquivos"]:
         print(f"\n{a['arquivo']}  [processo {a['processo_sei']}]")
         paginas = f"{a['paginas_registradas']}/{a['total_paginas']}"
         print(f"  páginas: {paginas}   documentos: {a['total_documentos']}")
+        cobertura = ", ".join(f"{c}: {n}" for c, n in a["cobertura_metadados"].items())
+        print(f"  metadados encontrados: {cobertura}")
         for d in a["documentos"]:
-            numero = d["numero_documento"] or "-"
             doc_id = d["documento_sei_id"] or "?"
-            rotulo = d["rotulo"] or "?"
-            print(f"    p{d['paginas']:>9}  {doc_id:>10}  {rotulo}  ({numero})")
-        if a["paginas_por_flag"]:
-            print("  flags:")
-            for flag, paginas in a["paginas_por_flag"].items():
-                print(f"    {flag}: {paginas}")
+            rotulo = (d["rotulo"] or "?")[:30]
+            data = d["data_documento"] or d["data_assinatura"] or "-"
+            unidade = d["unidade"] or "-"
+            print(f"    p{d['paginas']:>9}  {doc_id:>10}  {rotulo:30}  {data:10}  {unidade}")
     if relatorio["alertas"]:
-        print("\nALERTAS:")
+        print("\nALERTAS (para revisão):")
         for alerta in relatorio["alertas"]:
             print(f"  - {alerta}")
     else:
@@ -135,14 +134,22 @@ def imprimir_resumo(relatorio: dict) -> None:
 
 
 def main() -> None:
+    from app.ingestion.parser import SUFIXO_DOCUMENTOS
+
     resultados = []
-    for caminho in sorted(PASTA_PROCESSED.glob("*.json")):
+    for caminho in sorted(PASTA_PROCESSED.glob(f"*{SUFIXO_DOCUMENTOS}")):
         with open(caminho, encoding="utf-8") as arquivo:
-            dados = json.load(arquivo)
-        if isinstance(dados, dict) and "documentos" in dados:
-            resultados.append(dados)
-        else:
-            print(f"Ignorando {caminho.name}: formato antigo; rode o loader novamente.")
+            documentos = [json.loads(linha) for linha in arquivo if linha.strip()]
+        if not documentos:
+            continue
+        resultados.append(
+            {
+                "arquivo_origem": documentos[0]["arquivo_origem"],
+                "processo_sei": documentos[0]["processo_sei"],
+                "total_paginas": max(d["pagina_fim"] for d in documentos),
+                "documentos": documentos,
+            }
+        )
     relatorio = gerar_relatorio(resultados, [])
     caminho = salvar_relatorio(relatorio)
     imprimir_resumo(relatorio)

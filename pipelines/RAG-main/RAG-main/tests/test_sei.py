@@ -174,3 +174,109 @@ def test_remove_moldura_sei_e_mantem_assinatura():
 
 def test_substituicoes_de_caracteres():
     assert sei.limpar_texto("​Despacho ̶ UNDF\n item").texto == "Despacho - UNDF\n• item"
+
+
+def test_numero_do_rotulo_ignora_datas():
+    assert sei.numero_do_rotulo("Memorando 131") == "131"
+    assert sei.numero_do_rotulo("Decreto n. 44.969, de 19/09/2023") is None
+    assert sei.numero_do_rotulo("Regimento Interno V3") is None
+
+
+# --------------------------------------------------------------------------
+# Metadados (RAG-02): assunto, data e unidade
+# --------------------------------------------------------------------------
+
+
+def test_assunto_em_uma_linha():
+    texto = (
+        "Memorando Nº 1/2024 - UNDF/REIT\nAssunto: Pedido de anuência para edital FAP\n1.\nTexto"
+    )
+    assert sei.extrair_assunto(texto) == "Pedido de anuência para edital FAP"
+
+
+def test_assunto_quebrado_com_parenteses():
+    texto = (
+        "Assunto: Proposta de criação do Núcleo de Inteligência Artificial da Universidade\n"
+        "(NIAUnDF). Manifestação da COCBS.\n"
+        "Senhora Coordenadora,\n"
+    )
+    assert sei.extrair_assunto(texto) == (
+        "Proposta de criação do Núcleo de Inteligência Artificial da Universidade "
+        "(NIAUnDF). Manifestação da COCBS."
+    )
+
+
+def test_assunto_com_aspas_abertas_continua():
+    texto = (
+        'Assunto: Esclarecimentos sobre o documento "Justificativa de Mudança do Pro\n'
+        'jeto e Foco Principal: Do CIIA GovTech para o NIAUnDF"\n'
+        "Senhora Reitora,\n"
+    )
+    assert sei.extrair_assunto(texto).endswith('para o NIAUnDF"')
+
+
+def test_assunto_termina_em_conectivo_continua():
+    texto = (
+        "Assunto: Requer encaminhamento às Pró-Reitorias de Pesquisa e\n"
+        "Pós-Graduação e de Extensão, com prazo.\n"
+        "1.\n"
+    )
+    assert sei.extrair_assunto(texto) == (
+        "Requer encaminhamento às Pró-Reitorias de Pesquisa e "
+        "Pós-Graduação e de Extensão, com prazo."
+    )
+
+
+def test_assunto_nao_engole_saudacao_nem_paragrafo():
+    assert sei.extrair_assunto("Assunto: criação de núcleo na UnDF\nPrezado,\nTexto") == (
+        "criação de núcleo na UnDF"
+    )
+    assert sei.extrair_assunto("Assunto: Pedido de anuência\nSolicito termo de anuência") == (
+        "Pedido de anuência"
+    )
+
+
+def test_assunto_palavra_solta_no_fim():
+    assert sei.extrair_assunto("Assunto: Proposta da Universidade\nNIAUnDF\n1.") == (
+        "Proposta da Universidade NIAUnDF"
+    )
+
+
+def test_sem_assunto():
+    assert sei.extrair_assunto("TERMO DE ACEITE\n19/2026\nTexto sem assunto") is None
+
+
+def test_data_do_cabecalho():
+    assert sei.extrair_data("Memorando\nBrasília-DF, 07 de maio de 2024.\n") == "2024-05-07"
+    assert sei.extrair_data("Despacho\nBrasília, 09 de março de 2024.") == "2024-03-09"
+    assert sei.extrair_data("GT de IA\nBrasília 31 de maio de 2024") == "2024-05-31"
+
+
+def test_data_invalida_ou_ausente():
+    assert sei.extrair_data("Brasília-DF, 07 de maiô de 2024.") is None
+    assert sei.extrair_data("Texto sem data") is None
+
+
+def test_data_assinatura_mais_antiga():
+    texto = (
+        "Documento assinado eletronicamente por FULANO DE TAL - Matr.123,\n"
+        "Professor, em 12/02/2026, às 10:37, conforme art. 6º\n"
+        "Documento assinado eletronicamente por CICLANA - Matr.456, em 10/02/2026, às 09:00\n"
+    )
+    assert sei.extrair_data_assinatura(texto) == "2026-02-10"
+    assert sei.extrair_data_assinatura("sem assinatura") is None
+
+
+def test_unidade_pelo_numero():
+    assert sei.extrair_unidade("", "98/2024 - UNDF/REIT/CEINTER") == "UNDF/REIT/CEINTER"
+
+
+def test_unidade_pelo_cabecalho_de_despacho():
+    # O SEI escreve "Despacho ̶ UNDF/REIT" com um traço combinante (U+0336).
+    assert sei.extrair_unidade("Reitoria\nDespacho  \u0336  UNDF/REIT\n", None) == "UNDF/REIT"
+    texto = "Vice-Reitoria\nDespacho - UNDF/VICE-REIT/CEINTER/COETI\n"
+    assert sei.extrair_unidade(texto, None) == "UNDF/VICE-REIT/CEINTER/COETI"
+
+
+def test_unidade_ausente():
+    assert sei.extrair_unidade("TERMO DE ACEITE\n5/2024\n", "5/2024") is None

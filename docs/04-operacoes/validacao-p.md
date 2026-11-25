@@ -56,7 +56,25 @@ Tratamento: faça backup. Uma base de demonstração com dados sintéticos pode 
 | `pytest tests/backend/test_p3_legacy_nul.py` | 3 aprovados: JSON e texto com U+0000 interrompem a `0011` sem expor conteúdo nem alterar a linha; barra invertida literal (`\u0000`) não é acusada |
 | `test_p3_legacy_nul`, `test_compat`, `test_p3_nul_text`, `test_migrations` e `test_ready` (head `0011`) | 29 aprovados em SQLite |
 
-A `0011` não foi exercitada em PostgreSQL nesta correção.
+A `0011` só foi aplicada a bancos PostgreSQL vazios (os testes migram até o head); a recusa com U+0000 em JSON no PostgreSQL fica para o bloco H.
+
+### Suíte de 25/11/2026, depois do merge de `origin/main` (`04a4a7b`)
+
+| Execução | Resultado |
+| --- | --- |
+| `scripts.dev check` em SQLite: lint, formato, validação do repositório e suíte completa | 546 aprovados, 3 falhas, 2.859,85 s |
+| Suíte completa no PostgreSQL 17 compartilhado (`pg-p6-test`), rodada por outra sessão ao mesmo tempo, na mesma worktree | 3 falhas; total de aprovados não registrado. A repetição foi encerrada por falta de memória |
+| Os 6 testes que falharam nas duas rodadas, isolados, em SQLite, duas vezes | 28 aprovados nas duas |
+| Os mesmos 6 testes e `test_p3_legacy_nul.py` num PostgreSQL 17 novo e descartável | 31 aprovados, 43,78 s |
+
+Falhas e causa provável:
+
+- `test_a13.py::test_concurrent_last_slot_has_one_write_and_distinct_physical_receipts` e `test_a4.py::test_queue_races_use_one_operator_lock_for_both_producers[benchmark-and-chat]`, em SQLite: 503 `storage_unavailable` no lugar de 429. É a trava do SQLite esgotando o tempo de espera com duas suítes completas e outro projeto rodando na máquina e a memória livre abaixo de 1 GB.
+- `test_f1.py::test_process_outcome_has_one_physical_attempt_and_durable_logical_reservation[inventory-500-invalid_response]`, em SQLite: 409 no lugar de 500. **Causa não identificada**; não se repetiu isolado. Fica registrado junto da instabilidade do `test_f0` abaixo.
+- `test_ready.py::test_ready_reports_head_revision`, no PostgreSQL: a rodada começou antes da `0011` e da mudança do teste para `0011`; o módulo carregado esperava `0010` e o head lido do disco já era `0011`.
+- `test_a9.py::test_separate_processes_cannot_overbook_last_slot` e `test_i3.py::test_actual_proxy_route_with_synthetic_transport[wire_sse]`, no PostgreSQL: corrida entre subprocessos e probe em Node, sensíveis a carga; passaram isolados nos dois bancos.
+
+Não houve uma suíte completa sem falhas depois do merge. A próxima suíte completa, em SQLite e PostgreSQL isolado (P8), roda sozinha na máquina ao fechar a Fase 2.
 
 ## Suíte completa
 

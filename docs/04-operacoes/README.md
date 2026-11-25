@@ -2,6 +2,7 @@
 
 - [Estado atual Backend & Tools](backend-estado-atual.md): índice vigente, implementação, evidências e liberações separadas.
 - [Validação documental D](validacao-d.md): fichas, exemplos, versões e limites.
+- [Sandbox (Dev Container)](sandbox.md): ambiente isolado da `team/backend` no Codespaces ou no Docker Desktop.
 - [S1/S2](validacao-s1-s2.md): dependências Python atualizadas; Next do portal e documentos reais na `main` registrados para outras frentes.
 
 - [Validação do bloco 1 em 25/10/2026](validacao-bloco1-2026-10-25.md): snapshots coerentes, falhas no chat, reconexão limitada e heartbeat.

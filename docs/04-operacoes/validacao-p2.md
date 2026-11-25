@@ -85,3 +85,22 @@ Os decis em negrito são picos de contenção da máquina, com outra suíte e ou
 | `test_a5`, `test_a6` e `test_p9_claim` no PostgreSQL 17 | 15 aprovados |
 
 **Limites.** O filtro de concessões continua em Python, um candidato por vez. Com muitos runs sem concessão na fila, o claim ainda percorre todos. A quota de 20 runs por operador limita isso. Levar o filtro para SQL exigiria desnormalizar `process_id`/`corpus_version` em `runs`, o que não foi feito. Uma primeira execução do comando de comparação passou de 300 s com a máquina carregada; as três repetições cronometradas acima não se repetiram nisso.
+
+## P9c — Laço SSE com menos escritas
+
+**Problema.** A cada tick de 200 ms, o laço de `GET /runs/{id}/events` chamava `renew_stream`, uma transação de escrita que trava a linha do operador (a mesma trava de `POST /runs`). Também chamava `read_events`, que rodava `expire()`, outra transação de escrita. Eram cerca de 10 transações de escrita por segundo por stream, com até 5 streams por operador.
+
+**Mudança.** A autenticação (`actor`) e o escopo (`owned_run` em `read_events`) continuam conferidos a cada tick. A revogação e a perda de concessão encerram o fluxo como antes. A renovação da lease passa a ocorrer a cada `SSE_RENEW_SECONDS` (7,5 s, um quarto do TTL de 30 s). `expire()` sai de `read_events`, que fica só leitura, e roda no laço a cada `SSE_MAINTENANCE_SECONDS` (2 s), inclusive no primeiro tick. Assim a expiração da fila e do worker continua visível para quem só acompanha pelo stream.
+
+| Verificação | Resultado |
+| --- | --- |
+| `tests/backend/test_p9_sse.py` sem a mudança: transações de escrita de um stream parado em 3 s | 28; o teste exige no máximo 4 |
+| Mesmo teste com a mudança | Aprovado |
+| `test_p9_sse`, `test_a9` (cota, recuperação, revogação, corrida entre processos), `test_a0` (erros antes/depois da abertura), `test_a5`, `test_run_snapshots`, `test_chat_delivery` e `tests/integration/test_i3.py`, em SQLite | 61 aprovados |
+| `test_p9_sse`, `test_a9` e `test_run_snapshots` no PostgreSQL 17 | 12 aprovados |
+
+**Limites.** Com a renovação a cada 7,5 s, uma lease removida por fora (o que hoje só o próprio fechamento faz) é percebida em até 7,5 s, e não em 200 ms. O polling de 200 ms continua para ler eventos; trocar por notificação do banco não faz parte desta entrega.
+
+## P9d — Auditoria antes da autenticação
+
+Não tratado. Hoje `app.py` registra a tentativa física de qualquer requisição a `/tools/<tool>` antes de autenticar. Isso é intencional desde o F0 ("recusas permanecem auditadas") e custa cerca de 4 escritas por requisição sem credencial. Mudar altera a semântica de auditoria do F0 e precisa de decisão do responsável.

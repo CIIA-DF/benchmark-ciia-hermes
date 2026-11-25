@@ -44,6 +44,10 @@ TERMINAL = TERMINAL_STATUSES
 MAX_EVENTS_PER_RUN = 20_000
 MAX_SSE_CONNECTIONS = 5
 SSE_LEASE_SECONDS = 30.0
+# Intervalos do laço SSE (P9c): a autorização continua conferida a cada tick; a renovação da
+# lease e a expiração de runs, que são escritas, não precisam rodar a cada 200 ms.
+SSE_RENEW_SECONDS = SSE_LEASE_SECONDS / 4
+SSE_MAINTENANCE_SECONDS = 2.0
 WORKER_FRESHNESS_SECONDS = 60.0
 MAX_PHYSICAL_ATTEMPTS_PER_RUN = 1_000
 
@@ -896,7 +900,7 @@ class ExecutionService:
             return self.public_run(conn, self.owned_run(conn, actor, run_id))
 
     def read_events(self, actor, run_id, after):
-        self.expire()
+        # Só leitura: o laço SSE roda expire() em intervalo próprio (P9c), não a cada tick.
         with self.engine.connect() as conn:
             row = self.owned_run(conn, actor, run_id)
             items = [

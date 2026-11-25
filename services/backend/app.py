@@ -54,7 +54,12 @@ from contracts.models import (
 )
 from services.backend.auth import authenticate, bootstrap
 from services.backend.errors import ToolFailure, fail
-from services.backend.execution import TERMINAL, ExecutionService
+from services.backend.execution import (
+    SSE_MAINTENANCE_SECONDS,
+    SSE_RENEW_SECONDS,
+    TERMINAL,
+    ExecutionService,
+)
 from services.backend.experiments import ExperimentRecords
 from services.backend.http_boundary import HTTPBoundary
 from services.backend.migrate import schema_revisions
@@ -575,13 +580,24 @@ def create_app(engine: Engine | None = None) -> FastAPI:
 
         async def generate():
             nonlocal cursor
-            last_ping = time.monotonic()
+            last_ping = last_renew = time.monotonic()
+            last_maintenance = None
             while not await request.is_disconnected():
                 try:
+                    # Autenticação e escopo (owned_run em read_events) a cada tick; escritas
+                    # de renovação e expiração só nos intervalos próprios (P9c).
                     current = await run_in_threadpool(actor, request)
-                    await run_in_threadpool(
-                        service.renew_stream, current, str(run_id), stream_lease_id
-                    )
+                    now = time.monotonic()
+                    if now - last_renew >= SSE_RENEW_SECONDS:
+                        await run_in_threadpool(
+                            service.renew_stream, current, str(run_id), stream_lease_id
+                        )
+                        last_renew = now
+                    if last_maintenance is None or now - last_maintenance >= (
+                        SSE_MAINTENANCE_SECONDS
+                    ):
+                        await run_in_threadpool(service.expire)
+                        last_maintenance = now
                     items, status = await run_in_threadpool(
                         service.read_events, current, str(run_id), cursor
                     )

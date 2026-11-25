@@ -235,11 +235,13 @@ results ignorado pelo Git e escolha um nome de saída ainda inexistente:
 uv run --locked python -m scripts.export_chat --output results/chat.jsonl
 ```
 
-Filtros: --participant UUID e --conversation UUID. Padrão: IDs, versões, estados,
-tempos, referências, eventos de tools e recibos; sem conteúdo textual. Para incluir
-mensagens e artefatos privados, acrescente --include-content explicitamente.
-Consumo não informado fica null. Tokens de autenticação nunca são exportados.
-Exportação falha pode deixar arquivo parcial; não usá-lo como evidência validada.
+Formato atual: **export_version 2**, com dados declarados, observados e avaliados separados.
+Tentativas/fases vêm do histórico persistido, inclusive falhas tardias; SSE não é a fonte de contagem.
+Filtros: --participant UUID, --conversation UUID e --run UUID. Padrão --kind chat;
+use --kind benchmark ou --kind all para incluir execuções sem conversa.
+Conteúdo e parâmetros livres exigem --include-content. Desconhecidos continuam null.
+Arquivo final só é publicado quando completo, sem sobrescrever destino; o volume precisa permitir hard links.
+[Contrato v2, migração do consumidor, privacidade e limites](exportacao-canonica.md).
 
 ## Backup da stack de chat
 

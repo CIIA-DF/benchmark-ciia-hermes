@@ -158,8 +158,10 @@ def test_export_is_scoped_and_omits_content_and_credentials(client, corpus, engi
     assert "PRIVAD" not in raw
     assert claimed["run_token"] not in raw
     assert client.worker_headers["Authorization"].split()[1] not in raw
-    assert item["input_tokens"] is None and item["cost_usd"] is None
-    assert item["receipts"][0]["artifact_id"] == receipt["artifact_id"]
+    assert item["export_version"] == "2"
+    assert item["declared"]["experiment"] is None
+    assert item["evaluated"] == {"verified_success": None, "evaluator": None}
+    assert item["observed"]["artifacts"][0]["receipt"]["artifact_id"] == receipt["artifact_id"]
     assert item["participant_id"] == participant
     with pytest.raises(FileExistsError):
         export_file(engine, path, participant_id=participant)

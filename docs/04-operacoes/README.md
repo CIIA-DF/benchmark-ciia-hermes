@@ -80,3 +80,14 @@
 - [A13](validacao-a13.md): seis fronteiras HTTP, executor compatível e teto de 1.000 admissões físicas por run, sem apagar recusas.
 
 - [Fechamento A](validacao-a-fechamento.md): matriz A0–A13, workflow, contratos públicos, limites e validação consolidada.
+
+- [I1](validacao-i1.md): clientes equivalentes, requisição congelada por chamada lógica e retry sem duplicar efeitos.
+
+- [I2](validacao-i2.md): bootstrap só cria ausentes, operações administrativas explícitas, rotação preserva perfil e auditoria transacional.
+
+- [I3](validacao-i3.md): limites de corpo, prazos, cabeçalhos, SSE e cancelamento no proxy, com fronteiras reais explicitadas.
+
+- [Fechamento I](validacao-i-fechamento.md): matriz I1–I3, workflow, códigos, suíte compartilhada de 454 casos e quatro complementos dirigidos.
+
+- [Exportação canônica v2](exportacao-canonica.md): contrato do arquivo, privacidade, snapshot e migração do consumidor.
+- [Validação E](validacao-e.md): reconciliação do JSONL com o banco e limites de homologação.

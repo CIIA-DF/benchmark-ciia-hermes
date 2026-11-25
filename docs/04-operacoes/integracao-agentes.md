@@ -82,3 +82,24 @@ Registrar comandos, IDs, versões e resultados observados em armazenamento priva
 Não registrar prompts/documentos/chaves nos logs operacionais.
 Nenhum adaptador real foi incluído nesta entrega do Backend; homologação depende
 das equipes, sem substituir esse aceite por um teste de simulação.
+
+## I1 — requisição estável por chamada
+
+Clientes síncrono/assíncrono capturam contexto, argumentos aninhados e bytes/cabeçalhos antes do primeiro envio.
+Retry mantém ID, corpo, chave e lease; mutação posterior do chamador não muda a chamada em curso.
+Erro HTTP transitório exige envelope retryable e status transitório; 401/403/409 continuam definitivos mesmo com sinalizador incoerente.
+Sucesso inválido não recebe retry automático. Chamadas independentes podem se sobrepor; nenhum workflow fixo foi imposto.
+[Evidências e limites I1](validacao-i1.md).
+
+## I2 — rotação e reinício
+
+Token antigo não volta a valer ao reiniciar com ambiente antigo. Bootstrap não atualiza perfis existentes.
+Use scripts.provision FILE --operation rotate com principal_id/token_env para preservar direitos; atualize os segredos privados dos clientes autorizados.
+Rotação durante uma escrita pode produzir 403 sem efeito novo; novas chamadas com segredo antigo recebem 401.
+[Evidências e operação I2](validacao-i2.md).
+
+## I3 — Transporte e homologação
+
+ModelConfig rejeita timeout não positivo ou não finito. Falhas controladas do proxy cobrem limites, cursores SSE, cabeçalhos e cancelamento upstream.
+O proxy do portal não é o cliente de tools e não encaminha credencial de worker do navegador.
+Testes locais não comprovam Nginx/Compose ou inferência real. [Configuração, catálogo e evidências I3](validacao-i3.md).

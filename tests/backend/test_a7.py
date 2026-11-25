@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from services.backend.app import create_app
 from services.backend.auth import authenticate
-from services.backend.schema import principals
+from services.backend.schema import principals, runs
 from services.backend.storage import make_engine
 from tests.backend import test_a5
 from tests.backend.test_a5 import row, snapshot, terminal_events
@@ -108,6 +108,37 @@ def test_sql_failure_rolls_back_presence_and_lease(client, corpus, engine, clock
     assert response.status_code == 503 and "PRIVATE-A7" not in response.text
     assert dict(presence(client, engine)) == previous
     assert row(engine, run["run_id"])["lease_until"] == before["lease_until"]
+
+
+@pytest.mark.parametrize("boundary", ["lease", "budget"])
+def test_deadline_crossed_during_profile_lock_rolls_back(
+    client, corpus, engine, clock, monkeypatch, boundary
+):
+    run, headers = start(client, corpus)
+    rid = run["run_id"]
+    initial = row(engine, rid)
+    if boundary == "budget":
+        clock.now = initial["started_at"] + 299.5
+        with engine.begin() as conn:
+            conn.execute(
+                update(runs).where(runs.c.run_id == rid).values(lease_until=clock.now + 30)
+            )
+    else:
+        clock.now = initial["lease_until"] - 0.5
+    before = row(engine, rid)
+    previous = dict(presence(client, engine))
+    service = client.app.state.execution
+    observe = service.observe_worker
+
+    def delayed(*args, **kwargs):
+        clock.now += 0.5
+        return observe(*args, **kwargs)
+
+    monkeypatch.setattr(service, "observe_worker", delayed)
+    response = client.post(f"/runs/{rid}/heartbeat", headers=headers)
+    assert response.status_code == 409 and response.json()["code"] == "conflict"
+    assert row(engine, rid)["lease_until"] == before["lease_until"]
+    assert dict(presence(client, engine)) == previous
 
 
 @pytest.mark.parametrize("opponent", ["expiry", "finish"])

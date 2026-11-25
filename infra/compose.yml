@@ -52,6 +52,8 @@ services:
       dockerfile: infra/portal.Dockerfile
     environment:
       BACKEND_URL: http://backend:8000
+      BACKEND_PROXY_TIMEOUT_SECONDS: ${BACKEND_PROXY_TIMEOUT_SECONDS:-20}
+      BACKEND_PROXY_IDLE_TIMEOUT_SECONDS: ${BACKEND_PROXY_IDLE_TIMEOUT_SECONDS:-30}
       BACKEND_OPERATOR_TOKEN: ${BACKEND_OPERATOR_TOKEN:?Execute scripts.chat setup}
     ports:
       - "127.0.0.1:3000:3000"

@@ -1,5 +1,7 @@
 # A7 — Heartbeat autorizado e presença observada
 
+
+> Atualização de 31/10/2026: auditoria identificou renovação após vencimento durante espera pela trava do perfil. A correção revalida lease e orçamento após as travas e concessões, com rollback da presença em caso de conflito. O aceite anterior fica condicionado à revisão manual da correção e à validação de concorrência em PostgreSQL; as evidências históricas abaixo permanecem preservadas.
 Data: 30/10/2026. Worktree oficial C:/Users/roger/.codex/worktrees/backend-tools/benchmark-ciia-hermes, branch team/backend.
 Escopo: [A7 do plano](../02-arquitetura/backend-plano-blocos.md). Sem publicação ou revisão automática.
 

@@ -101,8 +101,26 @@ Para outros perfis, crie um JSON privado fora do Git, por exemplo:
 
 Configure a variável com um token aleatório de pelo menos 32 caracteres e
 execute `uv run --locked python -m scripts.provision CAMINHO_PRIVADO`.
-A aplicação deve usar a mesma `DATABASE_URL`. O comando substitui as
-concessões daquela identidade; não altera o corpus.
+A aplicação deve usar a mesma `DATABASE_URL`. O padrão é **create**: identidade existente é recusada, sem substituir concessões.
+Para atualizar um perfil existente, use `--operation update` com role, executor quando worker, can_write e grants explícitos.
+Essa operação substitui o perfil/concessões na mesma transação de sua auditoria; não altera o corpus.
+Em create e update, `can_write` é obrigatório como role e grants: omiti-lo não revoga mais a escrita em silêncio. Um arquivo com vários perfis é conferido inteiro antes da primeira escrita (desde 21/11/2026): as regras de perfil (worker com executor, operador sem executor, token com 32 ou mais caracteres); a existência (em create, nenhum pode existir; em update e rotate, todos precisam existir); e a credencial (`principal_id` ou token repetido no arquivo, ou token que já pertence a outro perfil no banco, é recusado). Se algo falhar no meio (por exemplo, outro processo criou o perfil depois da conferência), a mensagem informa só a contagem, "Perfis aplicados: k de n", sem identificar perfis.
+
+Para rotacionar somente a credencial, use outro JSON privado mínimo:
+
+```json
+[{"principal_id": "worker-langgraph", "token_env": "LANGGRAPH_WORKER_TOKEN"}]
+```
+
+Execute `uv run --locked python -m scripts.provision CAMINHO_PRIVADO --operation rotate`.
+Role, executor, can_write e concessões atuais são preservados, inclusive revogações. Campos de perfil no arquivo de rotação são recusados.
+O token antigo deixa de autenticar. Atualize também os arquivos privados/variáveis dos clientes autorizados; não publique tokens em comando ou Git.
+O bootstrap só cria principais ausentes: mudar variáveis e reiniciar não rotaciona credenciais nem restaura direitos revogados.
+Se o token do ambiente difere do perfil local gravado, o backend registra o aviso `bootstrap_token_mismatch principal_id=…` (sem token nem hash) e mantém o perfil; o portal e o worker com esse token recebem 401 até a rotação explícita.
+Repetir scripts.chat setup preserva arquivos privados existentes; mudanças de direitos/credenciais exigem a operação administrativa explícita.
+A migração 0009 guarda operação, origem de código, estados de permissões e indicação de troca de credencial, sem token ou hash de token.
+A origem do código não comprova identidade humana; acesso ao comando/banco depende da administração do ambiente.
+Falha ao registrar essa auditoria desfaz a mudança administrativa. A trilha anterior à migração não é inventada retroativamente.
 
 O worker recebe uma segunda credencial temporária na reserva da execução.
 Todas as tools exigem tanto o token de serviço quanto `X-Run-Token`.
@@ -249,3 +267,15 @@ Este comando prepara somente corpus sintético, cria uma execução técnica e
 exercita as quatro leituras e as duas escritas. Confere replay e hash por uma
 leitura independente. Imprime apenas IDs e resultados de verificação, sem tokens.
 Não usa LLM e não é resultado científico. Sem DATABASE_URL, usa data/demo.db.
+
+
+## I3 — Prazos e limites do proxy local
+
+O portal aceita corpo de até 1 MiB contando bytes recebidos. BACKEND_PROXY_TIMEOUT_SECONDS (padrão 20) limita a leitura total do corpo e a espera dos cabeçalhos do backend, por fase.
+BACKEND_PROXY_IDLE_TIMEOUT_SECONDS (padrão 30) limita inatividade da resposta; não limita a duração total do SSE.
+Valor vazio ou só com espaços usa o padrão, como `${VAR:-20}` no Compose; `0`, negativo ou não finito continua recusado com 503.
+Os dois valores exigem segundos positivos e finitos. Compose os passa ao portal; fora dele, configure o ambiente do processo Next.
+Corpo lento retorna 408 request_timeout; excesso retorna 413 payload_too_large.
+Falha de transporte anterior aos cabeçalhos retorna 503; em SSE aberto, stream_error informa interrupção sem alterar o status já enviado.
+Credenciais continuam somente no servidor. Este proxy representa um operador local e não fornece autenticação multiusuário.
+[Catálogo de códigos, encaminhamento e evidências I3](validacao-i3.md).

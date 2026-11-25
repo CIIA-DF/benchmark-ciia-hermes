@@ -625,8 +625,19 @@ class ExecutionService:
             .mappings()
             .first()
         )
+        current = (
+            conn.execute(
+                select(principals).where(principals.c.principal_id == actor["principal_id"])
+            )
+            .mappings()
+            .first()
+        )
         if (
             row is None
+            or current is None
+            or current["token_sha256"] != actor["token_sha256"]
+            or current["role"] != "worker"
+            or current["executor"] != row["executor"]
             or actor["role"] != "worker"
             or actor["executor"] != row["executor"]
             or row["worker_id"] != actor["principal_id"]
@@ -693,10 +704,13 @@ class ExecutionService:
                     row["context"]["process_id"],
                     row["context"]["corpus_version"],
                 )
+            now = time.time()
+            if row["lease_until"] <= now or row["started_at"] + self.max_run_seconds <= now:
+                fail(409, "conflict", "Reserva da execução expirada.")
             conn.execute(
                 update(runs)
                 .where(runs.c.run_id == str(run_id))
-                .values(lease_until=time.time() + self.lease_seconds)
+                .values(lease_until=now + self.lease_seconds)
             )
         return {"status": "running"}
 
@@ -977,6 +991,7 @@ class ExecutionService:
                 owner["role"] != "operator"
                 or worker["role"] != "worker"
                 or worker["executor"] != row["executor"]
+                or worker["token_sha256"] != actor["token_sha256"]
                 or not owner["can_write"]
                 or not worker["can_write"]
             ):

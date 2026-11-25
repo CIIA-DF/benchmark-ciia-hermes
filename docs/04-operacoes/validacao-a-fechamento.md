@@ -1,5 +1,7 @@
 # Fechamento local do bloco A — APIs
 
+
+> Atualização de 31/10/2026: auditoria identificou renovação após vencimento durante espera pela trava do perfil. A correção revalida lease e orçamento após as travas e concessões, com rollback da presença em caso de conflito. O aceite anterior fica condicionado à revisão manual da correção e à validação de concorrência em PostgreSQL; as evidências históricas abaixo permanecem preservadas.
 Data: 30/10/2026. Situação: fechamento local aprovado em SQLite, disponível para revisão manual.
 Worktree: C:/Users/roger/.codex/worktrees/backend-tools/benchmark-ciia-hermes. Branch: team/backend.
 Escopo: A0–A13 do [plano vigente](../02-arquitetura/backend-plano-blocos.md). Revisão CTO/Astra permanece manual.

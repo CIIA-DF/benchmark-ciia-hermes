@@ -189,3 +189,17 @@ stream_leases = Table(
     Column("run_id", String, ForeignKey("runs.run_id"), nullable=False),
     Column("lease_until", Float, nullable=False),
 )
+
+# Administrative state changes only; no credentials or credential hashes.
+administrative_events = Table(
+    "administrative_events",
+    metadata,
+    Column("event_id", String(36), primary_key=True),
+    Column("principal_id", String, ForeignKey("principals.principal_id"), nullable=False),
+    Column("operation", String, nullable=False),
+    Column("source", String, nullable=False),
+    Column("recorded_at", Float, nullable=False),
+    Column("credential_changed", Boolean, nullable=False),
+    Column("before_state", JSON, nullable=True),
+    Column("after_state", JSON, nullable=False),
+)

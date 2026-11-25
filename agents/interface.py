@@ -2,9 +2,11 @@
 
 import asyncio
 import hashlib
+import math
 import os
 import time
 from collections.abc import AsyncIterator
+from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Protocol
 from uuid import uuid4
@@ -96,11 +98,16 @@ def tool_outcome(
 
 def transient(exc: Exception) -> bool:
     if isinstance(exc, ToolCallError):
-        return bool(exc.error and exc.error.retryable)
+        return bool(
+            exc.response.status_code in {408, 425, 429, 500, 502, 503, 504}
+            and exc.error
+            and exc.error.retryable
+        )
     return isinstance(exc, httpx.TransportError)
 
 
 def tool_payload(name: str, arguments: dict, context: dict) -> dict:
+    """Combine argumentos do modelo com contexto confiável fornecido pelo executor."""
     if name not in TOOLS:
         raise ValueError("Ferramenta fora do catálogo compartilhado.")
     if any(k in arguments and arguments[k] != v for k, v in context.items()):
@@ -140,8 +147,8 @@ class ModelConfig:
                 "Configure LLM_BASE_URL, LLM_MODEL e LLM_API_KEY para integração real."
             )
         timeout = float(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
-        if timeout <= 0:
-            raise ValueError("LLM_TIMEOUT_SECONDS deve ser positivo.")
+        if not math.isfinite(timeout) or timeout <= 0:
+            raise ValueError("LLM_TIMEOUT_SECONDS deve ser positivo e finito.")
         return cls(*values, timeout)
 
 
@@ -163,15 +170,18 @@ class ToolClient:
         self.calls: list[ToolCallRecord] = []
 
     def call(self, name: str, arguments: dict) -> dict:
-        payload = tool_payload(name, arguments, self.context)
+        context = deepcopy(self.context)
+        payload = deepcopy(tool_payload(name, arguments, context))
         tool_call_id, started, outcome = str(uuid4()), time.perf_counter(), None
         try:
+            request = self.client.build_request(
+                "POST", f"/tools/{name}", json=payload, headers={"X-Tool-Call-Id": tool_call_id}
+            )
+            body = request.content
             for attempt in range(ATTEMPTS):
                 try:
-                    response = self.client.post(
-                        f"/tools/{name}", json=payload, headers={"X-Tool-Call-Id": tool_call_id}
-                    )
-                    outcome = tool_outcome(response, name, self.context, payload)
+                    response = self.client.post(request.url, content=body, headers=request.headers)
+                    outcome = tool_outcome(response, name, context, payload)
                     return outcome
                 except (ToolCallError, httpx.TransportError) as exc:
                     if attempt == ATTEMPTS - 1 or not transient(exc):
@@ -192,16 +202,21 @@ class AsyncToolClient:
         self.calls: list[ToolCallRecord] = []
 
     async def call(self, name: str, arguments: dict) -> dict:
-        payload = tool_payload(name, arguments, self.execution.context)
+        context = deepcopy(self.execution.context)
+        payload = deepcopy(tool_payload(name, arguments, context))
         tool_call_id, started, outcome = str(uuid4()), time.perf_counter(), None
         headers = {"X-Run-Token": self.execution.run_token, "X-Tool-Call-Id": tool_call_id}
         try:
+            request = self.client.build_request(
+                "POST", f"/tools/{name}", json=payload, headers=headers
+            )
+            body = request.content
             for attempt in range(ATTEMPTS):
                 try:
                     response = await self.client.post(
-                        f"/tools/{name}", json=payload, headers=headers
+                        request.url, content=body, headers=request.headers
                     )
-                    outcome = tool_outcome(response, name, self.execution.context, payload)
+                    outcome = tool_outcome(response, name, context, payload)
                     return outcome
                 except (ToolCallError, httpx.TransportError) as exc:
                     if attempt == ATTEMPTS - 1 or not transient(exc):

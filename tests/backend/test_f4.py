@@ -1,5 +1,7 @@
 """F4: checklist outcomes, version isolation and physical tracking."""
 
+from uuid import uuid4
+
 import httpx
 import pytest
 from sqlalchemy import delete, event, func, insert, select, update
@@ -122,10 +124,12 @@ def test_versioned_checklist_to_pendency_rejects_foreign_requirement(
     client, context, corpus, engine
 ):
     keys = ("process_id", "corpus_version", "requirements_version")
+    # Sufixo único: num PostgreSQL reaproveitado, o processo OTHER já existe de rodadas anteriores.
+    other = f"OTHER-{uuid4().hex[:10]}"
     with engine.begin() as conn:
         for field in keys:
             foreign = {k: context[k] for k in keys}
-            foreign[field] = "OTHER"
+            foreign[field] = other
             conn.execute(
                 insert(requirements).values(
                     **foreign,

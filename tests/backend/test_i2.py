@@ -123,20 +123,27 @@ def test_rotation_preserves_revoked_profile_and_survives_stale_environment(
 def test_bootstrap_race_creates_one_identity_and_one_event(engine, monkeypatch):
     monkeypatch.setenv("BACKEND_OPERATOR_TOKEN", uuid4().hex)
     monkeypatch.delenv("BACKEND_WORKER_TOKEN", raising=False)
+    # local-operator tem nome fixo; num PostgreSQL reaproveitado ele já existe, e o bootstrap
+    # não deve gravar nada. Num banco novo, a corrida cria uma identidade e um evento.
+    before = {item["event_id"] for item in audits(engine, "local-operator")}
+    expected = 0 if before else 1
     with ThreadPoolExecutor(max_workers=2) as pool:
         list(pool.map(lambda _: bootstrap(engine), range(2)))
-    assert len(audits(engine, "local-operator")) == 1
+    assert len([e for e in audits(engine, "local-operator") if e["event_id"] not in before]) == (
+        expected
+    )
     bootstrap(engine)
-    assert len(audits(engine, "local-operator")) == 1
+    assert len([e for e in audits(engine, "local-operator") if e["event_id"] not in before]) == (
+        expected
+    )
 
 
 @pytest.mark.parametrize("operation", ["update", "rotate"])
 def test_audit_failure_rolls_back_credentials_grants_and_profile(engine, operation):
     old, new = uuid4().hex, uuid4().hex
-    provision(
-        engine, "rollback-profile", old, "operator", [("PROC-SYNTHETIC", "v1")], can_write=True
-    )
-    before = snapshot(engine, "rollback-profile")
+    profile = f"rollback-profile-{uuid4().hex[:10]}"
+    provision(engine, profile, old, "operator", [("PROC-SYNTHETIC", "v1")], can_write=True)
+    before = snapshot(engine, profile)
 
     def unavailable(conn, cursor, statement, parameters, context, executemany):
         if statement.startswith("INSERT INTO administrative_events"):
@@ -146,13 +153,13 @@ def test_audit_failure_rolls_back_credentials_grants_and_profile(engine, operati
     try:
         with pytest.raises(SQLAlchemyError):
             if operation == "rotate":
-                rotate_token(engine, "rollback-profile", new)
+                rotate_token(engine, profile, new)
             else:
-                provision(engine, "rollback-profile", new, "operator", [], can_write=False)
+                provision(engine, profile, new, "operator", [], can_write=False)
     finally:
         event.remove(engine, "before_cursor_execute", unavailable)
-    assert snapshot(engine, "rollback-profile") == before
-    assert len(audits(engine, "rollback-profile")) == 1
+    assert snapshot(engine, profile) == before
+    assert len(audits(engine, profile)) == 1
 
 
 def test_cli_requires_explicit_update_and_rotation_preserves_state(

@@ -72,13 +72,15 @@ def test_import_is_immutable_and_checklist_feeds_pendency(client, corpus, contex
 def test_scope_filters_process_corpus_and_version_before_returning_ids(
     client, corpus, context, engine
 ):
+    # Sufixo único: num PostgreSQL reaproveitado, o processo OTHER já existe de rodadas anteriores.
+    other = f"OTHER-{uuid4().hex[:10]}"
     with engine.begin() as conn:
         for field in ("process_id", "corpus_version", "requirements_version"):
             foreign = {
                 key: context[key]
                 for key in ("process_id", "corpus_version", "requirements_version")
             }
-            foreign[field] = "OTHER"
+            foreign[field] = other
             conn.execute(
                 insert(requirements).values(
                     **foreign,

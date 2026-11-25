@@ -566,16 +566,28 @@ class ExecutionService:
         with self.transaction() as conn:
             self.observe_worker(conn, actor, executor, "claim")
             # Permissões dos workers também são limitadas a processo e corpus.
+            # Lista sem trava e trava um candidato por vez (P9b): antes, o SELECT travava todos
+            # os runs na fila do executor, e um segundo worker recebia 204 com trabalho na fila.
             statement = (
-                select(runs)
+                select(runs.c.run_id)
                 .where(runs.c.status == "queued", runs.c.executor == executor)
                 .order_by(runs.c.created_at)
-                .with_for_update(skip_locked=True)
             )
             if run_id is not None:
                 statement = statement.where(runs.c.run_id == str(run_id))
-            candidates = conn.execute(statement).mappings()
-            for candidate in candidates:
+            for candidate_id in conn.execute(statement).scalars().all():
+                candidate = (
+                    conn.execute(
+                        select(runs)
+                        .where(runs.c.run_id == candidate_id, runs.c.status == "queued")
+                        .with_for_update(skip_locked=True)
+                    )
+                    .mappings()
+                    .first()
+                )
+                if candidate is None:
+                    # Outro worker já reservou ou está reservando este run.
+                    continue
                 context = candidate["context"]
                 worker_grant = conn.execute(
                     select(permissions).where(

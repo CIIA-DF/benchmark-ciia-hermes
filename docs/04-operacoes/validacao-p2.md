@@ -69,3 +69,19 @@ Fase 2 do [plano por blocos](../02-arquitetura/backend-plano-blocos.md), aberta 
 Os decis em negrito são picos de contenção da máquina, com outra suíte e outro projeto rodando. Eles aparecem nos dois casos e não acompanham o tamanho do run. Fora deles, o custo por evento sobe de 13 para 28 ms antes da mudança e fica entre 11 e 15 ms depois. A máquina não oferece medição limpa; o resultado vale como tendência, não como número de desempenho.
 
 **Limites.** `GET /runs/{id}` ainda reconstrói o texto parcial a cada consulta, o que é proporcional ao run, mas não por evento. A `0012` não foi exercitada em PostgreSQL com dados; isso fica no bloco H.
+
+## P9b — Claim sem travar a fila
+
+**Problema.** `ExecutionService.claim` fazia `SELECT … FOR UPDATE SKIP LOCKED` sobre **todos** os runs na fila do executor, sem `LIMIT`, e conferia as concessões em Python. Enquanto a transação de um worker estava aberta, todos esses runs ficavam travados; outro worker pulava todos e recebia 204 com trabalho na fila. Runs pulados por falta de concessão também continuavam travados até o fim da transação.
+
+**Mudança.** O claim lista os IDs dos candidatos sem trava, na mesma ordem (`created_at`). Depois trava um por vez com `FOR UPDATE SKIP LOCKED`, conferindo de novo `status = 'queued'`. Concessões, expiração da fila e reserva seguem como antes. Não há migração. No SQLite nada muda na prática: `BEGIN IMMEDIATE` já serializa as escritas.
+
+| Verificação | Resultado |
+| --- | --- |
+| `tests/backend/test_p9_claim.py` no PostgreSQL 17 sem a mudança: worker A segura a transação depois de reservar; worker B pede claim com outro run na fila | Falha: B recebe `None` (204) |
+| Mesmo teste com a mudança, PostgreSQL 17 novo, três rodadas | 3 de 3 aprovados (3,5 s, 8,0 s e 7,0 s); A e B recebem runs diferentes |
+| Mesmo teste em SQLite | Aprovado; B espera a transação de A e depois reserva o outro run |
+| `test_a3`, `test_a4`, `test_a5`, `test_a6`, `test_worker_polling`, `test_execution` e `test_p9_claim`, em SQLite | 53 aprovados, 283,88 s |
+| `test_a5`, `test_a6` e `test_p9_claim` no PostgreSQL 17 | 15 aprovados |
+
+**Limites.** O filtro de concessões continua em Python, um candidato por vez. Com muitos runs sem concessão na fila, o claim ainda percorre todos. A quota de 20 runs por operador limita isso. Levar o filtro para SQL exigiria desnormalizar `process_id`/`corpus_version` em `runs`, o que não foi feito. Uma primeira execução do comando de comparação passou de 300 s com a máquina carregada; as três repetições cronometradas acima não se repetiram nisso.

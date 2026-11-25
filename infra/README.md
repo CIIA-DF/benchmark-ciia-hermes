@@ -10,7 +10,7 @@ a composição original.
 
 Na raiz: copie .env.example, defina senha e execute `uv run --locked python -m scripts.dev up`, depois `demo-compose`. `down` preserva volume. [Início rápido](../docs/00-comece-aqui/01-inicio-rapido.md).
 
-Desde 22/11/2026, o serviço `backend` recebe do `.env` `ENABLED_EXECUTORS` e os limites `RUN_*` e `CHAT_CONTEXT_MAX_CHARS`, com os mesmos padrões do código. Antes, só os padrões valiam no Compose, e uma rodada `hermes,langgraph` não habilitava os executores. Requer revisão da Infra.
+Desde 22/11/2026, o serviço `backend` recebe do `.env` `ENABLED_EXECUTORS` e os limites `RUN_*` e `CHAT_CONTEXT_MAX_CHARS`, com os mesmos padrões do código. Antes, só os padrões valiam no Compose. O único worker do Compose é o `simulation`: habilitar `hermes` ou `langgraph` em `ENABLED_EXECUTORS` sem provisionar o worker correspondente deixa as execuções recebendo 503 `executor_unavailable`. Mantenha `ENABLED_EXECUTORS=simulation` no Compose. Requer revisão da Infra.
 
 Imagens têm tags; congelar digests e confirmar arquitetura/plataforma antes dos experimentos finais. Não há GPU, LLM ou acesso à VPS pressupostos.
 

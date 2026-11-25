@@ -1,24 +1,38 @@
 # Plano de implementação por blocos — Ferramentas, APIs e Backend
 
-## Blocos pendentes
+## Alinhamento com o planejamento da `main`
 
-Atualização de 31/10/2026: **I1–I3 têm fechamento técnico local**, com suíte compartilhada de 454 casos e quatro complementos dirigidos.
-[Relatório completo I e limites da validação](../04-operacoes/validacao-i-fechamento.md).
-Os blocos **D, E, O e H permanecem pendentes**.
-Na publicação anterior da branch team/backend, a observação listava I, D, E, O e H como pendentes; I foi tratado nesta etapa.
-Este fechamento não substitui ressalvas de outras auditorias, inclusive a revisão manual da correção A7.
-Publicar a branch não equivale à conclusão do plano, ao aceite global ou à autorização de deploy.
-Relatórios, propostas e atualizações incrementais de documentação não encerram os blocos abaixo.
+Atualização de 25/11/2026, conferida com `origin/main` `6f4ff13`. O planejamento oficial do Backend & Tools na `main` é a seção 2 do [backlog conjunto](../01-overview/backlog.md) (Tasks 2.1–2.5 e milestone) e o [guia da equipe](../03-equipes/backend.md). Este plano detalha a execução local desses itens em blocos. Não substitui o backlog nem amplia o escopo aprovado.
 
-| Bloco | Trabalho restante |
-| --- | --- |
-| D — Documentação formal | Consolidar endpoints, contratos, exemplos, ADRs, migrações, versões e estado verificado/proposto após formalizar as interfaces |
-| E — Exportação canônica | Exportar do histórico persistido, reconciliar IDs/tentativas/fases/efeitos, distinguir declarado/observado/avaliado e versionar legados |
-| O — Observabilidade | Definir indicadores reproduzíveis, correlação segura e análise sintética que sustente decisões sem inventar ganhos reais |
-| H — Homologação | Validar PostgreSQL, concorrência, travas, quotas, busca, migrações, atualização de base existente, backup e restauração |
+| Task da `main` | Blocos deste plano | Situação local | Pendente para aceite |
+| --- | --- | --- | --- |
+| 2.1 — Modelagem relacional e migrações (PostgreSQL + Alembic) | F0, A6, A9, I2, J (migrações `0001`–`0010`) e H | Migrações aditivas; suíte completa em SQLite e PostgreSQL 17 compartilhado ([validação P](../04-operacoes/validacao-p.md)) | H: concorrência, backup/restauração e atualização de base existente em PostgreSQL |
+| 2.2 — API REST e validação de esquemas (FastAPI + Pydantic) | A0–A13, D e P2/P3 | Fronteira HTTP, envelopes e limites; referência vigente em [backend-api-atual.md](backend-api-atual.md) | Revisão manual; mudança de contrato do P3 com as equipes consumidoras |
+| 2.3 — Catálogo de ferramentas de leitura | F1–F4 e K (catálogo comum `openai_tools()`/`catalog_version()`) | Quatro tools de leitura verificadas; catálogo comum proposto | Adoção do catálogo por Hermes e LangGraph e congelamento da versão com a Metodologia |
+| 2.4 — Ferramentas de escrita e idempotência rígida | F0, F5 e F6 | Escritas idempotentes com um único efeito sob concorrência e retry; o campo segue o contrato da `main` (`idempotency_key` em `contracts/models.py` e `contracts/README.md`), que corresponde à `chave_idempotencia` citada no backlog | Revisão manual |
+| 2.5 — Execuções e contexto autenticado | A3, A5–A9, I1, I2 e J | `/runs`, claim, heartbeat, eventos e `/experiments` com identidade vinda do contexto autenticado do worker | Runtimes Hermes/LangGraph reais e LLM real não homologados |
 
-A aprovação final permanece manual. PostgreSQL e recuperação documentada são requisitos do aceite global.
-As seções originais abaixo preservam o detalhamento e os critérios de aceite de cada bloco.
+**Milestone da `main`** (endpoints de consulta de processo e registro idempotente de pendências com testes): atendido no escopo local por F1 e F5, com suíte completa em SQLite e PostgreSQL. Falta a revisão manual do responsável e a revisão das equipes afetadas antes do PR para `main`.
+
+**Itens só deste plano**, sem Task correspondente na `main`: E (exportação canônica), O (indicadores), H (homologação), J (registro experimental), K (alinhamento entre frentes), P (pendências da auditoria de 30/10) e S (dependências). As Tasks 2.6 e 2.7 existem apenas no backlog da `team/backend` e chegam à `main` pelo PR da equipe.
+
+## Situação dos blocos
+
+| Bloco | Situação | Evidência |
+| --- | --- | --- |
+| F, A, I | Fechamento técnico local | [F6](../04-operacoes/validacao-f6.md), [A](../04-operacoes/validacao-a-fechamento.md), [I](../04-operacoes/validacao-i-fechamento.md) |
+| D | Implementado; revisão manual pendente | [Validação D](../04-operacoes/validacao-d.md) |
+| E | Implementado; revisão dos consumidores pendente | [Validação E](../04-operacoes/validacao-e.md) |
+| J, K, P, S | Implementados ou propostos (ver registros ao final) | [J](../04-operacoes/validacao-j.md), [K](../04-operacoes/validacao-k.md), [P](../04-operacoes/validacao-p.md), [S1/S2](../04-operacoes/validacao-s1-s2.md) |
+| O | Pendente | — |
+| H | Pendente | — |
+
+O quadro detalhado de implementação, verificação e liberação está em [backend-estado-atual.md](../04-operacoes/backend-estado-atual.md).
+
+**Desvios das regras da seção 1:** J, K e P foram executados em sequência, sem registro da revisão manual entre os blocos. O bloco P agrupou tools (P2), contratos (P3), infraestrutura (P4) e testes (P6). A revisão manual desses blocos fica pendente antes do PR para `main`.
+
+A aprovação final permanece manual. PostgreSQL e recuperação documentada são requisitos do aceite global. Publicar a branch não equivale à conclusão do plano, ao aceite global ou à autorização de deploy.
+As seções originais abaixo preservam o detalhamento e os critérios de aceite de cada bloco. A observação de 31/10/2026 (D, E, O e H pendentes) foi substituída por esta seção; os registros de execução permanecem como histórico.
 
 ## 1. Organização e regras de execução
 
@@ -516,3 +530,21 @@ Consolidação editorial das 21 operações, rastreamento, migrações e versõe
 ## Registro de execução E — 02/11/2026
 
 Exportador canônico v2 implementado localmente; histórico persistido substitui reconstrução por SSE. [Formato e compatibilidade](../04-operacoes/exportacao-canonica.md) e [validação E](../04-operacoes/validacao-e.md). Preserva legado, nulos, conteúdo opt-in e falhas tardias; publicação exclusiva de snapshot completo. Revisão manual/consumidores e PostgreSQL continuam pendentes. O e H não foram implementados nesta entrega; registros anteriores de E pendente permanecem históricos.
+
+## Registro de execução J — 21/11/2026
+
+Port das rotas `/experiments` e do `ExperimentRunClient` de João Enomoto (`task/langgraph-grafo`, `856ff06`), com autenticação, reserva, escopo e conferência com o histórico. Migração `0010`, `GET /ready`, `scripts.benchmark_batch` e revisões na exportação JSONL v2. Testes dirigidos e conferência com o `LangGraphAdapter` real usando modelo falso: [validação J](../04-operacoes/validacao-j.md), [ADR 011](../05-decisoes/011-registro-experimental-revisoes.md). Revisão do LangGraph e da Metodologia, LLM real e PostgreSQL pendentes.
+
+## Registro de execução K — 22/11/2026
+
+Catálogo comum `openai_tools()`/`catalog_version()` e conferência cruzada sobre a v0.2: Hermes com patch proposto pela `RunBridge`, LangGraph 10/10 e Evaluation 16/16, todos com modelos falsos. Patches ficam para as equipes aplicarem nas próprias branches: [validação K](../04-operacoes/validacao-k.md). Adoção do catálogo e congelamento da versão dependem das equipes e da Metodologia.
+
+## Registro de execução P — 22/11/2026
+
+Pendências da auditoria de 30/10: `X-Tool-Call-Id` na resposta (P2), U+0000 recusado em textos livres (P3), executores e limites repassados no Compose (P4) e isolamento dos testes no PostgreSQL reaproveitado (P6). Suíte completa em SQLite e PostgreSQL 17: [validação P](../04-operacoes/validacao-p.md). Item 1 (perda de transporte) e job do portal no CI aguardam decisão.
+
+O P3 alterou o schema dos parâmetros das tools e, com isso, o `catalog_version()` calculado no K; o novo valor ainda precisa ser registrado. A revisão de 25/11/2026 apontou dois efeitos do P3 a tratar antes do merge: leitura de linhas antigas que já contêm U+0000 e respostas do LLM com U+0000 na `RunBridge`, que passam a terminar como `adapter_error`.
+
+## Registro S — 22/11/2026
+
+S1 atualizou certifi e opentelemetry-api no lock; S2 registra o Next do portal com alvo proposto: [S1/S2](../04-operacoes/validacao-s1-s2.md). Suíte completa após S1 pendente.

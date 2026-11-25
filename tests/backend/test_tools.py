@@ -25,7 +25,7 @@ def test_search_is_scoped_to_process_and_corpus(client, engine, corpus, context)
             "query": "material",
         },
     )
-    assert missing.status_code == 404
+    assert missing.status_code == 403
 
 
 def test_literal_search_and_empty_result_caveat(client, context):
@@ -36,7 +36,7 @@ def test_literal_search_and_empty_result_caveat(client, context):
         assert "não prova" in response.json()["warning"]
 
 
-def test_errors_do_not_echo_inputs_and_planned_writes_fail(client, context):
+def test_errors_do_not_echo_inputs_and_unauthorized_context_is_rejected(client, context):
     bad = client.post(
         "/tools/buscar_documentos", json={**context, "query": " ", "secret": "nunca-ecoar"}
     )
@@ -50,7 +50,7 @@ def test_errors_do_not_echo_inputs_and_planned_writes_fail(client, context):
             "requirements_version": "wrong",
         },
     )
-    assert wrong_version.status_code == 409
+    assert wrong_version.status_code == 403
     for tool in ["registrar_pendencia", "salvar_minuta"]:
         response = client.post(
             f"/tools/{tool}",
@@ -62,8 +62,8 @@ def test_errors_do_not_echo_inputs_and_planned_writes_fail(client, context):
                 "evidence_note": "Demonstração sem ação autorizada.",
             },
         )
-        assert response.status_code == 501
-        assert response.json()["code"] == "not_implemented"
+        assert response.status_code == 422
+        assert response.json()["code"] == "validation_error"
 
 
 def test_contract_rejects_invalid_limits_and_duplicate_pages(context, corpus):
@@ -97,7 +97,8 @@ def test_read_rejects_document_from_another_process(client, engine, corpus, cont
     assert "pages" not in response.json()
 
 
-def test_requirements_are_explicitly_unimplemented(client, context):
+def test_requirements_return_versioned_synthetic_checklist(client, context):
     response = client.post("/tools/consultar_requisitos", json=context)
-    assert response.status_code == 501
-    assert response.json()["code"] == "not_implemented"
+    assert response.status_code == 200
+    assert response.json()["requirements_version"] == context["requirements_version"]
+    assert response.json()["items"][0]["requirement_id"] == "REQ-DEMO-001"

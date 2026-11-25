@@ -1,0 +1,21 @@
+{
+  "name": "CIIA Backend & Tools (sandbox)",
+  "dockerComposeFile": "compose.yml",
+  "service": "dev",
+  "workspaceFolder": "/workspaces/benchmark-ciia-hermes",
+  "remoteUser": "vscode",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [8000, 3000],
+  "portsAttributes": {
+    "8000": { "label": "backend", "onAutoForward": "silent" },
+    "3000": { "label": "portal", "onAutoForward": "silent" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "charliermarsh.ruff"],
+      "settings": {
+        "python.defaultInterpreterPath": "/workspaces/benchmark-ciia-hermes/.venv/bin/python"
+      }
+    }
+  }
+}

@@ -20,6 +20,21 @@
 
 ---
 
+## Backend e chat: implementação local em revisão
+
+As seis tools, memória por conversa, execuções autenticadas, SSE e migrações
+estão disponíveis na frente Backend. O chat local não exige login; o marcador
+pseudônimo de participante serve à análise. O simulador não chama LLM e os
+adaptadores reais continuam dependentes das respectivas equipes.
+
+[PRD](docs/02-arquitetura/backend-prd.md) ·
+[TDD](docs/02-arquitetura/backend-tdd.md) ·
+[Operação local](docs/04-operacoes/chat.md) ·
+[Integração dos agentes](docs/04-operacoes/integracao-agentes.md).
+
+As descrições v0.1 abaixo preservam a base publicada anterior; o estado atual
+local está nos documentos acima e no relatório de validação.
+
 ## Sobre o projeto
 
 Este repositório compara duas implementações de agentes, **Hermes** e **LangGraph**, executadas sobre o **mesmo corpus**, as **mesmas ferramentas HTTP** e o **mesmo modelo de linguagem**. A pergunta de pesquisa:

@@ -1,0 +1,4589 @@
+openapi: 3.1.0
+info:
+  title: CIIA — tools e conversas experimentais
+  version: 0.3.0
+paths:
+  /health:
+    get:
+      tags:
+      - Saúde
+      summary: Verifica API e banco
+      description: Executa SELECT 1 no banco configurado. 200 confirma essa consulta; falha SQL retorna
+        503 storage_unavailable. Não verifica schema completo, fila, workers, modelos ou inferência de
+        LLM.
+      operationId: health
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security: []
+  /ready:
+    get:
+      tags:
+      - Saúde
+      summary: Verifica se o schema do banco está na revisão esperada
+      description: Compara a revisão Alembic aplicada com a head do código, sem migrar. Diferença ou banco
+        sem controle de versão retorna 503 storage_unavailable retryable (por exemplo, migração ainda
+        em curso). `/health` continua só testando a conexão. Não verifica fila, workers, modelos ou inferência.
+      operationId: ready
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /capabilities:
+    get:
+      tags:
+      - Operador
+      summary: Configuração dos executores, presença observada e permissão de escrita
+      description: available mantém o significado legado de configuração habilitada, igual a enabled.
+        worker_recent indica polling/heartbeat autorizado nos últimos 60 s, em escopo concedido ao operador.
+        Não comprova inferência. Modelo remoto desconhecido é null e configuration_known é false; não
+        são inferidos do ambiente da API.
+      operationId: capabilities
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilitiesResponse'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /processos:
+    get:
+      tags:
+      - Operador
+      summary: Processos e corpus concedidos ao operador
+      description: Lista vazia autorizada retorna 200. Payload persistido deve ser válido e corresponder
+        à identidade da linha concedida; inconsistência retorna 500 invalid_response seguro, sem lista
+        parcial.
+      operationId: listProcesses
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/Process'
+                type: array
+                title: Response Listprocesses
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /conversations:
+    post:
+      tags:
+      - Conversas
+      summary: Cria conversa fixando processo, corpus, requisitos e executor
+      operationId: createConversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversationInput'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationResponse'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+    get:
+      tags:
+      - Conversas
+      summary: Lista conversas do operador; filtro de participante não concede acesso
+      operationId: listConversations
+      parameters:
+      - name: participant_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Participant Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConversationResponse'
+                title: Response Listconversations
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /conversations/{conversation_id}:
+    get:
+      tags:
+      - Conversas
+      summary: Conversa com mensagens e execuções
+      operationId: getConversation
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Conversation Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversationDetail'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /conversations/{conversation_id}/messages:
+    post:
+      tags:
+      - Conversas
+      summary: Envia mensagem e enfileira execução de chat
+      description: Repetir a mesma `idempotency_key` com a mesma entrada devolve o run existente antes
+        da quota. Só um run ativo por conversa; outro envio recebe 409 `conflict`. Compartilha com POST
+        /runs o limite de queued por operador, padrão 20, configurável por RUN_MAX_QUEUED_PER_OPERATOR.
+        Fila cheia retorna 429 `resource_limit`, sem gravar mensagem, run ou evento. Gravação dos três
+        é atômica.
+      operationId: sendMessage
+      parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Conversation Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageInput'
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponse'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /runs:
+    post:
+      tags:
+      - Execuções
+      summary: Enfileira execução de benchmark, sem memória de chat
+      description: Limite padrão de 20 runs queued por operador, contando todos os seus processos, corpus
+        e executores. Configurável por RUN_MAX_QUEUED_PER_OPERATOR. Replay da mesma chave/entrada precede
+        a quota; entrada diferente mantém 409. Fila cheia retorna 429 resource_limit, sem criar run ou
+        evento. Queued vencido é expirado antes da quota, sem exigir GET prévio.
+      operationId: createRun
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunInput'
+        required: true
+      responses:
+        '202':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponse'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /runs/claim:
+    post:
+      tags:
+      - Worker
+      summary: Reserva a próxima execução do executor
+      description: Devolve `run_token`, que deve ir no cabeçalho `X-Run-Token` das tools, eventos, heartbeat
+        e resultado. Queued vencido não é entregue; a expiração é revalidada sob a trava antes de atribuir
+        o worker. Polling autorizado registra presença observada, inclusive quando retorna 204 sem trabalho.
+      operationId: claimRun
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimInput'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimedRun'
+        '204':
+          description: Sem tarefa
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /runs/{run_id}:
+    get:
+      tags:
+      - Execuções
+      summary: Snapshot consistente de status, texto parcial e cursor
+      description: Queued expira após 300 s desde created_at, configuráveis por RUN_QUEUE_TIMEOUT_SECONDS.
+        Retorna timed_out com result.error_code queue_timeout, preservando histórico, parciais e artefatos.
+        A regra também vale em criação e claim.
+      operationId: getRun
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponse'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /runs/{run_id}/heartbeat:
+    post:
+      tags:
+      - Worker
+      summary: Renova a reserva da execução
+      description: Renova lease e presença observada atomicamente para o worker atual autorizado, com
+        executor compatível. Lease vencido ou execução terminal não renova.
+      operationId: heartbeat
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeartbeatResponse'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+        RunToken: []
+  /runs/{run_id}/events:
+    post:
+      tags:
+      - Worker
+      summary: Publica status ou trecho de resposta; idempotente por event_id
+      description: Teto de 20.000 eventos por run, incluindo eventos do servidor e tools. A última vaga
+        é reservada ao done. Novo evento sem capacidade retorna 429 resource_limit e encerra o run com
+        result.error_code event_limit; consulte o snapshot. Replay idêntico de evento já aceito não consome
+        vaga enquanto o run estiver ativo.
+      operationId: publishEvent
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentEvent'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventReceipt'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+        RunToken: []
+    get:
+      tags:
+      - Execuções
+      summary: Fluxo SSE de eventos persistidos
+      description: Eventos `status`, `text_delta`, `tool` e `done`, cada um com `id` igual à sequência.
+        O cabeçalho `Last-Event-ID` tem precedência sobre `after`. Falhas após o início do fluxo chegam
+        como evento `stream_error` com `message` e `code`. O fluxo termina após o evento `done`. Até 5
+        conexões por operador, com leases duráveis de 30 s renovados durante o fluxo; sem capacidade retorna
+        429 resource_limit. Leases abandonados são recuperados após o prazo, sem reiniciar a API.
+      operationId: streamEvents
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      - name: after
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: After
+      - name: Last-Event-ID
+        in: header
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+        description: Última sequência recebida; substitui `after`.
+      responses:
+        '200':
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              example: 'id: 3
+
+                event: text_delta
+
+                data: {"text": "Resposta parcial"}
+
+
+                id: 4
+
+                event: done
+
+                data: {"status": "succeeded"}
+
+
+                '
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /runs/{run_id}/result:
+    post:
+      tags:
+      - Worker
+      summary: Encerra a execução com resultado final
+      description: Com sucesso, `answer` deve coincidir com a concatenação dos `text_delta`. Benchmark
+        bem-sucedido exige `experiment`. As chamadas declaradas devem corresponder ao histórico observado,
+        e artefatos ao efeito da chamada. Erro no cliente pode coexistir com efeito confirmado. Duração
+        não é comparada. Repetir o mesmo resultado é idempotente.
+      operationId: finishRun
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentResult'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunResponse'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+        RunToken: []
+  /experiments:
+    post:
+      tags:
+      - Experimentos
+      summary: Registra a primeira revisão do ExperimentRun do run reservado
+      description: 'Somente o worker com a reserva do run de benchmark. `parameters.revision` ausente
+        vira 1; outro valor retorna 409. Reenvio idêntico é idempotente, inclusive após o encerramento;
+        conteúdo diferente retorna 409 idempotency_conflict. Contexto, tarefa e executor devem ser os
+        da reserva, e `tool_calls` o histórico observado. Registro não comprova sucesso: `verified_success`
+        e `evaluator` ficam nulos.'
+      operationId: recordExperiment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRun'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /experiments/{run_id}:
+    get:
+      tags:
+      - Experimentos
+      summary: Relê a revisão atual do ExperimentRun
+      description: Operador dono do run ou worker do mesmo executor com concessão do processo. Run sem
+        registro ou fora do escopo retorna 404 not_found.
+      operationId: readExperiment
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+    put:
+      tags:
+      - Experimentos
+      summary: Acrescenta revisão sequencial ao ExperimentRun
+      description: 'Somente o worker com a reserva ativa. A revisão deve ser a atual + 1 e não pode alterar
+        identidade, protocolo, orçamento nem avaliação externa, nem reduzir latência, tokens ou chamadas
+        já registradas: 409 idempotency_conflict. Caminho diferente do corpo retorna 422. Run encerrado
+        só aceita o reenvio idêntico.'
+      operationId: reviseExperiment
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRun'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /experiments/{run_id}/revisions:
+    get:
+      tags:
+      - Experimentos
+      summary: Histórico de revisões do ExperimentRun
+      description: Mesmo escopo de leitura de `GET /experiments/{run_id}`. Run autorizado sem registro
+        retorna lista vazia.
+      operationId: experimentHistory
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExperimentRun'
+                title: Response Experimenthistory
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /artifacts/{artifact_id}:
+    get:
+      tags:
+      - Artefatos
+      summary: Artefato gravado e recibo, para conferência pelo operador
+      description: Após conferir propriedade e concessões, valida ferramenta, payload, recibo, contexto
+        do run, identificadores e hashes. Corrupção retorna 500 `invalid_response`. A leitura não exige
+        lease ativo nem permissão de escrita.
+      operationId: getArtifact
+      parameters:
+      - name: artifact_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Artifact Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtifactResponse'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /tools/consultar_processo:
+    post:
+      tags:
+      - Tools
+      summary: Metadados, inventário e cobertura da exportação
+      operationId: consultarProcesso
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolContext'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessResult'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+      security:
+      - BearerAuth: []
+        RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
+      description: ' Teto de 1.000 requisições físicas atribuíveis à lease por run, incluindo erros e
+        retries. Excesso retorna 429 resource_limit, retryable false, antes do corpo/efeito; recusas permanecem
+        auditadas.'
+  /tools/buscar_documentos:
+    post:
+      tags:
+      - Tools
+      summary: Busca literal de trechos com fonte
+      description: Lista vazia não prova ausência no processo original. Teto de 1.000 requisições físicas
+        atribuíveis à lease por run, incluindo erros e retries. Excesso retorna 429 resource_limit, retryable
+        false, antes do corpo/efeito; recusas permanecem auditadas.
+      operationId: buscarDocumentos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchInput'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResult'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+      security:
+      - BearerAuth: []
+        RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
+  /tools/ler_documento:
+    post:
+      tags:
+      - Tools
+      summary: Lê documento inteiro ou páginas específicas
+      operationId: lerDocumento
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReadInput'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResult'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+      security:
+      - BearerAuth: []
+        RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
+      description: ' Teto de 1.000 requisições físicas atribuíveis à lease por run, incluindo erros e
+        retries. Excesso retorna 429 resource_limit, retryable false, antes do corpo/efeito; recusas permanecem
+        auditadas.'
+  /tools/consultar_requisitos:
+    post:
+      tags:
+      - Tools
+      summary: Checklist versionado do processo
+      operationId: consultarRequisitos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolContext'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequirementsResult'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+      security:
+      - BearerAuth: []
+        RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
+      description: ' Teto de 1.000 requisições físicas atribuíveis à lease por run, incluindo erros e
+        retries. Excesso retorna 429 resource_limit, retryable false, antes do corpo/efeito; recusas permanecem
+        auditadas.'
+  /tools/registrar_pendencia:
+    post:
+      tags:
+      - Tools
+      summary: Registra pendência de requisito com evidências
+      description: 'Replay com a mesma `idempotency_key` e entrada devolve o recibo com `replayed: true`;
+        entrada diferente recebe 409 `idempotency_conflict`. Teto de 1.000 requisições físicas atribuíveis
+        à lease por run, incluindo erros e retries. Excesso retorna 429 resource_limit, retryable false,
+        antes do corpo/efeito; recusas permanecem auditadas.'
+      operationId: registrarPendencia
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PendencyInput'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteReceipt'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+      security:
+      - BearerAuth: []
+        RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
+  /tools/salvar_minuta:
+    post:
+      tags:
+      - Tools
+      summary: Persiste minuta fundamentada e devolve recibo
+      description: Mesma regra de idempotência de `registrar_pendencia`. Teto de 1.000 requisições físicas
+        atribuíveis à lease por run, incluindo erros e retries. Excesso retorna 429 resource_limit, retryable
+        false, antes do corpo/efeito; recusas permanecem auditadas.
+      operationId: salvarMinuta
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WriteInput'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WriteReceipt'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '429':
+          description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
+      security:
+      - BearerAuth: []
+        RunToken: []
+      parameters:
+      - name: X-Tool-Call-Id
+        in: header
+        required: false
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9_.:-]{1,120}$
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
+components:
+  schemas:
+    AgentEvent:
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          title: Event Id
+        kind:
+          type: string
+          enum:
+          - status
+          - text_delta
+          title: Kind
+        text:
+          type: string
+          maxLength: 4000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Text
+      additionalProperties: false
+      type: object
+      required:
+      - event_id
+      - kind
+      - text
+      title: AgentEvent
+      description: Evento do adaptador; deltas preservam espaços e quebras de linha.
+    AgentResult:
+      properties:
+        status:
+          type: string
+          enum:
+          - succeeded
+          - failed
+          - timed_out
+          title: Status
+        answer:
+          type: string
+          maxLength: 100000
+          pattern: ^[^\x00]*$
+          title: Answer
+          default: ''
+        sources:
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/Evidence'
+            - $ref: '#/components/schemas/InventoryEvidence'
+          type: array
+          maxItems: 100
+          title: Sources
+        error_code:
+          anyOf:
+          - type: string
+            enum:
+            - adapter_error
+            - context_limit
+            - model_timeout
+          - type: 'null'
+          title: Error Code
+        experiment:
+          anyOf:
+          - $ref: '#/components/schemas/ExperimentRun'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      title: AgentResult
+      description: Resultado declarado pelo adaptador e fontes a validar pelo servidor.
+    ArtifactResponse:
+      properties:
+        artifact_id:
+          type: string
+          format: uuid
+          title: Artifact Id
+        tool:
+          type: string
+          enum:
+          - registrar_pendencia
+          - salvar_minuta
+          title: Tool
+        payload:
+          anyOf:
+          - $ref: '#/components/schemas/PendencyInput'
+          - $ref: '#/components/schemas/WriteInput'
+          title: Payload
+        receipt:
+          $ref: '#/components/schemas/WriteReceipt'
+      additionalProperties: false
+      type: object
+      required:
+      - artifact_id
+      - tool
+      - payload
+      - receipt
+      title: ArtifactResponse
+    ArtifactSummary:
+      properties:
+        artifact_id:
+          type: string
+          format: uuid
+          title: Artifact Id
+        tool:
+          type: string
+          enum:
+          - registrar_pendencia
+          - salvar_minuta
+          title: Tool
+      additionalProperties: false
+      type: object
+      required:
+      - artifact_id
+      - tool
+      title: ArtifactSummary
+    CapabilitiesResponse:
+      properties:
+        executors:
+          items:
+            $ref: '#/components/schemas/ExecutorCapability'
+          type: array
+          title: Executors
+        can_write:
+          type: boolean
+          title: Can Write
+        profile:
+          type: string
+          title: Profile
+      additionalProperties: false
+      type: object
+      required:
+      - executors
+      - can_write
+      - profile
+      title: CapabilitiesResponse
+    Chunk:
+      properties:
+        chunk_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Chunk Id
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+        document_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Document Id
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+        source:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Source
+        page:
+          type: integer
+          minimum: 1.0
+          title: Page
+        start:
+          type: integer
+          minimum: 0.0
+          title: Start
+        end:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: End
+        text:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Text
+      additionalProperties: false
+      type: object
+      required:
+      - chunk_id
+      - process_id
+      - document_id
+      - corpus_version
+      - source
+      - page
+      - start
+      - end
+      - text
+      title: Chunk
+    ClaimInput:
+      properties:
+        executor:
+          type: string
+          enum:
+          - simulation
+          - hermes
+          - langgraph
+          title: Executor
+        run_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Run Id
+      additionalProperties: false
+      type: object
+      required:
+      - executor
+      title: ClaimInput
+    ClaimedRun:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+        context:
+          $ref: '#/components/schemas/RunContext'
+        history:
+          items:
+            $ref: '#/components/schemas/HistoryMessage'
+          type: array
+          title: History
+        task:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Task
+        task_metadata:
+          $ref: '#/components/schemas/TaskMetadata'
+        kind:
+          type: string
+          enum:
+          - chat
+          - benchmark
+          title: Kind
+        executor:
+          type: string
+          enum:
+          - simulation
+          - hermes
+          - langgraph
+          title: Executor
+        run_token:
+          type: string
+          title: Run Token
+        lease_seconds:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Lease Seconds
+        heartbeat_seconds:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Heartbeat Seconds
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - context
+      - history
+      - task
+      - task_metadata
+      - kind
+      - executor
+      - run_token
+      - lease_seconds
+      - heartbeat_seconds
+      title: ClaimedRun
+      description: Trabalho reservado ao worker, com token e intervalos da reserva em segundos.
+    ConversationDetail:
+      properties:
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+        executor:
+          type: string
+          enum:
+          - simulation
+          - hermes
+          - langgraph
+          title: Executor
+          default: simulation
+        participant_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Participant Id
+        conversation_id:
+          type: string
+          format: uuid
+          title: Conversation Id
+        owner_id:
+          type: string
+          title: Owner Id
+        created_at:
+          type: number
+          title: Created At
+        messages:
+          items:
+            $ref: '#/components/schemas/MessageResponse'
+          type: array
+          title: Messages
+        runs:
+          items:
+            $ref: '#/components/schemas/RunResponse'
+          type: array
+          title: Runs
+      additionalProperties: false
+      type: object
+      required:
+      - process_id
+      - corpus_version
+      - requirements_version
+      - conversation_id
+      - owner_id
+      - created_at
+      - messages
+      - runs
+      title: ConversationDetail
+    ConversationInput:
+      properties:
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+        executor:
+          type: string
+          enum:
+          - simulation
+          - hermes
+          - langgraph
+          title: Executor
+          default: simulation
+        participant_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Participant Id
+      additionalProperties: false
+      type: object
+      required:
+      - process_id
+      - corpus_version
+      - requirements_version
+      title: ConversationInput
+    ConversationResponse:
+      properties:
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+        executor:
+          type: string
+          enum:
+          - simulation
+          - hermes
+          - langgraph
+          title: Executor
+          default: simulation
+        participant_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Participant Id
+        conversation_id:
+          type: string
+          format: uuid
+          title: Conversation Id
+        owner_id:
+          type: string
+          title: Owner Id
+        created_at:
+          type: number
+          title: Created At
+      additionalProperties: false
+      type: object
+      required:
+      - process_id
+      - corpus_version
+      - requirements_version
+      - conversation_id
+      - owner_id
+      - created_at
+      title: ConversationResponse
+    Document:
+      properties:
+        document_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Document Id
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+        title:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Title
+        source:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Source
+        sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          title: Sha256
+        pages:
+          items:
+            $ref: '#/components/schemas/Page'
+          type: array
+          minItems: 1
+          title: Pages
+      additionalProperties: false
+      type: object
+      required:
+      - document_id
+      - process_id
+      - corpus_version
+      - title
+      - source
+      - sha256
+      - pages
+      title: Document
+    DocumentResult:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        document:
+          $ref: '#/components/schemas/Document'
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - document
+      title: DocumentResult
+    EventReceipt:
+      properties:
+        sequence:
+          type: integer
+          exclusiveMinimum: 0.0
+          title: Sequence
+      additionalProperties: false
+      type: object
+      required:
+      - sequence
+      title: EventReceipt
+    Evidence:
+      properties:
+        document_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Document Id
+          description: Documento que contém o trecho citado.
+        chunk_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Chunk Id
+          description: Identificador do trecho citado nesse documento.
+        page:
+          type: integer
+          minimum: 1.0
+          title: Page
+          description: Número da página de origem do trecho, a partir de 1.
+      additionalProperties: false
+      type: object
+      required:
+      - document_id
+      - chunk_id
+      - page
+      title: Evidence
+      description: Referência verificável a um trecho e à página de origem no corpus.
+    ExecutorCapability:
+      properties:
+        name:
+          type: string
+          enum:
+          - simulation
+          - hermes
+          - langgraph
+          title: Name
+        available:
+          type: boolean
+          title: Available
+        simulation:
+          type: boolean
+          title: Simulation
+        enabled:
+          type: boolean
+          title: Enabled
+        worker_recent:
+          type: boolean
+          title: Worker Recent
+        last_seen_at:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Last Seen At
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Model
+        configuration_known:
+          type: boolean
+          title: Configuration Known
+      additionalProperties: false
+      type: object
+      required:
+      - name
+      - available
+      - simulation
+      - enabled
+      - worker_recent
+      - last_seen_at
+      - model
+      - configuration_known
+      title: ExecutorCapability
+    ExperimentRun:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        contract_version:
+          type: string
+          const: '0.1'
+          title: Contract Version
+          default: '0.1'
+        task_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Task Id
+        split:
+          type: string
+          enum:
+          - development
+          - final
+          title: Split
+        executor:
+          type: string
+          enum:
+          - hermes
+          - langgraph
+          - simulation
+          title: Executor
+        repetition:
+          type: integer
+          minimum: 1.0
+          title: Repetition
+        code_commit:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Code Commit
+        harness_version:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Harness Version
+        adapter_version:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Adapter Version
+        model:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Model
+        endpoint_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Endpoint Id
+        prompt_sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          title: Prompt Sha256
+        parameters:
+          patternProperties:
+            ^[^\x00]+$:
+              anyOf:
+              - type: string
+                pattern: ^[^\x00]*$
+              - type: number
+              - type: integer
+              - type: boolean
+          propertyNames:
+            maxLength: 120
+            minLength: 1
+          type: object
+          title: Parameters
+        started_at:
+          type: string
+          format: date-time
+          title: Started At
+        latency_ms:
+          type: number
+          minimum: 0.0
+          title: Latency Ms
+        tool_calls:
+          items:
+            $ref: '#/components/schemas/ToolCallRecord'
+          type: array
+          title: Tool Calls
+        input_tokens:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Input Tokens
+        output_tokens:
+          anyOf:
+          - type: integer
+            minimum: 0.0
+          - type: 'null'
+          title: Output Tokens
+        cost_usd:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          title: Cost Usd
+        agent_declared_success:
+          type: boolean
+          title: Agent Declared Success
+        persisted_artifact_ids:
+          items:
+            type: string
+            maxLength: 120
+            minLength: 1
+            pattern: ^[A-Za-z0-9_.:-]+$
+          type: array
+          title: Persisted Artifact Ids
+        verified_success:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Verified Success
+        evaluator:
+          anyOf:
+          - type: string
+            pattern: ^[^\x00]*$
+          - type: 'null'
+          title: Evaluator
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - task_id
+      - split
+      - executor
+      - repetition
+      - code_commit
+      - harness_version
+      - adapter_version
+      - model
+      - endpoint_id
+      - prompt_sha256
+      - parameters
+      - started_at
+      - latency_ms
+      - tool_calls
+      - agent_declared_success
+      - persisted_artifact_ids
+      - verified_success
+      - evaluator
+      title: ExperimentRun
+    HealthResponse:
+      properties:
+        status:
+          type: string
+          const: ok
+          title: Status
+          default: ok
+        contract_version:
+          type: string
+          const: '0.3'
+          title: Contract Version
+          default: '0.3'
+      additionalProperties: false
+      type: object
+      title: HealthResponse
+    HeartbeatResponse:
+      properties:
+        status:
+          type: string
+          const: running
+          title: Status
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      title: HeartbeatResponse
+    HistoryMessage:
+      properties:
+        role:
+          type: string
+          enum:
+          - user
+          - assistant
+          title: Role
+        content:
+          type: string
+          pattern: ^[^\x00]*$
+          title: Content
+      additionalProperties: false
+      type: object
+      required:
+      - role
+      - content
+      title: HistoryMessage
+    InventoryEvidence:
+      properties:
+        kind:
+          type: string
+          const: inventory
+          title: Kind
+          description: Identifica referência ao inventário.
+          default: inventory
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Processo a que o inventário pertence.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus a que o inventário pertence.
+      additionalProperties: false
+      type: object
+      required:
+      - process_id
+      - corpus_version
+      title: InventoryEvidence
+      description: Referência ao inventário para fundamentar uma limitação da exportação.
+    InventoryItem:
+      properties:
+        document_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Document Id
+        title:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Title
+        source:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Source
+        pages:
+          type: integer
+          minimum: 1.0
+          title: Pages
+        sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          title: Sha256
+      additionalProperties: false
+      type: object
+      required:
+      - document_id
+      - title
+      - source
+      - pages
+      - sha256
+      title: InventoryItem
+    MessageInput:
+      properties:
+        content:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Content
+        idempotency_key:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Idempotency Key
+      additionalProperties: false
+      type: object
+      required:
+      - content
+      - idempotency_key
+      title: MessageInput
+    MessageResponse:
+      properties:
+        message_id:
+          type: string
+          format: uuid
+          title: Message Id
+        conversation_id:
+          type: string
+          format: uuid
+          title: Conversation Id
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+        role:
+          type: string
+          enum:
+          - user
+          - assistant
+          title: Role
+        content:
+          type: string
+          title: Content
+        created_at:
+          type: number
+          title: Created At
+      additionalProperties: false
+      type: object
+      required:
+      - message_id
+      - conversation_id
+      - run_id
+      - role
+      - content
+      - created_at
+      title: MessageResponse
+    Page:
+      properties:
+        number:
+          type: integer
+          minimum: 1.0
+          title: Number
+        text:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Text
+      additionalProperties: false
+      type: object
+      required:
+      - number
+      - text
+      title: Page
+    PendencyInput:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        idempotency_key:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Idempotency Key
+          description: Chave da escrita; reutilize-a apenas com a mesma ferramenta e conteúdo da entrada.
+        content:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Content
+          description: Texto integral da minuta ou pendência a persistir.
+        evidence:
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/Evidence'
+            - $ref: '#/components/schemas/InventoryEvidence'
+          type: array
+          minItems: 1
+          title: Evidence
+          description: Referências a trechos ou ao inventário que fundamentam o texto.
+        evidence_note:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Evidence Note
+          description: Explicação de como as referências fundamentam o texto.
+        requirement_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirement Id
+          description: Identificador do requisito no checklist da execução.
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - idempotency_key
+      - content
+      - evidence
+      - evidence_note
+      - requirement_id
+      title: PendencyInput
+      description: Pendência associada a um requisito do checklist versionado.
+    Process:
+      properties:
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+        title:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Title
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+        export_completeness:
+          type: string
+          enum:
+          - complete
+          - partial
+          - unknown
+          title: Export Completeness
+        export_note:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Export Note
+      additionalProperties: false
+      type: object
+      required:
+      - process_id
+      - title
+      - corpus_version
+      - requirements_version
+      - export_completeness
+      - export_note
+      title: Process
+    ProcessResult:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        process:
+          $ref: '#/components/schemas/Process'
+        inventory:
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+          type: array
+          title: Inventory
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - process
+      title: ProcessResult
+    ReadInput:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        document_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Document Id
+          description: Identificador de documento no corpus autorizado.
+        pages:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+            minItems: 1
+          - type: 'null'
+          title: Pages
+          description: Números de páginas positivas e distintas; omita ou use null para todas.
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - document_id
+      title: ReadInput
+      description: Seleção de documento e, opcionalmente, de suas páginas.
+    ReadinessResponse:
+      properties:
+        status:
+          type: string
+          const: ready
+          title: Status
+          default: ready
+        schema_revision:
+          type: string
+          title: Schema Revision
+      additionalProperties: false
+      type: object
+      required:
+      - schema_revision
+      title: ReadinessResponse
+      description: Banco na revisão de schema que o código espera; não verifica workers nem modelos.
+    Requirement:
+      properties:
+        requirement_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirement Id
+        description:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Description
+        source:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Source
+      additionalProperties: false
+      type: object
+      required:
+      - requirement_id
+      - description
+      - source
+      title: Requirement
+    RequirementsResult:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        items:
+          items:
+            $ref: '#/components/schemas/Requirement'
+          type: array
+          minItems: 1
+          title: Items
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - items
+      title: RequirementsResult
+    RunContext:
+      properties:
+        run_id:
+          type: string
+          pattern: ^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$
+          title: Run Id
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      title: RunContext
+      description: Escopo recebido do servidor para uma execução reservada.
+    RunInput:
+      properties:
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+        executor:
+          type: string
+          enum:
+          - simulation
+          - hermes
+          - langgraph
+          title: Executor
+          default: simulation
+        task:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Task
+        idempotency_key:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Idempotency Key
+        task_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Task Id
+        split:
+          type: string
+          enum:
+          - development
+          - final
+          title: Split
+          default: development
+        repetition:
+          type: integer
+          minimum: 1.0
+          title: Repetition
+          default: 1
+      additionalProperties: false
+      type: object
+      required:
+      - process_id
+      - corpus_version
+      - requirements_version
+      - task
+      - idempotency_key
+      - task_id
+      title: RunInput
+    RunResponse:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+        conversation_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Conversation Id
+        kind:
+          type: string
+          enum:
+          - chat
+          - benchmark
+          title: Kind
+        executor:
+          type: string
+          enum:
+          - simulation
+          - hermes
+          - langgraph
+          title: Executor
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - timed_out
+          title: Status
+        context:
+          $ref: '#/components/schemas/RunContext'
+        created_at:
+          type: number
+          title: Created At
+        started_at:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Started At
+        finished_at:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Finished At
+        result:
+          anyOf:
+          - $ref: '#/components/schemas/StoredResult'
+          - type: 'null'
+        partial_answer:
+          type: string
+          title: Partial Answer
+        last_event_id:
+          type: integer
+          minimum: 0.0
+          title: Last Event Id
+        artifacts:
+          items:
+            $ref: '#/components/schemas/ArtifactSummary'
+          type: array
+          title: Artifacts
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - conversation_id
+      - kind
+      - executor
+      - status
+      - context
+      - created_at
+      - started_at
+      - finished_at
+      - result
+      - partial_answer
+      - last_event_id
+      title: RunResponse
+      description: Retrato da execução, eventos observados e artefatos associados.
+    SearchInput:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        query:
+          type: string
+          maxLength: 200
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Query
+          description: Busca literal; U+0000 não é permitido.
+        limit:
+          type: integer
+          maximum: 20.0
+          minimum: 1.0
+          title: Limit
+          description: Número máximo de trechos retornados; padrão 5.
+          default: 5
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - query
+      title: SearchInput
+      description: Busca literal de trechos no processo e corpus da execução.
+    SearchResult:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        export_completeness:
+          type: string
+          enum:
+          - complete
+          - partial
+          - unknown
+          title: Export Completeness
+        items:
+          items:
+            $ref: '#/components/schemas/Chunk'
+          type: array
+          maxItems: 20
+          title: Items
+        warning:
+          type: string
+          title: Warning
+          default: Não localizar um documento não prova ausência no processo original.
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - export_completeness
+      - items
+      title: SearchResult
+    StoredResult:
+      properties:
+        status:
+          type: string
+          enum:
+          - succeeded
+          - failed
+          - timed_out
+          title: Status
+        answer:
+          type: string
+          maxLength: 100000
+          pattern: ^[^\x00]*$
+          title: Answer
+          default: ''
+        sources:
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/Evidence'
+            - $ref: '#/components/schemas/InventoryEvidence'
+          type: array
+          maxItems: 100
+          title: Sources
+        error_code:
+          anyOf:
+          - type: string
+            enum:
+            - adapter_error
+            - context_limit
+            - model_timeout
+            - worker_timeout
+            - queue_timeout
+            - event_limit
+          - type: 'null'
+          title: Error Code
+        experiment:
+          anyOf:
+          - $ref: '#/components/schemas/ExperimentRun'
+          - type: 'null'
+      additionalProperties: false
+      type: object
+      required:
+      - status
+      title: StoredResult
+      description: Resultado persistido; inclui falhas terminais produzidas pelo servidor.
+    TaskMetadata:
+      properties:
+        task_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Task Id
+        split:
+          type: string
+          enum:
+          - development
+          - final
+          title: Split
+        repetition:
+          type: integer
+          minimum: 1.0
+          title: Repetition
+      additionalProperties: false
+      type: object
+      required:
+      - task_id
+      - split
+      - repetition
+      title: TaskMetadata
+    ToolCallRecord:
+      properties:
+        tool_call_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Tool Call Id
+        tool:
+          type: string
+          enum:
+          - consultar_processo
+          - buscar_documentos
+          - ler_documento
+          - consultar_requisitos
+          - registrar_pendencia
+          - salvar_minuta
+          title: Tool
+        duration_ms:
+          type: number
+          minimum: 0.0
+          title: Duration Ms
+        status:
+          type: string
+          enum:
+          - ok
+          - error
+          title: Status
+        artifact_id:
+          anyOf:
+          - type: string
+            maxLength: 120
+            minLength: 1
+            pattern: ^[A-Za-z0-9_.:-]+$
+          - type: 'null'
+          title: Artifact Id
+      additionalProperties: false
+      type: object
+      required:
+      - tool_call_id
+      - tool
+      - duration_ms
+      - status
+      title: ToolCallRecord
+      description: Chamada declarada no relatório experimental, sujeita à reconciliação do servidor.
+    ToolContext:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      title: ToolContext
+      description: Escopo da execução autenticada; o agente não escolhe estes campos no catálogo.
+    ToolError:
+      properties:
+        code:
+          type: string
+          enum:
+          - validation_error
+          - not_found
+          - version_mismatch
+          - not_implemented
+          - storage_unavailable
+          - idempotency_conflict
+          - unauthorized
+          - forbidden
+          - conflict
+          - context_limit
+          - executor_unavailable
+          - budget_exceeded
+          - invalid_response
+          - internal_error
+          - http_error
+          - method_not_allowed
+          - payload_too_large
+          - resource_limit
+          title: Code
+        message:
+          type: string
+          title: Message
+        run_id:
+          anyOf:
+          - type: string
+            format: uuid
+          - type: 'null'
+          title: Run Id
+        retryable:
+          type: boolean
+          title: Retryable
+          default: false
+      additionalProperties: false
+      type: object
+      required:
+      - code
+      - message
+      title: ToolError
+    WriteInput:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        idempotency_key:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Idempotency Key
+          description: Chave da escrita; reutilize-a apenas com a mesma ferramenta e conteúdo da entrada.
+        content:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Content
+          description: Texto integral da minuta ou pendência a persistir.
+        evidence:
+          items:
+            anyOf:
+            - $ref: '#/components/schemas/Evidence'
+            - $ref: '#/components/schemas/InventoryEvidence'
+          type: array
+          minItems: 1
+          title: Evidence
+          description: Referências a trechos ou ao inventário que fundamentam o texto.
+        evidence_note:
+          type: string
+          maxLength: 100000
+          minLength: 1
+          pattern: ^[^\x00]+$
+          title: Evidence Note
+          description: Explicação de como as referências fundamentam o texto.
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - idempotency_key
+      - content
+      - evidence
+      - evidence_note
+      title: WriteInput
+      description: Entrada comum de escrita fundamentada com chave para repetição idempotente.
+    WriteReceipt:
+      properties:
+        run_id:
+          type: string
+          format: uuid
+          title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
+        process_id:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Process Id
+          description: Identificador do processo no escopo da execução.
+        corpus_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
+        requirements_version:
+          type: string
+          maxLength: 120
+          minLength: 1
+          pattern: ^[A-Za-z0-9_.:-]+$
+          title: Requirements Version
+          description: Versão do checklist associada ao processo.
+        artifact_id:
+          type: string
+          format: uuid
+          title: Artifact Id
+          description: Identificador do artefato persistido.
+        persisted_at:
+          type: string
+          format: date-time
+          title: Persisted At
+          description: Instante com fuso horário da persistência original.
+        content_sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+          title: Content Sha256
+          description: SHA-256 hexadecimal do texto persistido em UTF-8.
+        replayed:
+          type: boolean
+          title: Replayed
+          description: Indica retorno de escrita idempotente anterior.
+      additionalProperties: false
+      type: object
+      required:
+      - run_id
+      - process_id
+      - corpus_version
+      - requirements_version
+      - artifact_id
+      - persisted_at
+      - content_sha256
+      - replayed
+      title: WriteReceipt
+      description: Comprovante do artefato persistido, inclusive em repetição idempotente.
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+    RunToken:
+      type: apiKey
+      in: header
+      name: X-Run-Token
+servers:
+- url: http://127.0.0.1:8000
+  description: Backend local

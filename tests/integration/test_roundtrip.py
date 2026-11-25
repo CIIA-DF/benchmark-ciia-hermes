@@ -7,7 +7,7 @@ from services.backend.app import create_app
 from services.backend.storage import chunks, ingest, make_engine
 
 
-def test_ingest_commit_reconnect_and_api(engine, corpus, context):
+def test_ingest_commit_reconnect_and_api(engine, corpus, context, client):
     process, document = corpus
     items = chunk_document(document)
     ingest(engine, process, document, items)
@@ -15,7 +15,7 @@ def test_ingest_commit_reconnect_and_api(engine, corpus, context):
     url = engine.url
     engine.dispose()
     reopened = make_engine(url)
-    with TestClient(create_app(reopened)) as client:
+    with TestClient(create_app(reopened), headers=dict(client.headers)) as client:
         response = client.post("/tools/consultar_processo", json=context)
         assert response.status_code == 200
         assert ProcessResult.model_validate(response.json()).process == process

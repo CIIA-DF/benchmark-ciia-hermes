@@ -1,0 +1,647 @@
+[
+  {
+    "method": "GET",
+    "path": "/health",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "405",
+      "413",
+      "500",
+      "503"
+    ],
+    "parameters": []
+  },
+  {
+    "method": "GET",
+    "path": "/ready",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "405",
+      "413",
+      "500",
+      "503"
+    ],
+    "parameters": []
+  },
+  {
+    "method": "GET",
+    "path": "/capabilities",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "405",
+      "413",
+      "500",
+      "503"
+    ],
+    "parameters": []
+  },
+  {
+    "method": "GET",
+    "path": "/processos",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "405",
+      "413",
+      "500",
+      "503"
+    ],
+    "parameters": []
+  },
+  {
+    "method": "POST",
+    "path": "/conversations",
+    "input_model": "ConversationInput",
+    "example": {
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "checklist-v1"
+    },
+    "responses": [
+      "201",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": []
+  },
+  {
+    "method": "GET",
+    "path": "/conversations",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "405",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "participant_id"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/conversations/{conversation_id}",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "conversation_id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/conversations/{conversation_id}/messages",
+    "input_model": "MessageInput",
+    "example": {
+      "content": "Analisar inventário sintético.",
+      "idempotency_key": "mensagem-1"
+    },
+    "responses": [
+      "202",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "conversation_id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/runs",
+    "input_model": "RunInput",
+    "example": {
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "checklist-v1",
+      "task": "Analisar inventário sintético.",
+      "task_id": "DEV-001",
+      "idempotency_key": "execucao-1"
+    },
+    "responses": [
+      "202",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": []
+  },
+  {
+    "method": "POST",
+    "path": "/runs/claim",
+    "input_model": "ClaimInput",
+    "example": {
+      "executor": "simulation"
+    },
+    "responses": [
+      "200",
+      "204",
+      "401",
+      "403",
+      "405",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": []
+  },
+  {
+    "method": "GET",
+    "path": "/runs/{run_id}",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "run_id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/runs/{run_id}/heartbeat",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "405",
+      "409",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "run_id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/runs/{run_id}/events",
+    "input_model": "AgentEvent",
+    "example": {
+      "event_id": "00000000-0000-4000-8000-000000000002",
+      "kind": "text_delta",
+      "text": "Resposta sintética."
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "405",
+      "409",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "run_id"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/runs/{run_id}/events",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "run_id",
+      "after",
+      "Last-Event-ID"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/runs/{run_id}/result",
+    "input_model": "AgentResult",
+    "example": {
+      "status": "failed",
+      "error_code": "adapter_error"
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "405",
+      "409",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "run_id"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/artifacts/{artifact_id}",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "artifact_id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/tools/consultar_processo",
+    "input_model": "ToolContext",
+    "example": {
+      "run_id": "00000000-0000-4000-8000-000000000001",
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "checklist-v1"
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "X-Tool-Call-Id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/tools/buscar_documentos",
+    "input_model": "SearchInput",
+    "example": {
+      "run_id": "00000000-0000-4000-8000-000000000001",
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "checklist-v1",
+      "query": "material",
+      "limit": 5
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "X-Tool-Call-Id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/tools/ler_documento",
+    "input_model": "ReadInput",
+    "example": {
+      "run_id": "00000000-0000-4000-8000-000000000001",
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "checklist-v1",
+      "document_id": "DOC-DEMO-001",
+      "pages": [
+        1
+      ]
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "X-Tool-Call-Id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/tools/consultar_requisitos",
+    "input_model": "ToolContext",
+    "example": {
+      "run_id": "00000000-0000-4000-8000-000000000001",
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "checklist-v1"
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "X-Tool-Call-Id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/tools/registrar_pendencia",
+    "input_model": "PendencyInput",
+    "example": {
+      "run_id": "00000000-0000-4000-8000-000000000001",
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "checklist-v1",
+      "idempotency_key": "exemplo-escrita-1",
+      "content": "Texto exclusivamente sintético.",
+      "evidence": [
+        {
+          "kind": "inventory",
+          "process_id": "PROC-DEMO-001",
+          "corpus_version": "synthetic-v1"
+        }
+      ],
+      "evidence_note": "Limitação do inventário sintético.",
+      "requirement_id": "REQ-DEMO-001"
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "X-Tool-Call-Id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/tools/salvar_minuta",
+    "input_model": "WriteInput",
+    "example": {
+      "run_id": "00000000-0000-4000-8000-000000000001",
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "checklist-v1",
+      "idempotency_key": "exemplo-escrita-1",
+      "content": "Texto exclusivamente sintético.",
+      "evidence": [
+        {
+          "kind": "inventory",
+          "process_id": "PROC-DEMO-001",
+          "corpus_version": "synthetic-v1"
+        }
+      ],
+      "evidence_note": "Limitação do inventário sintético."
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "422",
+      "429",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "X-Tool-Call-Id"
+    ]
+  },
+  {
+    "method": "POST",
+    "path": "/experiments",
+    "input_model": "ExperimentRun",
+    "example": {
+      "run_id": "00000000-0000-4000-8000-000000000001",
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "demo-v1",
+      "task_id": "DEV-001",
+      "split": "development",
+      "executor": "langgraph",
+      "repetition": 1,
+      "code_commit": "0000000",
+      "harness_version": "0.2",
+      "adapter_version": "langgraph-0.1",
+      "model": "openai/gpt-4o-mini",
+      "endpoint_id": "openrouter",
+      "prompt_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "parameters": {
+        "level": "chained",
+        "revision": 1
+      },
+      "started_at": "2026-11-21T12:00:00Z",
+      "latency_ms": 1200.0,
+      "tool_calls": [],
+      "agent_declared_success": true,
+      "persisted_artifact_ids": [],
+      "verified_success": null,
+      "evaluator": null
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "405",
+      "409",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": []
+  },
+  {
+    "method": "GET",
+    "path": "/experiments/{run_id}",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "run_id"
+    ]
+  },
+  {
+    "method": "PUT",
+    "path": "/experiments/{run_id}",
+    "input_model": "ExperimentRun",
+    "example": {
+      "run_id": "00000000-0000-4000-8000-000000000001",
+      "process_id": "PROC-DEMO-001",
+      "corpus_version": "synthetic-v1",
+      "requirements_version": "demo-v1",
+      "task_id": "DEV-001",
+      "split": "development",
+      "executor": "langgraph",
+      "repetition": 1,
+      "code_commit": "0000000",
+      "harness_version": "0.2",
+      "adapter_version": "langgraph-0.1",
+      "model": "openai/gpt-4o-mini",
+      "endpoint_id": "openrouter",
+      "prompt_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "parameters": {
+        "level": "chained",
+        "revision": 2
+      },
+      "started_at": "2026-11-21T12:00:00Z",
+      "latency_ms": 1500.0,
+      "tool_calls": [],
+      "agent_declared_success": true,
+      "persisted_artifact_ids": [],
+      "verified_success": null,
+      "evaluator": null
+    },
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "405",
+      "409",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "run_id"
+    ]
+  },
+  {
+    "method": "GET",
+    "path": "/experiments/{run_id}/revisions",
+    "input_model": null,
+    "example": null,
+    "responses": [
+      "200",
+      "401",
+      "403",
+      "404",
+      "405",
+      "413",
+      "422",
+      "500",
+      "503"
+    ],
+    "parameters": [
+      "run_id"
+    ]
+  }
+]

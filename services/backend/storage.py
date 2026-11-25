@@ -15,7 +15,7 @@ from sqlalchemy import (
     insert,
     select,
 )
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import URL, Engine
 
 from contracts.models import Chunk, Document, Process
 
@@ -54,7 +54,7 @@ chunks = Table(
 )
 
 
-def make_engine(url: str | None = None) -> Engine:
+def make_engine(url: str | URL | None = None) -> Engine:
     url = url or os.getenv("DATABASE_URL", "sqlite:///./data/demo.db")
     if url == "sqlite:///./data/demo.db":
         Path("data").mkdir(exist_ok=True)
@@ -69,11 +69,17 @@ def make_engine(url: str | None = None) -> Engine:
 
 
 def initialize(engine: Engine) -> None:
-    # Apenas criação inicial. Mudanças de schema exigirão migrações revisadas.
-    metadata.create_all(engine)
+    from services.backend.migrate import migrate
+
+    migrate(engine)
 
 
 def ingest(engine: Engine, process: Process, document: Document, items: list[Chunk]) -> int:
+    """Persista dados preparados com trechos rastreáveis e corpus versionado imutável.
+
+    Rejeita referências inconsistentes e alterações de conteúdo na mesma versão.
+    A preparação do corpus permanece sob responsabilidade de Documentos/RAG.
+    """
     if (document.process_id, document.corpus_version) != (
         process.process_id,
         process.corpus_version,

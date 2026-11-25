@@ -33,7 +33,7 @@ ExperimentRun inclui run_id, task_id, split/repetition, executor, corpus/requisi
 
 Guardar prompts efetivos e respostas completas apenas no armazenamento privado aprovado, ligados por hashes ao registro. Tokens/custo não informados ficam null, nunca zero. Definir fonte de preços/data/moeda e separar estimativa de custo medido. Registrar orçamento e interrupções, inclusive falhas.
 
-Escrita exige conferir banco/artefato por leitor independente e comparar conteúdo/hash/ID. Recibo HTTP ou alegação do agente sozinhos não bastam. Hoje escrita e persistência de ExperimentRun não estão implementadas: este documento define requisitos futuros.
+Escrita exige conferir banco/artefato por leitor independente e comparar conteúdo/hash/ID. Recibo HTTP ou alegação do agente sozinhos não bastam. Na implementação local v0.2, escritas e o envelope ExperimentRun são persistidos pelo backend. A validação técnica não substitui conferência independente nem representa coleta científica com agentes reais.
 
 ## Analisar e publicar
 

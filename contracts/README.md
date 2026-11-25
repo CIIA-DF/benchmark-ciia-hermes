@@ -1,67 +1,505 @@
-# Contratos v0.1 — proposta revisável
+# Contratos v0.3 — backend, tools e agentes
 
-Fonte executável: [models.py](models.py). Modelos Pydantic rejeitam campos extras, IDs inválidos, páginas repetidas e offsets inconsistentes. A API gera OpenAPI em /openapi.json e documentação em /docs. Versão de contrato: 0.1; versão da aplicação: 0.1.0.
+> Consolidação D (31/10/2026): [referência vigente por endpoint](../docs/02-arquitetura/backend-api-atual.md) e [estado de implementação/verificação/liberação](../docs/04-operacoes/backend-estado-atual.md). O conteúdo abaixo preserva o histórico incremental de compatibilidade; quotas, fases físicas, erros e versões atuais estão consolidados na referência vigente.
 
-## Entidades
+Fontes executáveis: [models.py](models.py) e [execution.py](execution.py).
+A API publica OpenAPI em `/openapi.json` e documentação em `/docs`.
+Pydantic rejeita campos extras e entradas inválidas sem ecoar seu conteúdo.
 
-| Modelo | Campos e significado |
+## Compatibilidade e revisão conjunta
+
+v0.2 exige autenticação e execução reservada nas seis tools. Consumidores
+v0.1 que enviavam um UUID arbitrário devem criar/reservar uma execução.
+`ToolClient` e `AsyncToolClient` injetam o contexto autenticado e rejeitam
+tentativas de alterá-lo. O protocolo `AgentAdapter` passa a oferecer
+`stream(ClaimedRun, AsyncToolClient)`.
+
+`ProcessResult` acrescenta inventário; `ReadInput` admite páginas opcionais.
+`PendencyInput` acrescenta `requirement_id`. Escritas exigem ao menos uma
+referência de chunk ou inventário. O contrato `ExperimentRun` v0.1 é
+preservado dentro do envelope v0.2 para os consumidores de avaliação.
+
+As equipes Backend, Documentos, Hermes, LangGraph, Metodologia e Infra devem
+revisar essas mudanças antes de integrar suas entregas. Consulte
+[operação do chat](../docs/04-operacoes/chat.md) para migrações e configuração.
+
+## Autenticação e contexto
+
+Operadores usam `Authorization: Bearer TOKEN_OPERADOR` para criar e
+acompanhar suas conversas, execuções e artefatos. Workers usam um token
+próprio, associado ao executor e a concessões explícitas por processo/corpus.
+
+`POST /runs/claim` devolve `ClaimedRun`, incluindo `run_token`. Tools,
+heartbeat, publicação de eventos e resultado exigem adicionalmente
+`X-Run-Token`. O modelo não recebe poder de escolher usuário, execução ou
+permissões. O cliente das tools associa o contexto antes de enviar HTTP.
+
+`ToolContext` contém `run_id`, `process_id`, `corpus_version` e
+`requirements_version`. Todos devem coincidir com a execução reservada.
+Cada operação confere as concessões atuais do worker e do proprietário.
+Escritas também exigem `can_write` nos dois perfis.
+
+## Conversas e execuções
+
+| Rota | Entrada e resultado |
 | --- | --- |
-| Process | process_id estável, title, corpus_version, requirements_version, export_completeness (complete/partial/unknown), export_note obrigatória |
-| Document | document_id, process_id, corpus_version, título, source, SHA-256 do arquivo ingerido, pages com número e texto |
-| Chunk | chunk_id determinístico, process_id/document_id/corpus_version, source, page, start/end, text |
-| SearchResult | run_id, processo, versões, completude, lista de chunks e aviso de limite de cobertura |
-| ToolError | code, message segura, run_id quando conhecido, retryable |
-| ExperimentRun | contexto, task_id/split/repetition, executor, commits/versões, modelo/endpoint, hash do prompt, parâmetros, início/latência, chamadas, tokens/custo, sucesso declarado, artefatos e sucesso verificado |
+| `GET /processos` | Processos/corpora autorizados ao operador. |
+| `GET /capabilities` | Perfil e disponibilidade dos executores. |
+| `POST /conversations` | Processo, corpus, requisitos e executor; retorna conversa. |
+| `GET /conversations` | Até 100 conversas mais recentes do operador. |
+| `GET /conversations/{id}` | Mensagens e execuções da conversa. |
+| `POST /conversations/{id}/messages` | `content`, `idempotency_key`; retorna execução com HTTP 202. |
+| `POST /runs` | Escopo, executor, `task`, `task_id`, `split`, `repetition`, chave; HTTP 202. |
+| `GET /runs/{id}` | Estado, resultado, texto parcial e cursor consistente. |
+| `POST /runs/claim` | Executor e `run_id` opcional; retorna reserva ou 204 sem tarefa. |
+| `POST /runs/{id}/heartbeat` | Renova a reserva ativa. |
+| `POST /runs/{id}/events` | Publica um `AgentEvent` idempotente. |
+| `GET /runs/{id}/events` | SSE autorizado ao proprietário. |
+| `POST /runs/{id}/result` | Encerra com `AgentResult`, de forma idempotente. |
+| `GET /artifacts/{id}` | Conteúdo e recibo para conferência pelo proprietário. |
 
-Processo/documento são identificados dentro de uma versão de corpus; não reutilizar IDs para outra origem. Em PDFs futuros, document_id deve vir de manifesto estável, sem depender do nome mutável do arquivo. A demo usa IDs fixos. Hash e offsets de JSON são demonstrativos, não extração de PDF. Chunks sempre apontam ao texto paginado validado. Documento sem página física precisa de contrato ampliado com localização equivalente antes da ingestão.
+Uma conversa fixa processo, corpus, requisitos e executor. Cada pergunta
+gera uma execução. A criação da pergunta e do run é atômica, com uma
+execução ativa por conversa. Chaves de envio são únicas por operador:
+entrada idêntica recupera o mesmo run; entrada diferente gera 409.
 
-Todas as chamadas exigem ToolContext: run_id UUID (fornecido pelo harness), process_id, corpus_version, requirements_version. A API devolve o mesmo contexto. Receber run_id não significa que existe uma execução registrada: persistência de ExperimentRun ainda é planejada.
+O worker recebe um snapshot de mensagens concluídas e da pergunta atual.
+Falhas e parciais são excluídos do contexto seguinte. Contexto excessivo
+retorna `context_limit`; não há truncamento ou resumo silencioso.
 
-## Ferramentas
+Estados: `queued`, `running`, `succeeded`, `failed`, `timed_out`.
+A reserva padrão dura 60 segundos e recebe heartbeat a cada 15 segundos.
+O orçamento total padrão é 300 segundos, configurável. A expiração é
+verificada ao consultar/reservar tarefas e durante o streaming.
+Uma execução interrompida não é reexecutada automaticamente.
 
-| Ferramenta | Entrada além do contexto | Saída prevista | Estado |
-| --- | --- | --- | --- |
-| consultar_processo | nenhuma | ProcessResult com Process | Implementada |
-| buscar_documentos | query 1–200 caracteres, limit 1–20 (padrão 5) | SearchResult | Implementada, substring literal |
-| ler_documento | document_id | DocumentResult com páginas completas | Implementada |
-| consultar_requisitos | nenhuma | RequirementsResult com requirement_id, descrição e fonte | Contrato; HTTP 501 |
-| registrar_pendencia | WriteInput | WriteReceipt | Contrato; HTTP 501 |
-| salvar_minuta | WriteInput | WriteReceipt | Contrato; HTTP 501 |
+Chat tem `kind=chat`; benchmark tem `kind=benchmark` e histórico isolado.
+`ExperimentRun` é obrigatório para concluir um benchmark com sucesso.
+Seus IDs, executor, tarefa e versões devem coincidir com a execução;
+artefatos declarados devem existir. `verified_success` e `evaluator`
+continuam nulos no resultado enviado pelo agente.
 
-Rotas: POST /tools/NOME. Resultado vazio da busca é 200 com items vazio e aviso; não prova ausência no processo original. Requirements versão demo-v1 é rótulo sintético, não checklist institucional validado.
+## Streaming e adaptação
 
-Erros implementados: 422 validation_error; 404 not_found para processo/corpus/documento; 409 version_mismatch para requisitos; 503 storage_unavailable (retryable); 501 not_implemented. Run_id é nulo quando entrada inválida ou falha de armazenamento impede associá-lo com segurança. Códigos unauthorized e idempotency_conflict estão reservados para a etapa de autorização/escrita.
+Implementações de referência: [worker HTTP](../agents/worker.py),
+[adaptador simulado](../agents/simulation.py) e
+[clientes das tools](../agents/interface.py). Cada equipe conecta seu
+runtime a esse protocolo, mantendo o catálogo comum e o contexto recebido.
 
-## Exemplos
+O adaptador produz `AgentEvent` com `event_id` UUID, `kind` e `text`.
+Tipos aceitos do worker: `status` e `text_delta`. O último item do adaptador
+é `AgentResult` com estado, resposta, fontes, erro opcional e registro
+experimental quando aplicável.
 
-Contexto da demo:
+Cada evento é confirmado no banco antes de ser disponibilizado ao portal.
+Reenvio de mesmo ID/conteúdo devolve a sequência original; conteúdo
+diferente gera 409. O backend atribui sequências crescentes por execução.
+
+SSE emite eventos `status`, `text_delta`, `tool` e `done`, com `id` numérico.
+Use `Last-Event-ID` ou `?after=SEQUENCIA` para retomar. O snapshot do run
+fornece texto parcial e cursor lidos sob a mesma trava. Depois de falha no
+fluxo, recupere esse snapshot e reconecte.
+
+A resposta final deve coincidir exatamente com os deltas publicados.
+Um adaptador sem streaming pode enviar somente a resposta final; a UI não
+simula tokens. O simulador incluído declara expressamente sua condição.
+Somente o texto destinado à resposta e o progresso operacional são
+publicados nesse canal.
+
+## As seis tools
+
+Todas usam `POST /tools/NOME` e devolvem o contexto autenticado.
+
+| Nome | Entrada adicional | Resultado |
+| --- | --- | --- |
+| `consultar_processo` | Nenhuma. | Processo, cobertura e inventário documental. |
+| `buscar_documentos` | `query` de 1–200 caracteres; `limit` de 1–20. | Chunks rastreáveis e aviso de cobertura. |
+| `ler_documento` | `document_id`; `pages` opcional, positivas e únicas. | Texto das páginas solicitadas. |
+| `consultar_requisitos` | Nenhuma. | Checklist da versão vinculada ao processo/corpus. |
+| `registrar_pendencia` | `PendencyInput`. | `WriteReceipt` confirmado. |
+| `salvar_minuta` | `WriteInput`. | `WriteReceipt` confirmado. |
+
+O catálogo gerado por `tool_catalog()` inclui descrições de uso e dos argumentos
+visíveis ao modelo; os campos de `ToolContext` são retirados desse schema e
+fornecidos pelo contexto autenticado. Descrições também aparecem no OpenAPI.
+Elas orientam consumidores, mas a entrega ao modelo depende dos adaptadores reais,
+ainda não homologados. A alteração de metadados de schema requer revisão de
+Backend, Documentos, Hermes, LangGraph e Metodologia antes da integração.
+
+A busca atual é substring literal, com filtros aplicados antes do limite.
+Não há recuperação vetorial nesta entrega. Resultado vazio é 200 e não
+comprova ausência no processo original. Checklist não importado gera 404.
+
+Escritas recebem `idempotency_key`, `content`, `evidence` e `evidence_note`.
+Pendência recebe também `requirement_id` do checklist versionado.
+Referências são resolvidas pelo servidor:
 
 ```json
-{"run_id":"00000000-0000-4000-8000-000000000001","process_id":"PROC-DEMO-001","corpus_version":"synthetic-v1","requirements_version":"demo-v1"}
+{"document_id":"DOC-DEMO-001","chunk_id":"ID_REAL_DO_CHUNK","page":1}
 ```
 
-consultar_processo e consultar_requisitos recebem esse objeto. buscar_documentos acrescenta `"query":"material","limit":5`; ler_documento acrescenta `"document_id":"DOC-DEMO-001"`. Consulte a saída real com `uv run --locked python -m scripts.dev demo`.
-
-As escritas acrescentam, por exemplo:
+Para uma limitação do inventário, sem inventar documento ou página:
 
 ```json
-{"idempotency_key":"task-001-pendencia-01","content":"Pendência experimental a revisar","evidence":[],"evidence_note":"Exportação parcial; ausência no processo original não confirmada."}
+{"kind":"inventory","process_id":"PROC-DEMO-001","corpus_version":"synthetic-v1"}
 ```
 
-Junte os campos ao contexto. Essa chamada válida retorna hoje 501, nunca um recibo fictício. O futuro recibo conterá artifact_id, persisted_at, content_sha256 e replayed além do contexto. Erro atual típico:
+Unicidade: `(run_id, ferramenta, idempotency_key)`. Entrada idêntica devolve
+o recibo original com `replayed=true`; entrada diferente gera 409.
+Artefato e recibo são gravados na mesma transação. O servidor relê o recibo
+após commit. Timeout após uma escrita deve ser resolvido repetindo a mesma
+operação e chave, pois a confirmação pode ter se perdido.
 
-```json
-{"code":"not_implemented","message":"Contrato previsto; ferramenta ainda não implementada.","run_id":"00000000-0000-4000-8000-000000000001","retryable":false}
-```
+`WriteReceipt` contém contexto, `artifact_id`, `persisted_at`, hash SHA-256
+do conteúdo e `replayed`. Fonte existente não comprova sustentação
+semântica: essa avaliação pertence ao protocolo metodológico.
 
-## Requisitos para implementar escritas
+## Erros seguros
 
-1. Validar autorização da execução/processo, corpus/requisitos e cada referência de evidência (documento, chunk e página).
-2. Exigir evidence_note; lista vazia só é aceitável com justificativa de limitação revisada conforme tarefa. Não transformar busca vazia em certeza de ausência.
-3. Usar chave única por (run_id, ferramenta, idempotency_key), armazenando hash canônico da entrada.
-4. Mesma chave/mesmo conteúdo retorna recibo original com replayed=true; conteúdo diferente retorna 409 idempotency_conflict.
-5. Gravar ação e recibo na mesma transação, confirmar commit e reler antes de declarar persistência. Timeout após commit é resolvido repetindo a mesma chave.
-6. Tratar concorrência com constraint única, nunca apenas um teste prévio em memória.
-7. Testar reenvio, concorrência, rollback, referência cruzada e inspeção por avaliador independente.
+| HTTP | Código |
+| --- | --- |
+| 401 | `unauthorized`: credencial ausente ou inválida. |
+| 403 | `forbidden`: contexto, perfil ou concessão incompatível. |
+| 404 | `not_found`: recurso autorizado inexistente. |
+| 409 | `version_mismatch`, `idempotency_conflict`, `conflict` ou `budget_exceeded`. |
+| 422 | `validation_error` ou `context_limit`. |
+| 503 | `storage_unavailable` ou `executor_unavailable`. |
 
-Esses itens são critérios futuros, não funcionalidades implementadas. Mudança em contratos exige issue específica, revisão dos consumidores, exemplos e testes. Schema versionado e migração devem preceder coleta final.
+Respostas não incluem SQL, credenciais ou entradas rejeitadas.
+`storage_unavailable` indica possibilidade de nova tentativa. Escritas e
+eventos devem manter suas chaves originais ao repetir a chamada.
+
+
+## v0.3 — rastreio e orçamento das tools (25/10/2026)
+
+Adições opcionais, descritas no [ADR 008](../docs/05-decisoes/008-rastreio-orcamento-tools.md):
+cabeçalho `X-Tool-Call-Id` nas seis tools; código `budget_exceeded` (409) em `ToolError`;
+evento SSE `tool` com `tool_call_id`, `status`, `code` e `replayed`; histórico de cada
+tentativa no servidor; `AsyncToolClient.calls` para compor `ExperimentRun.tool_calls`.
+
+## Complementos locais — 24/10/2026
+
+- Respostas tipadas de conversas, mensagens, runs, capacidades, heartbeat e
+  artefatos estão em execution.py/models.py e aparecem no OpenAPI.
+- ConversationInput recebe participant_id UUID opcional; permanece null no legado.
+  GET /conversations aceita ?participant_id=UUID. O filtro não é autorização:
+  acesso continua determinado pelo operador técnico e suas concessões.
+- Snapshot de run inclui artifacts com artifact_id/tool. O operador consulta o
+  conteúdo e recibo por GET /artifacts/{id}, inclusive após falha da execução.
+- [Catálogo](catalog.py) exporta seis nomes, descrições e schemas dos argumentos
+  para os modelos, sem campos de ToolContext. O cliente injeta o contexto.
+- [Integração](../docs/04-operacoes/integracao-agentes.md) descreve a fábrica local
+  e a homologação dos adaptadores; [TDD](../docs/02-arquitetura/backend-tdd.md)
+  descreve a fronteira com RAG.
+
+Essas adições exigem revisão de consumidores antes da integração compartilhada.
+O marcador não é enviado no ClaimedRun nem determina permissões.
+
+## Endurecimento dos tipos — auditoria de 28/10/2026
+
+Inteiros/booleanos dos modelos são estritos; métricas rejeitam valores não finitos.
+`RunContext`, `HistoryMessage` e `TaskMetadata` têm chaves obrigatórias e fechadas,
+mantendo dicionários para adaptadores. `HealthResponse` valida saúde e `ToolName`
+limita nomes nos registros. Números como strings/booleanos e reservas sintéticas
+incompletas deixam de ser aceitos. UUID/datetime preservam a representação JSON.
+
+É endurecimento de validação com impacto em clientes antes tolerados. Backend,
+Documentos, Hermes, LangGraph e Metodologia devem revisar antes da integração.
+Correspondência semântica de `tool_calls` com histórico ainda é pendente:
+tipagem não substitui autorização/conferência. Ver [auditoria](../docs/04-operacoes/auditoria-backend-2026-10-28.md).
+
+## T0 — reserva durável e modelos de saída (28/10/2026)
+
+O catálogo agora associa ToolSpec.input_model/description/output_model. Clientes
+validam respostas de sucesso antes de devolver JSON ao adaptador; resposta inválida
+é erro definitivo sem eco do conteúdo. Consumidores internos devem usar os campos
+nomeados do catálogo em vez de desempacotar a tupla anterior.
+
+Migração 0005 preserva a primeira ferramenta/entrada de cada chamada lógica.
+Mesmo ID com entrada/tool diferente gera 409 idempotency_conflict; rollback não
+libera ID ou orçamento. Corrigir entrada inválida exige ID novo. Retry da mesma
+escrita mantém ID, corpo e idempotency_key. Atualizar consumidores e solicitar
+revisão de Backend/Hermes/LangGraph antes de integrar. Ver [evidências T0](../docs/04-operacoes/validacao-t0-2026-10-28.md).
+
+## T1 — consistência de consultar_processo
+
+ProcessResult confere processo e versões contra o envelope e rejeita IDs duplicados
+no inventário. A consulta valida também o escopo dos documentos armazenados.
+Clientes comuns conferem contexto devolvido contra a execução da requisição.
+Inconsistência interna gera 500 invalid_response (retryable=false), documentado
+no OpenAPI desta tool. Consumidores que validam enums devem incorporar o código;
+Backend, Documentos, Hermes e LangGraph precisam revisar antes de integrar.
+Sucesso válido preserva o formato JSON, cobertura e nota. Ver [registro T1](../docs/04-operacoes/validacao-t1-2026-10-28.md).
+
+## T2 — consistência de buscar_documentos
+
+SearchResult rejeita chunks fora do contexto, IDs repetidos e mais de 20 itens.
+Servidor/clientes comuns conferem também o limite específico da requisição e o
+contexto devolvido. Payloads do índice precisam coincidir com suas chaves/texto.
+Inconsistência retorna 500 invalid_response, sem retry automático nem eco.
+Busca vazia continua 200, com cobertura e warning; não prova ausência documental.
+Sem normalização Unicode nova. Revisão conjunta de Backend/Documentos/agentes
+continua necessária. Ver [registro T2](../docs/04-operacoes/validacao-t2-2026-10-28.md).
+
+## Correção T1-R — fronteira de processo
+
+O processo armazenado é validado antes de acessar campos. Payload incompleto,
+estrutura inválida, JSON null ou identidade incompatível geram 500 invalid_response
+seguro. Linha ausente mantém 404; versão válida divergente mantém 409.
+Nas tools, a falha é auditada depois da reserva durável T0-R2; mesma operação
+pode ser recuperada após reparo administrativo, sem nova cobrança lógica.
+Não há código/campo novo de contrato. [Fechamento T1-R](../docs/04-operacoes/validacao-t1-r.md).
+
+## T3 — leitura de documento e páginas
+
+DocumentResult confere processo/corpus e ordem das páginas. O servidor valida o
+documento armazenado antes do filtro, confere o ID e devolve exatamente as páginas
+pedidas em ordem documental crescente. Sem filtro, preserva todas as páginas.
+Clientes conferem contexto da execução, documento e subconjunto da requisição.
+Documento corrompido, inclusive JSON null ou páginas fora de ordem, gera 500
+invalid_response seguro e auditado; documento/página ausente continua 404 e
+entrada inválida 422. O hash é do documento completo, não do subconjunto.
+Formato JSON mantido; revisão de Backend/Documentos/agentes necessária antes de
+integrar. [Evidências e workflow T3](../docs/04-operacoes/validacao-t3.md).
+
+## T4 — checklist versionado
+
+RequirementsResult exige lista não vazia e IDs únicos. Servidor filtra por
+processo/corpus/requirements_version e confere o ID do payload contra a chave
+persistida; clientes comuns conferem o contexto completo da execução. Checklist
+ausente mantém 404; payload inconsistente gera 500 invalid_response seguro e
+auditado; banco indisponível mantém 503 transitório. JSON válido preservado;
+OpenAPI explicita minItems=1. Importação administrativa imutável preservada.
+items[].requirement_id alimenta registrar_pendencia.requirement_id no mesmo
+escopo. Conteúdo/homologação continuam sob Metodologia; Backend, Documentos e
+agentes devem revisar a compatibilidade antes de integrar. [Evidências e workflow T4](../docs/04-operacoes/validacao-t4.md).
+
+## T5 — pendência e integridade do recibo
+
+PendencyInput mantém o JSON. O requisito selecionado e o chunk referenciado são
+validados contra armazenamento/escopo antes do efeito; inconsistência é 500
+invalid_response seguro e auditado, enquanto referência ausente continua 422.
+WriteReceipt.artifact_id agora é UUID e persisted_at exige fuso (AwareDatetime);
+JSON continua string/date-time. Escritor comum confere payload canônico, hashes,
+chaves, contexto e recibo na escrita, replay e releitura independente pós-commit.
+Clientes comuns conferem contexto e hash do conteúdo de registrar_pendencia.
+
+Mudanças compartilhadas afetam salvar_minuta (escritor/recibo), GET de artefatos
+(schema) e resultado do worker (fontes; 500 documentado). T6/A7 continuam separados.
+IDs arbitrários, timestamps sem fuso ou registros inconsistentes podem ser
+recusados; sem migração/reparo automático. Backend, Documentos, Hermes/LangGraph e
+Metodologia devem revisar antes de integrar. Falha pós-commit pode deixar efeito
+confirmado: retry conserva IDs/corpo. [Workflow, respostas e limites T5](../docs/04-operacoes/validacao-t5.md).
+
+## T6 — conferência de salvar_minuta no cliente
+
+Clientes síncrono/assíncrono agora conferem contexto e content_sha256 do recibo de
+salvar_minuta contra execução e conteúdo enviado. As duas escritas usam o modelo
+de entrada do catálogo na mesma checagem, sem duplicar o escritor ou a regra de
+hash. Resposta válida preserva JSON; 200 inconsistente é ToolCallError definitivo,
+sem eco nem retry automático. WriteInput/WriteReceipt e OpenAPI não mudaram nesta
+rodada. Minuta não exige requirement_id, checklist cadastrado ou pendência prévia.
+Backend, Documentos e agentes devem revisar consumo antes de integrar; Metodologia
+continua responsável por qualidade semântica. [Workflow e evidências T6](../docs/04-operacoes/validacao-t6.md).
+
+## F0 — tentativa física e fases
+
+Migração aditiva 0006 acrescenta physical_tool_attempts/physical_tool_phases.
+PhysicalToolAttempt/PhysicalToolPhase tipam a leitura interna ToolTracking.history.
+UUID físico é gerado por requisição no servidor, separado do ID lógico e de seu
+orçamento. Efeito confirmado e resposta preparada são fases da mesma tentativa;
+client_received permanece null. Legado não recebe backfill e tool_call_history
+continua um ledger de compatibilidade de estágios, sem precisão física presumida.
+Nenhum endpoint/schema público mudou. Backend, agentes e Metodologia devem revisar
+antes de integrar; adoção ampla/exportação permanecem nos blocos próprios.
+[ADR 009](../docs/05-decisoes/009-tentativas-fisicas-tools.md) e [evidências F0](../docs/04-operacoes/validacao-f0.md).
+
+## F1 — consultar_processo com rastreamento físico
+
+Integração de F0 verificada por HTTP/banco para processo e inventário. ToolContext,
+ProcessResult e OpenAPI permanecem iguais. 200 com inventário vazio, 404 ausente,
+409 de versão válida divergente, 500 seguro de metadados/inventário e 503 do banco
+mantêm reservas e tentativas físicas coerentes. A leitura não cria fase de artefato;
+client_received continua null. [Aceite e workflow F1](../docs/04-operacoes/validacao-f1.md).
+
+## P3 — textos livres sem U+0000 (22/11/2026)
+
+O tipo `Text` (tarefa, mensagem, conteúdo e nota das escritas, títulos e textos do corpus,
+metadados de versão do `ExperimentRun`), `AgentEvent.text` e `AgentResult.answer` passam a
+publicar o pattern `^[^\x00]+$` (`answer`: `^[^\x00]*$`, porque pode ser vazio). O PostgreSQL
+não armazena U+0000 em texto: antes o valor passava pela validação e falhava no banco. Agora é
+422 `validation_error`. Documentos (ingestão), Hermes, LangGraph e Metodologia precisam revisar
+a restrição; nenhum caractere é removido ou substituído.
+
+## F2 — busca sem U+0000
+
+SearchInput.query agora publica pattern `^[^\x00]+$`: NUL em qualquer posição é
+422 validation_error antes da busca, sem remoção do caractere ou ampliação do termo.
+Min/max de caracteres, limite, escape literal e SearchResult permanecem iguais.
+OpenAPI e catálogo compartilham a restrição. Entrada recusada atribuível preserva
+hash do corpo, reserva/orçamento e tentativa física F0; clientes recebem erro
+recuperável, sem retry automático. Backend, Documentos e agentes devem revisar o
+schema antes de integrar. [Workflow, respostas e evidências F2](../docs/04-operacoes/validacao-f2.md).
+
+## F3 — leitura com rastreamento F0
+
+Integração T3/F0 verificada por HTTP e banco. ReadInput/DocumentResult permanecem iguais.
+Seleção respeita páginas exatas e ordem documental; sha256 continua do documento completo.
+Cada requisição tem tentativa física própria, sem fase de artefato ou prova de recebimento.
+Leitura parcial não comprova completude do arquivo original. [Aceite F3](../docs/04-operacoes/validacao-f3.md).
+
+## F4 — checklist com rastreamento F0
+
+Integração T4/F0 verificada por HTTP/banco. Modelos e OpenAPI preservados.
+Checklist não vazio, IDs únicos e escopo versionado continuam obrigatórios.
+Consulta registra fases de leitura; somente pendência válida confirma artefato.
+Requisito estrangeiro permanece recusado. [Aceite F4](../docs/04-operacoes/validacao-f4.md).
+
+## F5 — integridade reutilizável
+
+validate_artifact recebe registro, ferramenta e contexto confiável do run; retorna ArtifactResponse tipado.
+Escritor preserva validação da entrada exata, permissões, fontes, transações e replay.
+execution.digest continua disponível; algoritmo canônico foi movido sem alteração.
+GET permanece inalterado. A1 adotará a validação com autorização própria. [Aceite F5](../docs/04-operacoes/validacao-f5.md).
+
+## F6 — minuta e fechamento F
+
+Minuta reutiliza validate_artifact de F5 e rastreamento físico F0.
+Jornada busca/leitura/escrita preserva contexto, fontes, conteúdo e hash sem exigir checklist ou pendência.
+Clientes mantêm recusa definitiva de recibos adulterados. Nenhum contrato público mudou no F6.
+[Matriz e evidências de fechamento F](../docs/04-operacoes/validacao-f6.md).
+
+## A0 — fronteira HTTP
+
+ToolError acrescenta os códigos internal_error, http_error, method_not_allowed e payload_too_large.
+Validação de saída produz 500 invalid_response; entrada mantém 422 validation_error.
+Corpo acima de 1 MiB produz 413, inclusive com partes ou Content-Length menor que o recebido.
+401 acrescenta challenge Bearer; 405 preserva Allow; respostas privadas usam no-store.
+SSE aberto mantém status e comunica falha por stream_error.
+Consumidores comuns preservam o envelope tipado; revisar novos códigos e limites antes de integrar.
+[Evidências e workflow A0](../docs/04-operacoes/validacao-a0.md).
+
+## A1 — integridade no GET de artefatos
+
+GET /artifacts/{id} reutiliza validate_artifact após conferir propriedade e grants.
+Valida contexto do run, ferramenta, payload, recibo, IDs, hashes e chave; corrupção acessível retorna 500 invalid_response seguro.
+ArtifactResponse e seu JSON permanecem iguais. Leitura não exige can_write nem lease ativo.
+Portal e consumidores HTTP devem tratar a recusa de registros inconsistentes.
+[Workflow, catálogo e evidências A1](../docs/04-operacoes/validacao-a1.md).
+
+## A2 — reconciliação do resultado experimental
+
+POST /runs/{id}/result exige IDs lógicos únicos e correspondência com reservas e histórico atribuível ao run quando experiment é enviado.
+Ferramenta, sucesso declarado e artefato precisam de evidência compatível. persisted_artifact_ids corresponde aos IDs declarados nas chamadas, sem duplicações.
+Erro no cliente pode coexistir com resposta 200 ou efeito confirmado; ausência de resposta não é execução inexistente. Não há igualdade de duração nem certificação de recebimento.
+Declaração sem identidade atribuída é recusada; failed sem experiment continua disponível para falhas de adaptador/transporte.
+Modelos/códigos permanecem iguais; divergências semânticas novas retornam 422 validation_error. Corrupção persistida retorna 500 invalid_response.
+A pendência histórica de correspondência semântica é tratada para novos envios; não há revalidação retroativa de resultados terminais.
+Backend, adaptadores e Metodologia devem revisar antes de integrar. [Workflow, respostas e evidências A2](../docs/04-operacoes/validacao-a2.md).
+
+## A3 — quota queued na criação de benchmark
+
+POST /runs aceita por padrão até 20 runs queued por operador, contando todos os seus escopos/kinds. RUN_MAX_QUEUED_PER_OPERATOR é inteiro positivo, padrão 20.
+Replay idêntico precede quota; chave com outra entrada mantém 409. Nova criação sem capacidade retorna 429 resource_limit com retryable true e no-store, sem efeito persistido.
+Não há Retry-After ou reenvio automático: liberação depende do consumo da fila. Preservar chave/corpo ao repetir.
+ErrorCode acrescenta resource_limit; schemas de entrada/saída mantêm campos. Consumidores devem tratar o novo código/status antes da integração.
+Mensagens queued entram na contagem; a quota também é aplicada ao envio de mensagens desde A4.
+[Workflow, respostas e evidências A3](../docs/04-operacoes/validacao-a3.md).
+
+## A4 — APIs de conversas e quota comum
+
+POST /conversations/{id}/messages aplica a mesma quota de queued do POST /runs, sob a trava do operador e antes de gravar mensagem/run/evento.
+Mantém replay antes da quota, conflito de entrada/chave e uma execução ativa por conversa. Sem vaga retorna 429 resource_limit, retryable true, sem efeito parcial.
+POST/GET da coleção e GET do detalhe preservam contexto, grants, propriedade, filtro e modelos. Não houve paginação nova ou mudança de memória.
+Portal/consumidores de mensagens devem tratar 429 e conservar chave/entrada ao repetir. Código/DTOs permanecem os de A3.
+[Workflow, matriz por endpoint e evidências A4](../docs/04-operacoes/validacao-a4.md).
+
+## A5 — expiração da fila
+
+Queued vence após 300 s desde created_at, configurável por RUN_QUEUE_TIMEOUT_SECONDS positivo. A manutenção passiva é acionada por GET, criação e claim; a quota/claim revalidam o prazo sob suas travas.
+Snapshot retorna timed_out com result.error_code queue_timeout. Done de fila inclui error_code queue_timeout. Histórico, parciais e artefatos são preservados; não há reabertura por replay.
+StoredResult aceita a causa nova; AgentResult do worker continua sem permissão de enviá-la. Consumidores de enum fechado devem atualizar antes da integração.
+Portal recebeu o rótulo da causa; erro não significa desconexão comprovada de worker/LLM.
+[Workflow, configuração, respostas e testes A5](../docs/04-operacoes/validacao-a5.md).
+
+## A6 — presença observada no claim
+
+ClaimedRun e 204 permanecem iguais. Polling autorizado grava presença durável, inclusive sem tarefa; isso não comprova inferência.
+Migração 0007 é aditiva, sem backfill. [Workflow e evidências A6](../docs/04-operacoes/validacao-a6.md).
+
+## A7 — presença no heartbeat
+
+HeartbeatResponse mantém status running. Renovação de presença e lease é atômica e exige identidade atual compatível.
+Sem novo campo público. [Workflow e evidências A7](../docs/04-operacoes/validacao-a7.md).
+
+## A8 — teto de eventos
+
+20.000 eventos por run, incluindo servidor/tools/done; última vaga terminal. Excesso retorna 429 resource_limit, retryable false, e resultado failed/event_limit.
+StoredResult acrescenta event_limit; AgentResult do worker não aceita essa causa. Replays aceitos não consomem vaga enquanto ativo.
+Portal atualizado; consumidores devem incorporar a causa e consultar snapshot após limite. Histórico anterior não é apagado.
+[Workflow, exceção legada e evidências A8](../docs/04-operacoes/validacao-a8.md).
+
+## A9 — admissão SSE
+
+GET /runs/{id}/events permite até cinco conexões por operador entre processos, com leases duráveis de 30 s.
+Excesso retorna 429 resource_limit, retryable true, antes de abrir. Cursor, reconexão e stream_error permanecem iguais.
+Sem novo cabeçalho público. [Workflow, respostas e limitações A9](../docs/04-operacoes/validacao-a9.md).
+
+## A10 — configuração e presença
+
+ExecutorCapability mantém available como configuração habilitada e acrescenta enabled, worker_recent, last_seen_at, model e configuration_known.
+Presença recente exige observação até 60 s e escopo compartilhado atual. Modelo remoto null e configuration_known false não são inferidos do ambiente da API.
+Portal atualizado; consumidores com schemas fechados devem incorporar os campos. [Evidências A10](../docs/04-operacoes/validacao-a10.md).
+
+## A12 — identidade na listagem
+
+GET /processos mantém list[Process], escopo e vazio 200. Agora valida a identidade do JSON contra a linha concedida; divergência retorna 500 invalid_response seguro.
+Sem campo novo ou mudança no corpus. [Evidências A12](../docs/04-operacoes/validacao-a12.md).
+
+## A13 — quota física e executor
+
+As seis tools admitem até 1.000 requisições físicas atribuíveis à lease por run, incluindo entradas inválidas e retries.
+Excesso retorna 429 resource_limit, retryable false, sem executar. Recusas continuam auditadas; o número de registros pode superar 1.000.
+Mantém ID lógico, contratos e regras F; executor incompatível recebe 403. [Workflow e catálogo A13](../docs/04-operacoes/validacao-a13.md).
+
+## Fechamento local do bloco A
+
+A0–A13 verificados por suíte completa de 390 testes em SQLite após os aceites individuais.
+[Workflow, campos/códigos públicos, limites e pendências](../docs/04-operacoes/validacao-a-fechamento.md).
+PostgreSQL e revisão das equipes afetadas permanecem pendentes para homologação global. Sem publicação ou aceite automático de integração.
+
+## I1 — consumo estável dos contratos
+
+ToolClient e AsyncToolClient preservam a mesma requisição durante retry e validam resposta contra o contexto/entrada capturados.
+Contratos públicos permanecem iguais; entrada mutada externamente não altera a operação em andamento.
+[Evidências I1](../docs/04-operacoes/validacao-i1.md).
+
+## I2 — identidades administrativas
+
+Bootstrap preserva perfis existentes. Provisionamento CLI cria por padrão; update/rotate são operações explícitas.
+Rotação preserva papel/executor/escrita/grants. Migração 0009 audita estados sem credenciais, sem DTO HTTP novo.
+[Evidências e compatibilidade I2](../docs/04-operacoes/validacao-i2.md).
+
+
+## Fechamento local do bloco I
+
+I1–I3 preservam os contratos funcionais das tools, reforçam clientes/identidade e delimitam transporte do portal.
+Suíte compartilhada de 454 casos aprovada; quatro casos acrescentados depois foram cobertos pelos aceites dirigidos finais.
+Não houve uma execução única de 458 casos. [Matriz, workflow e limites](../docs/04-operacoes/validacao-i-fechamento.md).
+PostgreSQL, Nginx/Compose e agentes reais permanecem para homologação. D, E, O e H continuavam pendentes em 31/10; D e E foram entregues depois ([estado atual](../docs/04-operacoes/backend-estado-atual.md)).
+
+## Exportação canônica v2 — 02/11/2026
+
+O [contrato de arquivo E](../docs/04-operacoes/exportacao-canonica.md) substitui a reconstrução de tools por SSE. Dados declarados, observados e avaliados são separados; chamadas, tentativas, fases, legado e artefatos mantêm suas unidades. Consumidores de export_version 1 precisam adaptar os caminhos documentados. Não muda API 0.3.0 nem ExperimentRun 0.1. Revisão das equipes consumidoras permanece manual.
+
+## Registro experimental com revisões — 21/11/2026
+
+Port do `task/langgraph-grafo` (`856ff06`, João Enomoto): `POST /experiments`, `GET /experiments/{run_id}`, `PUT /experiments/{run_id}` e `GET /experiments/{run_id}/revisions`, com o mesmo `ExperimentRun` 0.1 e as mesmas regras de revisão (`parameters.revision` sequencial; identidade, protocolo, orçamento e avaliação externa fixos; métricas não diminuem). Mudanças da v0.2: escrita só pelo worker com `X-Run-Token` do run de benchmark; leitura pelo operador dono ou por worker do mesmo executor com concessão; `tool_calls` de cada revisão igual ao histórico do servidor; resultado com `experiment` precisa trazer a última revisão. `ExperimentRunClient` mantém `save`/`update`/`get` e aceita `token`/`run_token`. Não muda `contract_version` 0.3 nem `ExperimentRun` 0.1. [ADR 011](../docs/05-decisoes/011-registro-experimental-revisoes.md). Revisão do LangGraph e da Metodologia pendente.
+
+## U+0000 nos textos livres restantes — 25/11/2026 (P7)
+
+Completa o P3: `ExperimentRun.parameters` (nomes com 1 a 120 caracteres e valores de texto), `ExperimentRun.evaluator` e `HistoryMessage.content` recusam U+0000 com 422. Valores vazios e espaços continuam aceitos (alias `NulFree`, sem o `min_length` de `Text`). Não muda `contract_version` 0.3, `ExperimentRun` 0.1 nem `catalog_version()`, porque não são entradas de tool. Adaptadores que gravavam U+0000 nesses campos passam a receber 422 em `/experiments` e no resultado. [Validação P2](../docs/04-operacoes/validacao-p2.md#p7--cobertura-do-p3). Revisão de Hermes, LangGraph e Evaluation pendente.
+
+## Chamadas que nunca chegaram ao servidor — 25/11/2026 (P10)
+
+`ToolClient` e `AsyncToolClient` passam a separar em `unobserved` as chamadas lógicas cujas tentativas falharam todas antes do envio (`ConnectError`, `ConnectTimeout`, `PoolTimeout`). Essas chamadas saem de `ExperimentRun.tool_calls`, que continua igual ao histórico do servidor (regra do A2). A quantidade vai em `parameters["unobserved_tool_calls"]` (`UNOBSERVED_PARAMETER`), inteiro ≥ 0 e não decrescente entre revisões, recusado com 422/409 fora disso. A `RunBridge`, o `ExperimentSink` e o simulador gravam a contagem inclusive quando é 0. Não muda `contract_version` 0.3, `ExperimentRun` 0.1 nem `catalog_version()`. [Validação P2](../docs/04-operacoes/validacao-p2.md#p10--item-1-perda-de-transporte). Aceite da Metodologia e revisão de Hermes, LangGraph e Evaluation pendentes.

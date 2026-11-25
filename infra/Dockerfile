@@ -8,7 +8,10 @@ COPY services ./services
 COPY pipelines ./pipelines
 COPY scripts ./scripts
 COPY examples ./examples
+COPY agents ./agents
+COPY migrations ./migrations
+COPY alembic.ini ./
 RUN useradd --create-home app
 USER app
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
-CMD ["python", "-m", "uvicorn", "services.backend.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+CMD ["python", "-m", "scripts.start_backend"]

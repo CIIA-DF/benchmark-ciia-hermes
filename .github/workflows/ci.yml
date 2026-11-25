@@ -53,6 +53,7 @@ jobs:
           enable-cache: true
       - run: uv sync --locked
       - run: uv run --locked python -m scripts.dev test-integration
+      - run: uv run --locked python -m scripts.dev test-backend
       - run: uv run --locked python -m scripts.dev demo
   portal:
     name: portal

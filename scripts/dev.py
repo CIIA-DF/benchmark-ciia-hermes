@@ -40,9 +40,18 @@ def main():
                 parser.exit(
                     1, "Docker não encontrado. Use a demo local ou instale Docker Compose.\n"
                 )
-            compose = ("docker", "compose", "--env-file", ".env", "-f", "infra/compose.yml")
-            if not (ROOT / ".env").exists():
-                parser.exit(1, "Copie .env.example para .env e defina POSTGRES_PASSWORD.\n")
+            from scripts.chat import load
+
+            config = ROOT / ".env"
+            if not config.exists():
+                config = ROOT / "data/chat.env"
+            if not config.exists():
+                parser.exit(1, "Execute scripts.chat setup ou configure .env com senha e tokens.\n")
+            if config == ROOT / "data/chat.env":
+                load(config)
+            compose = ("docker", "compose", "--env-file", str(config), "-f", "infra/compose.yml")
+            if config == ROOT / "data/chat.env":
+                compose += ("--project-name", "ciia-chat-local")
             if args.command == "up":
                 run(*compose, "up", "--build", "--wait")
             elif args.command == "down":
@@ -51,7 +60,17 @@ def main():
                 run(
                     *compose, "exec", "-T", "backend", "python", "-m", "scripts.demo", "--seed-only"
                 )
-                run(python, "-m", "scripts.demo", "--url", "http://127.0.0.1:8000")
+                run(
+                    *compose,
+                    "exec",
+                    "-T",
+                    "backend",
+                    "python",
+                    "-m",
+                    "scripts.demo",
+                    "--url",
+                    "http://127.0.0.1:8000",
+                )
         elif args.command == "demo":
             run(python, "-m", "scripts.demo")
         elif args.command == "serve":

@@ -34,11 +34,27 @@ uv run --locked python -m scripts.dev test-backend
 
 Use `uv run --locked python -m scripts.dev check` antes do PR.
 
-## Primeiras tarefas
+## Entrega local e próximas integrações
+
+[PRD](../02-arquitetura/backend-prd.md), [TDD](../02-arquitetura/backend-tdd.md),
+[referência vigente da API](../02-arquitetura/backend-api-atual.md), [estado atual](../04-operacoes/backend-estado-atual.md) e [handoff dos agentes](../04-operacoes/integracao-agentes.md) descrevem a entrega.
+Demonstração das seis tools: `uv run --locked python -m scripts.tools_demo`.
+
+## Primeiras tarefas (histórico v0.1)
+
+Implementação v0.2: [chat e operação](../04-operacoes/chat.md),
+contratos de workers, migrações e ferramentas estão disponíveis para revisão.
+Próximo aceite conjunto: conectar cada adaptador real, homologar os
+checklists e conferir a execução em PostgreSQL e na infraestrutura aprovada.
+As tarefas abaixo preservam o onboarding da base v0.1.
 
 1. Executar demo e conferir consulta, busca e leitura no /docs.
 2. Revisar o teste de leitura entre processos e propor o primeiro caso de autorização por usuário/execução.
 3. Propor persistência idempotente de pendência com unique constraint e teste de repetição; implementar só depois de revisar autorização/evidências.
+
+## Registro experimental do LangGraph
+
+As rotas `/experiments` e o `ExperimentRunClient` criados por João Enomoto no `task/langgraph-grafo` (`856ff06`, 18/11/2026) foram portados para a v0.2 na `team/backend` em 21/11/2026, com token, reserva e conferência com o histórico ([ADR 011](../05-decisoes/011-registro-experimental-revisoes.md)). A branch do LangGraph não foi alterada. Para rodar o adaptador pelo worker, use `RunBridge` com `ExperimentSink` ([integração](../04-operacoes/integracao-agentes.md)).
 
 ## Critério de conclusão
 

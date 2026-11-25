@@ -7,6 +7,8 @@ import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
 import GithubSlugger from 'github-slugger';
 import DocSidebar, { MarkdownFile } from './DocSidebar';
+import AdmonitionBlock from './AdmonitionBlock';
+import CodeBlock from './CodeBlock';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,12 +28,12 @@ async function getMarkdownFiles(dir: string, baseDir: string = dir): Promise<Mar
       } else if (entry.name.endsWith('.md')) {
         const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
         const pathParts = relativePath.split('/');
-        const category = pathParts.length > 1 ? pathParts[0] : '01-overview';
+        const category = pathParts.length > 1 ? pathParts[0] : '00-comece-aqui';
 
         try {
           const content = await fs.readFile(fullPath, 'utf-8');
           const lines = content.split('\n');
-          let title = relativePath;
+          let title = relativePath === 'README.md' ? 'Visão Geral do Repositório (README)' : relativePath;
 
           for (const line of lines) {
             if (line.trim().startsWith('# ')) {
@@ -77,7 +79,7 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
   let markdownContent = '';
   let docFound = false;
 
-  const defaultFile = files.find(f => f.path.includes('getting-started.md')) || files[0];
+  const defaultFile = files.find(f => f.path.includes('01-inicio-rapido.md')) || files.find(f => f.path.includes('README.md')) || files[0];
   const currentPath = (currentDoc || (defaultFile ? defaultFile.path : '')).replace(/\\/g, '/');
   const isPdf = currentPath.toLowerCase().endsWith('.pdf');
 
@@ -174,11 +176,21 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
 
           {/* Institutional Metadata Pills */}
           <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
+            <Link
+              href="/"
+              className="text-[12px] font-mono text-sky-200 bg-sky-950/50 hover:bg-sky-900/60 border border-sky-500/50 px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 shadow-sm"
+            >
+              <span>←</span>
+              <span>Landing Page</span>
+            </Link>
+            <Link
+              href="/resultados.html"
+              className="text-[12px] font-mono text-slate-300 hover:text-white bg-[#111622] hover:bg-[#182030] border border-slate-700/80 px-3 py-1.5 rounded-md transition-colors"
+            >
+              Resultados
+            </Link>
             <span className="text-[11px] font-mono text-slate-300 bg-[#111622] border border-slate-800 px-2.5 py-1 rounded-md">
               Contratos v0.1
-            </span>
-            <span className="text-[11px] font-mono text-sky-300 bg-sky-950/30 border border-sky-800/50 px-2.5 py-1 rounded-md">
-              Hermes vs. LangGraph
             </span>
           </div>
         </div>
@@ -328,6 +340,15 @@ export default async function TeamPortal({ searchParams }: { searchParams: { doc
                     remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeSlug]}
                     components={{
+                      blockquote: ({ children, ...props }) => (
+                        <AdmonitionBlock {...props}>{children}</AdmonitionBlock>
+                      ),
+                      pre: ({ children }) => <>{children}</>,
+                      code: ({ className, children, ...props }) => (
+                        <CodeBlock className={className} {...props}>
+                          {children}
+                        </CodeBlock>
+                      ),
                       table: ({ ...props }) => (
                         <div className="overflow-x-auto my-6 border border-slate-800/90 rounded-lg bg-[#080B11]">
                           <table className="w-full text-left border-collapse text-[13.5px] text-slate-300 my-0" {...props} />

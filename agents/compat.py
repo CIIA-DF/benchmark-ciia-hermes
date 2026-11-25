@@ -25,7 +25,13 @@ import httpx
 
 from agents.interface import AsyncToolClient
 from contracts.execution import AgentEvent, AgentResult, ClaimedRun
-from contracts.models import ExperimentRun, ToolCallRecord, ToolContext, experiment_record
+from contracts.models import (
+    UNOBSERVED_PARAMETER,
+    ExperimentRun,
+    ToolCallRecord,
+    ToolContext,
+    experiment_record,
+)
 
 # Tamanho máximo de AgentEvent.text no contrato v0.2.
 DELTA_CHARS = 4000
@@ -51,6 +57,10 @@ class SyncToolClient:
     def calls(self) -> list[ToolCallRecord]:
         return self._tools.calls
 
+    @property
+    def unobserved(self) -> list[ToolCallRecord]:
+        return self._tools.unobserved
+
     def call(self, name: str, arguments: dict) -> dict:
         # Corrigível → dict com "error"; definitivo → ToolCallError, como no cliente comum.
         future = asyncio.run_coroutine_threadsafe(self._tools.call(name, arguments), self._loop)
@@ -64,11 +74,24 @@ class SyncToolClient:
         """Compatível com ToolClient.close(); a conexão pertence ao worker."""
 
 
-def normalized(report: ExperimentRun, calls: list[ToolCallRecord]) -> ExperimentRun:
-    """Registro com as chamadas e artefatos do cliente comum, iguais para os dois executores."""
+def normalized(
+    report: ExperimentRun,
+    calls: list[ToolCallRecord],
+    unobserved: list[ToolCallRecord] = (),
+) -> ExperimentRun:
+    """Registro com as chamadas e artefatos do cliente comum, iguais para os dois executores.
+
+    ``tool_calls`` fica igual ao histórico do servidor (regra do A2); as chamadas que nunca
+    chegaram a ele entram só como contagem em ``parameters["unobserved_tool_calls"]``.
+    """
     artifacts = list(dict.fromkeys(c.artifact_id for c in calls if c.artifact_id is not None))
+    parameters = {**report.parameters, UNOBSERVED_PARAMETER: len(unobserved)}
     return report.model_copy(
-        update={"tool_calls": list(calls), "persisted_artifact_ids": artifacts}
+        update={
+            "tool_calls": list(calls),
+            "persisted_artifact_ids": artifacts,
+            "parameters": parameters,
+        }
     )
 
 
@@ -101,7 +124,7 @@ class ExperimentSink:
         return ExperimentRun.model_validate(response.json())
 
     def _write(self, method: str, path: str, run: ExperimentRun) -> ExperimentRun:
-        run = normalized(run, self._tools.calls)
+        run = normalized(run, self._tools.calls, self._tools.unobserved)
         if self._tools.execution.kind == "benchmark":
             run = self._run(self._send(method, path, run))
         self.latest = run
@@ -166,7 +189,7 @@ def _failure(exc: BaseException, client: SyncToolClient, sink: ExperimentSink) -
     return "adapter_error"
 
 
-def _checked(report, execution: ClaimedRun, calls: list[ToolCallRecord]) -> ExperimentRun:
+def _checked(report, execution: ClaimedRun, tools: AsyncToolClient) -> ExperimentRun:
     if not isinstance(report, ExperimentRun):
         raise TypeError("run() deve retornar ExperimentRun.")
     expected = {**execution.context, **execution.task_metadata, "executor": execution.executor}
@@ -175,7 +198,7 @@ def _checked(report, execution: ClaimedRun, calls: list[ToolCallRecord]) -> Expe
         if produced.get(key) != (str(value) if key == "run_id" else value):
             raise ValueError(f"ExperimentRun.{key} difere da execução reservada.")
     # Paridade: o registro declarado vem do cliente comum, não do rastreio próprio do adaptador.
-    return normalized(report, calls)
+    return normalized(report, tools.calls, tools.unobserved)
 
 
 class RunBridge:
@@ -203,10 +226,10 @@ class RunBridge:
             )
             experiment = None
             if execution.kind == "benchmark":
-                experiment = _checked(report, execution, tools.calls)
+                experiment = _checked(report, execution, tools)
                 if sink.latest is not None:
                     # O servidor exige no resultado a última revisão gravada em /experiments.
-                    if normalized(sink.latest, tools.calls) != sink.latest:
+                    if normalized(sink.latest, tools.calls, tools.unobserved) != sink.latest:
                         raise ValueError("Houve chamadas de tool depois da última revisão.")
                     # A ponte não grava revisões pelo adaptador (ADR 011): um relatório final
                     # diferente do último gravado seria perdido em silêncio.

@@ -109,6 +109,11 @@ def transient(exc: Exception) -> bool:
     return isinstance(exc, httpx.TransportError)
 
 
+# Falhas em que a requisição não saiu do cliente (P10, item 1 da auditoria de 30/10). Qualquer
+# outra falha, inclusive cancelamento no meio do envio, conta como possivelmente observada.
+NOT_SENT = (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout)
+
+
 def tool_payload(name: str, arguments: dict, context: dict) -> dict:
     """Combine argumentos do modelo com contexto confiável fornecido pelo executor."""
     if name not in TOOLS:
@@ -182,27 +187,33 @@ class ToolClient:
             },
         )
         self.calls: list[ToolCallRecord] = []
+        # Chamadas que nunca chegaram ao servidor: ficam fora de ExperimentRun.tool_calls (P10).
+        self.unobserved: list[ToolCallRecord] = []
 
     def call(self, name: str, arguments: dict) -> dict:
         context = deepcopy(self.context)
         payload = deepcopy(tool_payload(name, arguments, context))
         tool_call_id, started, outcome = str(uuid4()), time.perf_counter(), None
+        observed = pending = False
         try:
             request = self.client.build_request(
                 "POST", f"/tools/{name}", json=payload, headers={"X-Tool-Call-Id": tool_call_id}
             )
             body = request.content
             for attempt in range(ATTEMPTS):
+                pending = True
                 try:
                     response = self.client.post(request.url, content=body, headers=request.headers)
                     outcome = tool_outcome(response, name, context, payload)
                     return outcome
                 except (ToolCallError, httpx.TransportError) as exc:
+                    observed, pending = observed or not isinstance(exc, NOT_SENT), False
                     if attempt == ATTEMPTS - 1 or not transient(exc):
                         raise
                 time.sleep(0.3 * (attempt + 1))
         finally:
-            self.calls.append(call_record(tool_call_id, name, started, outcome))
+            record = call_record(tool_call_id, name, started, outcome)
+            (self.calls if observed or pending else self.unobserved).append(record)
 
     def close(self):
         self.client.close()
@@ -275,18 +286,22 @@ class AsyncToolClient:
         self.execution = execution
         # Uma entrada por chamada lógica, para compor ExperimentRun.tool_calls.
         self.calls: list[ToolCallRecord] = []
+        # Chamadas que nunca chegaram ao servidor: ficam fora de ExperimentRun.tool_calls (P10).
+        self.unobserved: list[ToolCallRecord] = []
 
     async def call(self, name: str, arguments: dict) -> dict:
         context = deepcopy(self.execution.context)
         payload = deepcopy(tool_payload(name, arguments, context))
         tool_call_id, started, outcome = str(uuid4()), time.perf_counter(), None
         headers = {"X-Run-Token": self.execution.run_token, "X-Tool-Call-Id": tool_call_id}
+        observed = pending = False
         try:
             request = self.client.build_request(
                 "POST", f"/tools/{name}", json=payload, headers=headers
             )
             body = request.content
             for attempt in range(ATTEMPTS):
+                pending = True
                 try:
                     response = await self.client.post(
                         request.url, content=body, headers=request.headers
@@ -294,8 +309,10 @@ class AsyncToolClient:
                     outcome = tool_outcome(response, name, context, payload)
                     return outcome
                 except (ToolCallError, httpx.TransportError) as exc:
+                    observed, pending = observed or not isinstance(exc, NOT_SENT), False
                     if attempt == ATTEMPTS - 1 or not transient(exc):
                         raise
                 await asyncio.sleep(0.3 * (attempt + 1))
         finally:
-            self.calls.append(call_record(tool_call_id, name, started, outcome))
+            record = call_record(tool_call_id, name, started, outcome)
+            (self.calls if observed or pending else self.unobserved).append(record)

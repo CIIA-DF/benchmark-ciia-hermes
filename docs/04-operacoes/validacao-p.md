@@ -6,7 +6,7 @@ Data: 22/11/2026. Worktree `team/backend`. Cada item foi reproduzido de novo ant
 
 | Item da auditoria | Situação | Commit / evidência |
 | --- | --- | --- |
-| 1. Falha de transporte vira chamada não observada (`result_integrity.py:48`) | **Opção 3 escolhida pelo responsável em 25/11** (abaixo); implementação e aceite da Metodologia pendentes. A regra do A2 continua valendo até lá | `test_a2.py::test_never_executed_is_rejected` e `test_failure_without_experiment_preserves_unobserved_transport_path` |
+| 1. Falha de transporte vira chamada não observada (`result_integrity.py:48`) | **Opção 3 escolhida pelo responsável em 25/11** (abaixo) e implementada no [P10](validacao-p2.md#p10--item-1-perda-de-transporte); aceite da Metodologia pendente. A regra do A2 continua valendo para `tool_calls` | `test_a2.py::test_never_executed_is_rejected` e `test_failure_without_experiment_preserves_unobserved_transport_path` |
 | 2. `X-Tool-Call-Id` opcional, mas exigido na prática (`tools.py`) | Corrigido: o ID efetivo volta no cabeçalho `X-Tool-Call-Id` da resposta, gerado ou enviado | `d082d87`; `test_p2_tool_call_id.py`: 3 de 4 falhavam antes, 4 passam |
 | 3. U+0000 aceito em `Text`/`answer` (`contracts/models.py:19`) | Corrigido: o mesmo pattern do F2 em `Text`, `AgentEvent.text` e `AgentResult.answer`; mudança de contrato para revisão | `c98eec0`; `test_p3_nul_text.py`: 6 de 7 falhavam antes, 7 passam |
 | 4. Compose não repassa executores e limites (`infra/compose.yml`) | Corrigido: `ENABLED_EXECUTORS`, `RUN_*` e `CHAT_CONTEXT_MAX_CHARS` com os padrões do código; revisão da Infra | `71f2fb6`; `docker compose config` |
@@ -17,7 +17,9 @@ Data: 22/11/2026. Worktree `team/backend`. Cada item foi reproduzido de novo ant
 | 9. Desempenho: `text_delta` quadrático, claim que trava a fila, duas escritas por SSE a cada 200 ms, auditoria antes de autenticar | Não tratado nesta entrega: exige medição antes e depois | — |
 | Blocos H e O | Não tratados nesta entrega | — |
 
-## Item 1: decisão pendente
+## Item 1: opções avaliadas em 22/11
+
+Registro original da decisão, mantido como histórico. Em 25/11 o responsável escolheu a opção 3, implementada no [P10](validacao-p2.md#p10--item-1-perda-de-transporte).
 
 **O que acontece.** Se as 3 tentativas de uma tool falham no transporte (`ConnectError`), a requisição nunca chega ao servidor. O cliente comum registra a chamada como `error` em `tool_calls`. No `/result`, o servidor exige que as chamadas declaradas sejam exatamente as observadas, recusa com 422, e o run termina `failed` sem `ExperimentRun`, mesmo que o agente tenha se recuperado e respondido.
 

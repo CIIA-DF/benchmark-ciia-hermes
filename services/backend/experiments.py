@@ -12,7 +12,12 @@ import time
 from sqlalchemy import insert, select, update
 
 from contracts.execution import TERMINAL_STATUSES
-from contracts.models import FIRST_REVISION, ExperimentRun, experiment_record
+from contracts.models import (
+    FIRST_REVISION,
+    UNOBSERVED_PARAMETER,
+    ExperimentRun,
+    experiment_record,
+)
 from services.backend.auth import authorize
 from services.backend.errors import ToolFailure, fail
 from services.backend.result_integrity import validate_experiment_history
@@ -35,6 +40,8 @@ STABLE_FIELDS = (
     "endpoint_id",
     "prompt_sha256",
 )
+# UNOBSERVED_PARAMETER (P10): o servidor não consegue confirmar a contagem; só exige inteiro
+# não negativo e não decrescente entre revisões.
 STABLE_PARAMETERS = (
     "level",
     "max_model_calls",
@@ -70,6 +77,9 @@ def check_scope(row, report: ExperimentRun) -> None:
         or any(getattr(report, k) != v for k, v in row["task_metadata"].items())
     ):
         fail(422, "validation_error", "Registro experimental incompatível.")
+    unobserved = report.parameters.get(UNOBSERVED_PARAMETER, 0)
+    if not isinstance(unobserved, int) or isinstance(unobserved, bool) or unobserved < 0:
+        fail(422, "validation_error", "unobserved_tool_calls deve ser inteiro não negativo.")
 
 
 def check_revision(previous: ExperimentRun, run: ExperimentRun) -> None:
@@ -97,6 +107,11 @@ def check_revision(previous: ExperimentRun, run: ExperimentRun) -> None:
         )
         or run.verified_success != previous.verified_success
         or run.evaluator != previous.evaluator
+        or (
+            UNOBSERVED_PARAMETER in previous.parameters
+            and run.parameters.get(UNOBSERVED_PARAMETER, -1)
+            < previous.parameters[UNOBSERVED_PARAMETER]
+        )
     ):
         conflict("A revisão reduz métricas ou altera avaliação externa.")
     if revision_of(run) != revision_of(previous) + 1:

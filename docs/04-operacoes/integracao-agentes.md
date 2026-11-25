@@ -41,6 +41,13 @@ Antes dessa data, qualquer status 4xx/5xx lançava `HTTPStatusError`.
   `ok`/`error`, `artifact_id`). Use `list(tools.calls)` em `ExperimentRun.tool_calls`; o
   simulador já faz isso. Esse é o registro declarado pelo adaptador; o histórico do
   servidor é a referência para conferência.
+- Desde 25/11/2026 (P10): uma chamada lógica cujas tentativas falharam todas antes do envio
+  (`httpx.ConnectError`, `ConnectTimeout`, `PoolTimeout`) nunca chega ao servidor e vai para
+  `tools.unobserved`, não para `tools.calls`. Grave a quantidade em
+  `ExperimentRun.parameters["unobserved_tool_calls"]` (inteiro ≥ 0, não decrescente entre
+  revisões); a `RunBridge`, o `ExperimentSink` e o simulador já fazem isso, inclusive com 0.
+  Assim um run em que o agente se recupera da queda não é mais recusado no `/result`. Falha
+  possivelmente enviada (por exemplo `ReadTimeout`) continua em `tools.calls` como `error`.
 - `RUN_MAX_TOOL_CALLS` limita as chamadas lógicas por execução no servidor, igual para
   Hermes e LangGraph. Novas tentativas do mesmo ID não consomem orçamento.
 

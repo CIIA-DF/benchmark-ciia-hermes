@@ -33,3 +33,22 @@ Fase 2 do [plano por blocos](../02-arquitetura/backend-plano-blocos.md), aberta 
 | `ruff check`, `ruff format --check`, `scripts.validate_api_docs` (26 operações), `scripts.export_openapi` | Sem erros |
 
 **Limites.** Valores de texto de `parameters` continuam sem limite de tamanho, como antes. Adaptadores reais não foram exercitados.
+
+## P10 — Item 1, perda de transporte
+
+**Problema.** Se as 3 tentativas de uma tool falham antes do envio (`ConnectError`), o servidor nunca vê a chamada. O cliente comum a registrava em `tool_calls` como `error`; o `/result` recusava o registro com 422 (regra do A2: chamadas declaradas iguais às observadas), e o run de benchmark terminava `failed`, mesmo com o agente recuperado. Opção 3 da [validação P](validacao-p.md#item-1-opções-avaliadas-em-2211), escolhida pelo responsável em 25/11.
+
+**Mudança no cliente comum e no registro experimental.**
+
+- `ToolClient.call` e `AsyncToolClient.call` (`agents/interface.py`) separam a chamada lógica em `unobserved` quando nenhuma tentativa pode ter chegado ao servidor. Isso vale para todas as tentativas com `httpx.ConnectError`, `ConnectTimeout` ou `PoolTimeout`, e para falha ao montar a requisição. Qualquer outra situação conta como possivelmente observada: resposta HTTP, `ReadTimeout` ou cancelamento no meio do envio. Nesses casos a chamada continua em `calls`.
+- `normalized()` (`agents/compat.py`) grava `parameters["unobserved_tool_calls"]` com a contagem, inclusive 0. A `RunBridge`, o `ExperimentSink` e o simulador usam a mesma regra. A constante `UNOBSERVED_PARAMETER` fica em `contracts/models.py`.
+- O servidor (`services/backend/experiments.py`) exige inteiro não negativo e não decrescente entre revisões. Ele não consegue confirmar a contagem. `result_integrity.py` não muda: `tool_calls` continua igual ao histórico observado.
+
+| Verificação | Resultado |
+| --- | --- |
+| `pytest tests/backend/test_p10_unobserved.py` sem a mudança | 11 falhas. O run com tool perdida termina `failed`; `/experiments` aceita contagem negativa, booleana, texto e fracionária; revisão pode reduzir a contagem |
+| Mesmo arquivo com a mudança | 11 aprovados: separação nos dois clientes, `ReadTimeout` e queda seguida de resposta continuam observados, run recuperado `succeeded` com `unobserved_tool_calls=1`, recusas 422/409 |
+| Regressões: `test_compat`, `test_experiment_runs`, `test_a2` (inclui `test_never_executed_is_rejected`, inalterado), `test_e_export`, `test_benchmark_batch`, `test_worker_polling` e `tests/integration` | Aprovados, código de saída 0 |
+| `ruff check`, `ruff format --check` | Sem erros |
+
+**Limites.** O aceite da Metodologia sobre como contar esses runs está pendente. A contagem é declarada pelo cliente e não é verificável no servidor. Na exportação JSONL v2, `parameters` só sai com `--include-content`; levar a contagem para `declared` fica para o bloco O. Adaptadores que montam `ExperimentRun` sem a `RunBridge` (LangGraph isolado, runner da Evaluation) precisam gravar `len(tools.unobserved)`. Hermes, LangGraph e Evaluation precisam ser avisados.

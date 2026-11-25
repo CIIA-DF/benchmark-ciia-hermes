@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from uuid import uuid4
 
 from contracts.execution import AgentEvent, AgentResult
-from contracts.models import ExperimentRun
+from contracts.models import UNOBSERVED_PARAMETER, ExperimentRun
 
 
 class SimulationAdapter:
@@ -48,7 +48,7 @@ class SimulationAdapter:
                 model="not-called",
                 endpoint_id="none",
                 prompt_sha256=hashlib.sha256(execution.task.encode()).hexdigest(),
-                parameters={},
+                parameters={UNOBSERVED_PARAMETER: len(tools.unobserved)},
                 started_at=started,
                 latency_ms=(datetime.now(UTC) - started).total_seconds() * 1000,
                 tool_calls=list(tools.calls),

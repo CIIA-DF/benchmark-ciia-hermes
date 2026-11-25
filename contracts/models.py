@@ -328,6 +328,9 @@ class ExperimentRun(ToolContext):
 
 # Revisão de um ExperimentRun sem parameters.revision (ADR 011): o servidor grava como 1.
 FIRST_REVISION = 1
+# Chamadas lógicas que nunca chegaram ao servidor (P10): ficam fora de tool_calls e entram só
+# como contagem em parameters, declarada pelo cliente comum; 0 explícito é diferente de ausente.
+UNOBSERVED_PARAMETER = "unobserved_tool_calls"
 
 
 def experiment_record(run: ExperimentRun) -> dict:

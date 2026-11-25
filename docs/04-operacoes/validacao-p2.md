@@ -18,3 +18,18 @@ Fase 2 do [plano por blocos](../02-arquitetura/backend-plano-blocos.md), aberta 
 | Mesma seleção em SQLite | 57 aprovados |
 
 **Limites.** O custo de migrar até o head em cada teste no PostgreSQL será medido na suíte completa do fechamento da fase. A fixture exige permissão `CREATE` no banco de testes; na CI o usuário do serviço `postgres` tem essa permissão. `test_a9` (filtro `PREEXISTING`) e `test_ready` (restauração de `alembic_version`) mantêm proteções que ficaram redundantes, mas são inofensivas.
+
+## P7 — Cobertura do P3
+
+**Problema.** O P3 recusou U+0000 em `Text`, `AgentEvent.text` e `AgentResult.answer`, mas campos de texto livre gravados pelo worker continuavam aceitando o caractere: nomes e valores de texto de `ExperimentRun.parameters`, `ExperimentRun.evaluator` e `HistoryMessage.content`. Um `parameters={"nota": "x<U+0000>"}` passava em `/experiments` com 200 e ia para o JSON gravado.
+
+**Mudança, de contrato.** Novos aliases em `contracts/models.py`: `NulFree` (sem U+0000, aceita vazio e espaços) e `ParameterName` (1 a 120 caracteres, sem U+0000). `Text` não serve aqui: exige ao menos um caractere. Valem para os nomes e valores de texto de `parameters`, para `evaluator` e para `HistoryMessage.content`. Os campos preenchidos só pelo servidor (`ToolError.message`, `PhysicalToolAttempt.method`/`code` e afins) não mudam. `catalog_version()` continua `f419b756…e2c`. OpenAPI regenerado. Registro em [contracts/README.md](../../contracts/README.md).
+
+| Verificação | Resultado |
+| --- | --- |
+| `pytest tests/backend/test_p3_nul_text.py -k p7` sem a mudança | 5 falhas: os 4 casos de modelo aceitavam U+0000 e `/experiments` respondia 200 |
+| `pytest tests/backend/test_p3_nul_text.py` com a mudança | 13 aprovados, inclusive vazio em `parameters` e em `HistoryMessage.content` |
+| Regressões: `test_experiment_runs`, `test_compat`, `test_a2`, `test_e_export`, `test_chat_delivery`, `test_catalog_shared`, `test_openapi` e `tests/integration/test_adapter_protocol.py` | 74 aprovados em SQLite |
+| `ruff check`, `ruff format --check`, `scripts.validate_api_docs` (26 operações), `scripts.export_openapi` | Sem erros |
+
+**Limites.** Valores de texto de `parameters` continuam sem limite de tamanho, como antes. Adaptadores reais não foram exercitados.

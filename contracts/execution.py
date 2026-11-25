@@ -5,7 +5,15 @@ from uuid import UUID
 
 from pydantic import Field, StrictBool, StrictFloat, StrictInt
 
-from contracts.models import Contract, Evidence, ExperimentRun, Identifier, InventoryEvidence, Text
+from contracts.models import (
+    Contract,
+    Evidence,
+    ExperimentRun,
+    Identifier,
+    InventoryEvidence,
+    NulFree,
+    Text,
+)
 
 Executor = Literal["simulation", "hermes", "langgraph"]
 RunStatus = Literal["queued", "running", "succeeded", "failed", "timed_out"]
@@ -27,7 +35,7 @@ class RunContext(TypedDict):
 
 class HistoryMessage(TypedDict):
     role: Literal["user", "assistant"]
-    content: str
+    content: NulFree
 
 
 class TaskMetadata(TypedDict):

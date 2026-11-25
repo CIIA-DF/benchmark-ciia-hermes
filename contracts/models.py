@@ -18,6 +18,9 @@ from pydantic import (
 Identifier = Annotated[str, Field(min_length=1, max_length=120, pattern=r"^[A-Za-z0-9_.:-]+$")]
 # U+0000 é recusado como em SearchInput.query (F2): o PostgreSQL não o armazena em texto (P3).
 Text = Annotated[str, Field(min_length=1, max_length=100_000, pattern=r"^[^\x00]+$")]
+# Mesma recusa para textos que podem ser vazios e sem limite próprio (P7).
+NulFree = Annotated[str, Field(pattern=r"^[^\x00]*$")]
+ParameterName = Annotated[str, Field(min_length=1, max_length=120, pattern=r"^[^\x00]+$")]
 Completeness = Literal["complete", "partial", "unknown"]
 ToolName = Literal[
     "consultar_processo",
@@ -310,7 +313,7 @@ class ExperimentRun(ToolContext):
     model: Text
     endpoint_id: Identifier
     prompt_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
-    parameters: dict[str, str | StrictFloat | StrictInt | StrictBool]
+    parameters: dict[ParameterName, NulFree | StrictFloat | StrictInt | StrictBool]
     started_at: datetime
     latency_ms: StrictFloat = Field(ge=0)
     tool_calls: list[ToolCallRecord]
@@ -320,7 +323,7 @@ class ExperimentRun(ToolContext):
     agent_declared_success: StrictBool
     persisted_artifact_ids: list[Identifier]
     verified_success: StrictBool | None
-    evaluator: str | None
+    evaluator: NulFree | None
 
 
 # Revisão de um ExperimentRun sem parameters.revision (ADR 011): o servidor grava como 1.

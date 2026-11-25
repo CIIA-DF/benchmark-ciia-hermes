@@ -3372,12 +3372,17 @@ components:
           pattern: ^[a-f0-9]{64}$
           title: Prompt Sha256
         parameters:
-          additionalProperties:
-            anyOf:
-            - type: string
-            - type: number
-            - type: integer
-            - type: boolean
+          patternProperties:
+            ^[^\x00]+$:
+              anyOf:
+              - type: string
+                pattern: ^[^\x00]*$
+              - type: number
+              - type: integer
+              - type: boolean
+          propertyNames:
+            maxLength: 120
+            minLength: 1
           type: object
           title: Parameters
         started_at:
@@ -3430,6 +3435,7 @@ components:
         evaluator:
           anyOf:
           - type: string
+            pattern: ^[^\x00]*$
           - type: 'null'
           title: Evaluator
       additionalProperties: false
@@ -3494,6 +3500,7 @@ components:
           title: Role
         content:
           type: string
+          pattern: ^[^\x00]*$
           title: Content
       additionalProperties: false
       type: object

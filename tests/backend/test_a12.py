@@ -1,5 +1,7 @@
 """A12: process listing validates identity as well as public structure."""
 
+from uuid import uuid4
+
 import pytest
 from sqlalchemy import delete, insert, update
 
@@ -42,10 +44,13 @@ def test_corrupted_authorized_process_has_safe_invalid_response(client, corpus, 
 
 
 def test_process_listing_preserves_scope_typed_output_and_valid_empty(client, corpus, engine):
+    suffix = uuid4().hex[:10]
     with engine.begin() as conn:
         conn.execute(
             insert(processes).values(
-                process_id="PRIVATE-A12-ungranted", corpus_version="PRIVATE-A12-other", payload=None
+                process_id=f"PRIVATE-A12-ungranted-{suffix}",
+                corpus_version=f"PRIVATE-A12-other-{suffix}",
+                payload=None,
             )
         )
     response = client.get("/processos", headers=client.operator_headers)

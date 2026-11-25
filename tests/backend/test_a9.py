@@ -28,9 +28,24 @@ def clock(monkeypatch):
     return test_a5.clock.__wrapped__(monkeypatch)
 
 
+PREEXISTING: set[str] = set()
+
+
+@pytest.fixture(autouse=True)
+def isolate_leases(engine):
+    # Banco reaproveitado (TEST_DATABASE_URL): ignora leases de execuções anteriores.
+    with engine.connect() as conn:
+        PREEXISTING.clear()
+        PREEXISTING.update(conn.execute(select(stream_leases.c.lease_id)).scalars())
+
+
 def leases(engine):
     with engine.connect() as conn:
-        return [dict(item) for item in conn.execute(select(stream_leases)).mappings()]
+        return [
+            dict(item)
+            for item in conn.execute(select(stream_leases)).mappings()
+            if item["lease_id"] not in PREEXISTING
+        ]
 
 
 def operator(client, engine):

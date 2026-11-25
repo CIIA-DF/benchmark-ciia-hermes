@@ -110,10 +110,14 @@ def test_actual_asgi_chunk_limit(chunks, declared, status):
 
 
 def test_tool_oversize_is_recorded_without_logical_binding(client, engine):
+    # Sem run atribuível, a tentativa nova é identificada contra as já existentes no banco.
+    with engine.connect() as conn:
+        before = set(conn.execute(select(physical_tool_attempts.c.attempt_id)).scalars())
     response = client.post("/tools/consultar_processo", content=b"x" * (MAX_BODY_BYTES + 1))
     assert_error(response, 413, "payload_too_large")
     with engine.connect() as conn:
-        row = conn.execute(select(physical_tool_attempts)).mappings().one()
+        rows = conn.execute(select(physical_tool_attempts)).mappings().all()
+    (row,) = [r for r in rows if r["attempt_id"] not in before]
     assert row["http_status"] == 413 and row["code"] == "payload_too_large"
     assert row["run_id"] is None and row["tool_call_id"] is None
 

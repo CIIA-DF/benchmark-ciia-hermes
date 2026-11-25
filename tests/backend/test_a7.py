@@ -2,6 +2,7 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -57,9 +58,11 @@ def test_stale_identity_cannot_refresh_lease_or_presence(
             .where(principals.c.principal_id == actor["principal_id"])
             .values(
                 **{
-                    change: {"executor": "hermes", "role": "operator", "token_sha256": "revoked"}[
-                        change
-                    ]
+                    change: {
+                        "executor": "hermes",
+                        "role": "operator",
+                        "token_sha256": f"revoked-{uuid4().hex}",
+                    }[change]
                 }
             )
         )
@@ -73,7 +76,18 @@ def test_stale_identity_cannot_refresh_lease_or_presence(
     from services.backend.schema import worker_presence
 
     with engine.connect() as conn:
-        assert dict(conn.execute(select(worker_presence)).mappings().one()) == old_presence
+        assert (
+            dict(
+                conn.execute(
+                    select(worker_presence).where(
+                        worker_presence.c.principal_id == old_presence["principal_id"]
+                    )
+                )
+                .mappings()
+                .one()
+            )
+            == old_presence
+        )
 
 
 def test_invalid_lease_does_not_refresh_presence(client, corpus, engine, clock):

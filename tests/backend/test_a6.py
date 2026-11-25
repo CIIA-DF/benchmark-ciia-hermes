@@ -62,7 +62,14 @@ def test_invalid_poll_and_stale_authenticated_role_do_not_record_presence(
     monkeypatch.setattr("services.backend.app.authenticate", lambda *_: actor)
     assert client.post("/runs/claim", json={"executor": "simulation"}).status_code == 403
     with engine.connect() as conn:
-        assert conn.execute(select(worker_presence)).first() is None
+        assert (
+            conn.execute(
+                select(worker_presence).where(
+                    worker_presence.c.principal_id == actor["principal_id"]
+                )
+            ).first()
+            is None
+        )
 
 
 def test_claim_is_exclusive_and_scoped_while_recording_presence(client, corpus, engine):

@@ -2298,6 +2298,7 @@ components:
           type: string
           maxLength: 4000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Text
       additionalProperties: false
       type: object
@@ -2319,6 +2320,7 @@ components:
         answer:
           type: string
           maxLength: 100000
+          pattern: ^[^\x00]*$
           title: Answer
           default: ''
         sources:
@@ -2443,6 +2445,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Source
         page:
           type: integer
@@ -2460,6 +2463,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Text
       additionalProperties: false
       type: object
@@ -2511,6 +2515,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Task
         task_metadata:
           $ref: '#/components/schemas/TaskMetadata'
@@ -2738,11 +2743,13 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Title
         source:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Source
         sha256:
           type: string
@@ -2950,21 +2957,25 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Code Commit
         harness_version:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Harness Version
         adapter_version:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Adapter Version
         model:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Model
         endpoint_id:
           type: string
@@ -3147,11 +3158,13 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Title
         source:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Source
         pages:
           type: integer
@@ -3176,6 +3189,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Content
         idempotency_key:
           type: string
@@ -3235,6 +3249,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Text
       additionalProperties: false
       type: object
@@ -3281,6 +3296,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Content
           description: Texto integral da minuta ou pendência a persistir.
         evidence:
@@ -3296,6 +3312,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Evidence Note
           description: Explicação de como as referências fundamentam o texto.
         requirement_id:
@@ -3331,6 +3348,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Title
         corpus_version:
           type: string
@@ -3355,6 +3373,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Export Note
       additionalProperties: false
       type: object
@@ -3492,11 +3511,13 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Description
         source:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Source
       additionalProperties: false
       type: object
@@ -3613,6 +3634,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Task
         idempotency_key:
           type: string
@@ -3849,6 +3871,7 @@ components:
         answer:
           type: string
           maxLength: 100000
+          pattern: ^[^\x00]*$
           title: Answer
           default: ''
         sources:
@@ -4070,6 +4093,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Content
           description: Texto integral da minuta ou pendência a persistir.
         evidence:
@@ -4085,6 +4109,7 @@ components:
           type: string
           maxLength: 100000
           minLength: 1
+          pattern: ^[^\x00]+$
           title: Evidence Note
           description: Explicação de como as referências fundamentam o texto.
       additionalProperties: false

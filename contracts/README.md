@@ -322,6 +322,15 @@ ProcessResult e OpenAPI permanecem iguais. 200 com inventário vazio, 404 ausent
 mantêm reservas e tentativas físicas coerentes. A leitura não cria fase de artefato;
 client_received continua null. [Aceite e workflow F1](../docs/04-operacoes/validacao-f1.md).
 
+## P3 — textos livres sem U+0000 (22/11/2026)
+
+O tipo `Text` (tarefa, mensagem, conteúdo e nota das escritas, títulos e textos do corpus,
+metadados de versão do `ExperimentRun`), `AgentEvent.text` e `AgentResult.answer` passam a
+publicar o pattern `^[^\x00]+$` (`answer`: `^[^\x00]*$`, porque pode ser vazio). O PostgreSQL
+não armazena U+0000 em texto: antes o valor passava pela validação e falhava no banco. Agora é
+422 `validation_error`. Documentos (ingestão), Hermes, LangGraph e Metodologia precisam revisar
+a restrição; nenhum caractere é removido ou substituído.
+
 ## F2 — busca sem U+0000
 
 SearchInput.query agora publica pattern `^[^\x00]+$`: NUL em qualquer posição é

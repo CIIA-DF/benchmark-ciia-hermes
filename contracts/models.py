@@ -16,7 +16,8 @@ from pydantic import (
 )
 
 Identifier = Annotated[str, Field(min_length=1, max_length=120, pattern=r"^[A-Za-z0-9_.:-]+$")]
-Text = Annotated[str, Field(min_length=1, max_length=100_000)]
+# U+0000 é recusado como em SearchInput.query (F2): o PostgreSQL não o armazena em texto (P3).
+Text = Annotated[str, Field(min_length=1, max_length=100_000, pattern=r"^[^\x00]+$")]
 Completeness = Literal["complete", "partial", "unknown"]
 ToolName = Literal[
     "consultar_processo",

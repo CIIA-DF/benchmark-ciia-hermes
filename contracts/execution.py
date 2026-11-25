@@ -85,7 +85,7 @@ class AgentEvent(Contract):
     event_id: UUID
     kind: Literal["status", "text_delta"]
     # Deltas must preserve spaces and line breaks, unlike general contract strings.
-    text: str = Field(min_length=1, max_length=4000, strict=True)
+    text: str = Field(min_length=1, max_length=4000, strict=True, pattern=r"^[^\x00]+$")
 
     model_config = {"extra": "forbid", "str_strip_whitespace": False}
 
@@ -95,7 +95,7 @@ class AgentResult(Contract):
 
     model_config = {"extra": "forbid", "str_strip_whitespace": False}
     status: TerminalStatus
-    answer: str = Field(default="", max_length=100_000)
+    answer: str = Field(default="", max_length=100_000, pattern=r"^[^\x00]*$")
     sources: list[Reference] = Field(default_factory=list, max_length=100)
     error_code: Literal["adapter_error", "context_limit", "model_timeout"] | None = None
     experiment: ExperimentRun | None = None

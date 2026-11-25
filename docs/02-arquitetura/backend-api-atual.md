@@ -38,7 +38,7 @@ A expressão histórica “envelope v0.2” designa a evolução do protocolo; n
 | 405 | `method_not_allowed`: usar método indicado por `Allow`. |
 | 409 | `conflict`, `version_mismatch`, `idempotency_conflict`, `budget_exceeded`: corrigir causa; não trocar ID para contornar orçamento. |
 | 413 | `payload_too_large`: reduzir corpo; sem efeito de domínio. |
-| 422 | `validation_error`, `context_limit`: corrigir entrada; NUL em busca é inválido. |
+| 422 | `validation_error`, `context_limit`: corrigir entrada; NUL (U+0000) é inválido na busca e, desde 22/11/2026, em todo texto livre ([P3](../../contracts/README.md#p3--textos-livres-sem-u0000-22112026)). |
 | 429 | `resource_limit`: fila/SSE permitem retry; teto físico/eventos não permite retry automático (`retryable=false`). |
 | 500 | `invalid_response` para saída inconsistente; `internal_error` para falha inesperada. Não repetir automaticamente sucesso inválido. |
 | 503 | `storage_unavailable` ou `executor_unavailable`: observar `retryable` e configuração. |

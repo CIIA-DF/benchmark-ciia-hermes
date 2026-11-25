@@ -6,7 +6,7 @@ from sqlalchemy import text
 def test_ready_reports_head_revision(client):
     response = client.get("/ready")
     assert response.status_code == 200
-    assert response.json() == {"status": "ready", "schema_revision": "0010"}
+    assert response.json() == {"status": "ready", "schema_revision": "0011"}
 
 
 def test_ready_fails_while_schema_is_behind_but_health_stays_up(client, engine):

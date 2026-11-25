@@ -6,7 +6,7 @@ Atualização de 25/11/2026, conferida com `origin/main` `6f4ff13`. O planejamen
 
 | Task da `main` | Blocos deste plano | Situação local | Pendente para aceite |
 | --- | --- | --- | --- |
-| 2.1 — Modelagem relacional e migrações (PostgreSQL + Alembic) | F0, A6, A9, I2, J (migrações `0001`–`0010`) e H | Migrações aditivas; suíte completa em SQLite e PostgreSQL 17 compartilhado ([validação P](../04-operacoes/validacao-p.md)) | H: concorrência, backup/restauração e atualização de base existente em PostgreSQL |
+| 2.1 — Modelagem relacional e migrações (PostgreSQL + Alembic) | F0, A6, A9, I2, J e P3 (migrações `0001`–`0011`) e H | Migrações aditivas; suíte completa em SQLite e PostgreSQL 17 compartilhado ([validação P](../04-operacoes/validacao-p.md)) | H: concorrência, backup/restauração e atualização de base existente em PostgreSQL |
 | 2.2 — API REST e validação de esquemas (FastAPI + Pydantic) | A0–A13, D e P2/P3 | Fronteira HTTP, envelopes e limites; referência vigente em [backend-api-atual.md](backend-api-atual.md) | Revisão manual; mudança de contrato do P3 com as equipes consumidoras |
 | 2.3 — Catálogo de ferramentas de leitura | F1–F4 e K (catálogo comum `openai_tools()`/`catalog_version()`) | Quatro tools de leitura verificadas; catálogo comum proposto | Adoção do catálogo por Hermes e LangGraph e congelamento da versão com a Metodologia |
 | 2.4 — Ferramentas de escrita e idempotência rígida | F0, F5 e F6 | Escritas idempotentes com um único efeito sob concorrência e retry; o campo segue o contrato da `main` (`idempotency_key` em `contracts/models.py` e `contracts/README.md`), que corresponde à `chave_idempotencia` citada no backlog | Revisão manual |
@@ -543,7 +543,7 @@ Catálogo comum `openai_tools()`/`catalog_version()` e conferência cruzada sobr
 
 Pendências da auditoria de 30/10: `X-Tool-Call-Id` na resposta (P2), U+0000 recusado em textos livres (P3), executores e limites repassados no Compose (P4) e isolamento dos testes no PostgreSQL reaproveitado (P6). Suíte completa em SQLite e PostgreSQL 17: [validação P](../04-operacoes/validacao-p.md). Item 1 (perda de transporte) e job do portal no CI aguardam decisão.
 
-O P3 alterou o schema dos parâmetros das tools e, com isso, o `catalog_version()` calculado no K; o novo valor ainda precisa ser registrado. A revisão de 25/11/2026 apontou dois efeitos do P3 a tratar antes do merge: leitura de linhas antigas que já contêm U+0000 e respostas do LLM com U+0000 na `RunBridge`, que passam a terminar como `adapter_error`.
+O P3 alterou o schema dos parâmetros das tools e, com isso, o `catalog_version()` calculado no K; o novo valor ainda precisa ser registrado. A revisão de 25/11/2026 apontou dois efeitos do P3, corrigidos no mesmo dia: a migração `0011` interrompe a atualização de bancos que ainda guardam U+0000, sem alterar dados, e a `RunBridge` troca U+0000 da resposta do modelo por U+FFFD com evento de status, em vez de descartar a execução ([validação P](../04-operacoes/validacao-p.md#efeitos-do-p3-corrigidos-em-25112026)).
 
 ## Registro S — 22/11/2026
 

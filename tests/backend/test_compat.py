@@ -332,3 +332,20 @@ def test_normalized_uses_common_calls_and_artifacts():
     result = normalized(run, calls)
     assert result.tool_calls == calls
     assert result.persisted_artifact_ids == [artifact]
+
+
+@pytest.mark.parametrize("kind", ["chat", "benchmark"])
+def test_bridge_keeps_run_when_model_answer_has_nul(client, corpus, kind):
+    class NulAnswer(FakeRunAdapter):
+        def run(self, task, context):
+            experiment = super().run(task, context)
+            self.final_response = "ok\x00fim\x00"
+            return experiment
+
+    execution = queue_and_claim(client, corpus, kind)
+    stored = drive(client, execution, RunBridge(lambda tools, _: NulAnswer(tools)))
+    # P3: U+0000 da saída do modelo não descarta a execução nem vira adapter_error.
+    assert stored["status"] == "succeeded", stored
+    assert stored["result"]["answer"] == "ok�fim�"
+    if kind == "benchmark":
+        assert stored["result"]["experiment"]["agent_declared_success"] is True

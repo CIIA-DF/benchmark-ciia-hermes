@@ -216,13 +216,33 @@ class RunBridge:
                             "grave a revisão final pelo sink."
                         )
                     experiment = sink.latest
+            answer, replaced = _safe_answer(answer)
+            # Monta tudo antes de emitir: erro de validação aqui ainda vira falha do contrato.
+            events = [
+                AgentEvent(event_id=uuid4(), kind="text_delta", text=answer[i : i + DELTA_CHARS])
+                for i in range(0, len(answer), DELTA_CHARS)
+            ]
+            result = AgentResult(status="succeeded", answer=answer, experiment=experiment)
         except Exception as exc:  # noqa: BLE001 - a falha vira resultado terminal do contrato
             yield AgentResult(status="failed", error_code=_failure(exc, client, sink))
             return
-        if not isinstance(answer, str):
-            answer = ""
-        for offset in range(0, len(answer), DELTA_CHARS):
-            yield AgentEvent(
-                event_id=uuid4(), kind="text_delta", text=answer[offset : offset + DELTA_CHARS]
-            )
-        yield AgentResult(status="succeeded", answer=answer, experiment=experiment)
+        if replaced:
+            yield AgentEvent(event_id=uuid4(), kind="status", text=NUL_NOTICE.format(replaced))
+        for event in events:
+            yield event
+        yield result
+
+
+NUL_NOTICE = "Resposta do modelo continha {} U+0000; substituído por U+FFFD (P3)."
+
+
+def _safe_answer(answer) -> tuple[str, int]:
+    """Resposta textual sem U+0000, que os contratos recusam desde o P3.
+
+    A troca por U+FFFD fica visível no texto e no evento de status; descartar a execução
+    perderia um registro experimental já gravado por causa de um caractere da saída do modelo.
+    """
+    if not isinstance(answer, str):
+        return "", 0
+    count = answer.count("\x00")
+    return (answer.replace("\x00", "�"), count) if count else (answer, 0)

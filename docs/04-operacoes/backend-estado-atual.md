@@ -43,6 +43,7 @@ Contagens de seleções têm interseção: não somar testes dirigidos à suíte
 | 0008 | Leases duráveis de SSE |
 | 0009 | Eventos administrativos; sem credenciais nem histórico retroativo inventado |
 | 0010 | Registro experimental (`experiment_runs` e `experiment_run_revisions`), portado do LangGraph; sem registros inferidos para runs anteriores ([ADR 011](../05-decisoes/011-registro-experimental-revisoes.md), [J](validacao-j.md)) |
+| 0011 | Sem mudança de schema: interrompe a atualização, sem alterar dados, se alguma coluna de texto ou JSON ainda guardar U+0000, recusado pelos contratos desde o P3 ([P](validacao-p.md#efeitos-do-p3-corrigidos-em-25112026)) |
 
 Fontes: [revisões Alembic](../../migrations/versions) e [migração do backend](../../services/backend/migrate.py). Aplicar o fluxo documentado em [chat](chat.md) e [scripts](../../scripts/README.md), com backup e restauração isolada antes de base relevante. Não editar revisão publicada nem usar `create_all` como substituto de upgrade. D não executou migração em base operacional.
 

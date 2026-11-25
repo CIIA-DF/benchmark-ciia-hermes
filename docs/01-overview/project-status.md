@@ -6,7 +6,7 @@ Estado vigente da `team/backend`: [índice de estado e evidências](../04-operac
 Seis tools autenticadas e 26 operações HTTP ([referência](../02-arquitetura/backend-api-atual.md)),
 identidade administrativa auditada (I), exportação canônica JSONL v2 (E), registro
 experimental `/experiments` portado do LangGraph (J, [ADR 011](../05-decisoes/011-registro-experimental-revisoes.md)),
-`GET /ready` e migrações Alembic 0001–0010. Suíte de 21/11/2026: 514 testes aprovados em
+`GET /ready` e migrações Alembic 0001–0011. Suíte de 21/11/2026: 514 testes aprovados em
 SQLite; em PostgreSQL 17, 498 aprovados e 16 falhas analisadas
 ([relatório](../04-operacoes/validacao-suite-2026-11-21.md)). Hermes e LangGraph com LLM
 real, homologação em PostgreSQL/infraestrutura (H) e indicadores (O) continuam pendentes.

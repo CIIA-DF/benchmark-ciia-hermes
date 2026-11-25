@@ -23,6 +23,14 @@ services:
       BACKEND_OPERATOR_TOKEN: ${BACKEND_OPERATOR_TOKEN:?Execute scripts.chat setup}
       BACKEND_WORKER_TOKEN: ${BACKEND_WORKER_TOKEN:?Execute scripts.chat setup}
       SEED_SYNTHETIC: "1"
+      # Limites e executores do .env; padrões iguais aos do código (services/backend/execution.py).
+      ENABLED_EXECUTORS: ${ENABLED_EXECUTORS:-simulation}
+      RUN_LEASE_SECONDS: ${RUN_LEASE_SECONDS:-60}
+      RUN_TIMEOUT_SECONDS: ${RUN_TIMEOUT_SECONDS:-300}
+      RUN_QUEUE_TIMEOUT_SECONDS: ${RUN_QUEUE_TIMEOUT_SECONDS:-300}
+      RUN_MAX_QUEUED_PER_OPERATOR: ${RUN_MAX_QUEUED_PER_OPERATOR:-20}
+      RUN_MAX_TOOL_CALLS: ${RUN_MAX_TOOL_CALLS:-0}
+      CHAT_CONTEXT_MAX_CHARS: ${CHAT_CONTEXT_MAX_CHARS:-100000}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:

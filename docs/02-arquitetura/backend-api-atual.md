@@ -68,7 +68,7 @@ A correção local A7 revalida prazo após travas/concessões e desfaz presença
 | Conceito | Origem e significado |
 | --- | --- |
 | `run_id` | Servidor, identifica execução. |
-| `tool_call_id` | Cliente via `X-Tool-Call-Id`, opcional; servidor gera se ausente. Padrão `[A-Za-z0-9_.:-]{1,120}`. Repetir nas retentativas. |
+| `tool_call_id` | Cliente via `X-Tool-Call-Id`, opcional; servidor gera se ausente. Padrão `[A-Za-z0-9_.:-]{1,120}`. Repetir nas retentativas. Desde 22/11/2026 a resposta das tools devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (gerado ou enviado), para que o cliente o declare em `ExperimentRun.tool_calls`; valor inválido continua 422, sem eco. |
 | Chamada lógica | `(run_id, tool_call_id)` em `logical_tool_calls`; vincula ferramenta/hash antes de consultar domínio. Falha de domínio não libera identidade/orçamento. |
 | Tentativa física | UUID do servidor em `physical_tool_attempts`, por requisição de rota tool reconhecida; não é fornecido pelo cliente. Atribuição depende de credencial/reserva, não do run alegado no corpo. |
 | Fases | `started`, `effect_confirmed`, `completed`/`failed`/`interrupted`, vinculadas ao UUID físico. |

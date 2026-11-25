@@ -1748,8 +1748,9 @@ paths:
         schema:
           type: string
           pattern: ^[A-Za-z0-9_.:-]{1,120}$
-        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
-          o histórico de tentativas com `ExperimentRun.tool_calls`.
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
       description: ' Teto de 1.000 requisições físicas atribuíveis à lease por run, incluindo erros e
         retries. Excesso retorna 429 resource_limit, retryable false, antes do corpo/efeito; recusas permanecem
         auditadas.'
@@ -1855,8 +1856,9 @@ paths:
         schema:
           type: string
           pattern: ^[A-Za-z0-9_.:-]{1,120}$
-        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
-          o histórico de tentativas com `ExperimentRun.tool_calls`.
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
   /tools/ler_documento:
     post:
       tags:
@@ -1956,8 +1958,9 @@ paths:
         schema:
           type: string
           pattern: ^[A-Za-z0-9_.:-]{1,120}$
-        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
-          o histórico de tentativas com `ExperimentRun.tool_calls`.
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
       description: ' Teto de 1.000 requisições físicas atribuíveis à lease por run, incluindo erros e
         retries. Excesso retorna 429 resource_limit, retryable false, antes do corpo/efeito; recusas permanecem
         auditadas.'
@@ -2060,8 +2063,9 @@ paths:
         schema:
           type: string
           pattern: ^[A-Za-z0-9_.:-]{1,120}$
-        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
-          o histórico de tentativas com `ExperimentRun.tool_calls`.
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
       description: ' Teto de 1.000 requisições físicas atribuíveis à lease por run, incluindo erros e
         retries. Excesso retorna 429 resource_limit, retryable false, antes do corpo/efeito; recusas permanecem
         auditadas.'
@@ -2168,8 +2172,9 @@ paths:
         schema:
           type: string
           pattern: ^[A-Za-z0-9_.:-]{1,120}$
-        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
-          o histórico de tentativas com `ExperimentRun.tool_calls`.
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
   /tools/salvar_minuta:
     post:
       tags:
@@ -2272,8 +2277,9 @@ paths:
         schema:
           type: string
           pattern: ^[A-Za-z0-9_.:-]{1,120}$
-        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. Correlaciona
-          o histórico de tentativas com `ExperimentRun.tool_calls`.
+        description: ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. A resposta
+          devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor enviado é inválido).
+          Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.
 components:
   schemas:
     AgentEvent:

@@ -6,7 +6,7 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from copy import deepcopy
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
@@ -92,7 +92,8 @@ TOOL_CALL_HEADER = {
     "required": False,
     "schema": {"type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,120}$"},
     "description": "ID da chamada lógica, repetido nas retentativas; ausente, o servidor gera. "
-    "Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.",
+    "A resposta devolve o ID efetivo no cabeçalho `X-Tool-Call-Id` (exceto quando o valor "
+    "enviado é inválido). Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.",
 }
 
 SSE_EXAMPLE = (
@@ -142,15 +143,23 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         request.state.physical_attempt_id = attempt_id
         try:
             logical_id = request.headers.get("x-tool-call-id")
+            if logical_id is None:
+                # Sem cabeçalho, o ID lógico nasce aqui e volta na resposta: o cliente precisa
+                # dele para declarar a chamada no ExperimentRun (P2).
+                logical_id = str(uuid4())
+                request.scope["headers"] = [
+                    *request.scope["headers"],
+                    (b"x-tool-call-id", logical_id.encode("ascii")),
+                ]
+            # ID inválido do cliente continua recusado pela tool (422) e não é ecoado.
+            echoed = logical_id if CALL_ID.fullmatch(logical_id) else None
             try:
                 admitted = await run_in_threadpool(
                     service.admit_physical_tool_request,
                     attempt_id,
                     request.headers.get("authorization"),
                     request.headers.get("x-run-token"),
-                    logical_id
-                    if logical_id is not None and CALL_ID.fullmatch(logical_id)
-                    else None,
+                    echoed,
                 )
             except SQLAlchemyError:
                 request.state.tool_error_code = "storage_unavailable"
@@ -178,6 +187,8 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         except BaseException:
             await run_in_threadpool(service.tracking.complete, attempt_id, None)
             raise
+        if echoed is not None:
+            response.headers["X-Tool-Call-Id"] = echoed
         await run_in_threadpool(
             service.tracking.complete,
             attempt_id,

@@ -96,6 +96,11 @@ TOOL_CALL_HEADER = {
     "enviado é inválido). Correlaciona o histórico de tentativas com `ExperimentRun.tool_calls`.",
 }
 
+TOOL_CALL_RESPONSE_HEADER = {
+    "schema": {"type": "string", "pattern": "^[A-Za-z0-9_.:-]{1,120}$"},
+    "description": "ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.",
+}
+
 SSE_EXAMPLE = (
     'id: 3\nevent: text_delta\ndata: {"text": "Resposta parcial"}\n\n'
     'id: 4\nevent: done\ndata: {"status": "succeeded"}\n\n'
@@ -790,6 +795,10 @@ def create_app(engine: Engine | None = None) -> FastAPI:
                 operation["security"] = [] if path == "/health" else [security]
                 if path.startswith("/tools/"):
                     operation.setdefault("parameters", []).append(deepcopy(TOOL_CALL_HEADER))
+                    for response in responses.values():
+                        response.setdefault("headers", {})["X-Tool-Call-Id"] = deepcopy(
+                            TOOL_CALL_RESPONSE_HEADER
+                        )
                     operation["description"] = operation.get("description", "") + (
                         " Teto de 1.000 requisições físicas atribuíveis à lease por run, "
                         "incluindo erros e retries. Excesso retorna 429 resource_limit, "

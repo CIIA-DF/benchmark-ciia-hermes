@@ -1668,6 +1668,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProcessResult'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '401':
           description: Credencial ausente ou inválida (`unauthorized`).
           content:
@@ -1679,18 +1685,35 @@ paths:
               schema:
                 type: string
               description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '404':
           description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '409':
           description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
             `version_mismatch`, `budget_exceeded`).
@@ -1698,36 +1721,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '422':
           description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '429':
           description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '500':
           description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '413':
           description: Corpo acima de 1 MiB (payload_too_large).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '405':
           description: Método não permitido (method_not_allowed); preserva Allow.
           content:
@@ -1738,6 +1797,11 @@ paths:
             Allow:
               schema:
                 type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
       security:
       - BearerAuth: []
         RunToken: []
@@ -1776,6 +1840,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SearchResult'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '401':
           description: Credencial ausente ou inválida (`unauthorized`).
           content:
@@ -1787,18 +1857,35 @@ paths:
               schema:
                 type: string
               description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '404':
           description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '409':
           description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
             `version_mismatch`, `budget_exceeded`).
@@ -1806,36 +1893,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '422':
           description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '429':
           description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '500':
           description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '413':
           description: Corpo acima de 1 MiB (payload_too_large).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '405':
           description: Método não permitido (method_not_allowed); preserva Allow.
           content:
@@ -1846,6 +1969,11 @@ paths:
             Allow:
               schema:
                 type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
       security:
       - BearerAuth: []
         RunToken: []
@@ -1878,6 +2006,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/DocumentResult'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '401':
           description: Credencial ausente ou inválida (`unauthorized`).
           content:
@@ -1889,18 +2023,35 @@ paths:
               schema:
                 type: string
               description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '404':
           description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '409':
           description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
             `version_mismatch`, `budget_exceeded`).
@@ -1908,36 +2059,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '422':
           description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '429':
           description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '500':
           description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '413':
           description: Corpo acima de 1 MiB (payload_too_large).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '405':
           description: Método não permitido (method_not_allowed); preserva Allow.
           content:
@@ -1948,6 +2135,11 @@ paths:
             Allow:
               schema:
                 type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
       security:
       - BearerAuth: []
         RunToken: []
@@ -1983,6 +2175,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RequirementsResult'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '401':
           description: Credencial ausente ou inválida (`unauthorized`).
           content:
@@ -1994,18 +2192,35 @@ paths:
               schema:
                 type: string
               description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '404':
           description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '409':
           description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
             `version_mismatch`, `budget_exceeded`).
@@ -2013,36 +2228,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '422':
           description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '429':
           description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '500':
           description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '413':
           description: Corpo acima de 1 MiB (payload_too_large).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '405':
           description: Método não permitido (method_not_allowed); preserva Allow.
           content:
@@ -2053,6 +2304,11 @@ paths:
             Allow:
               schema:
                 type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
       security:
       - BearerAuth: []
         RunToken: []
@@ -2092,6 +2348,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WriteReceipt'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '401':
           description: Credencial ausente ou inválida (`unauthorized`).
           content:
@@ -2103,18 +2365,35 @@ paths:
               schema:
                 type: string
               description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '404':
           description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '409':
           description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
             `version_mismatch`, `budget_exceeded`).
@@ -2122,36 +2401,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '422':
           description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '429':
           description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '500':
           description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '413':
           description: Corpo acima de 1 MiB (payload_too_large).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '405':
           description: Método não permitido (method_not_allowed); preserva Allow.
           content:
@@ -2162,6 +2477,11 @@ paths:
             Allow:
               schema:
                 type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
       security:
       - BearerAuth: []
         RunToken: []
@@ -2197,6 +2517,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/WriteReceipt'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '401':
           description: Credencial ausente ou inválida (`unauthorized`).
           content:
@@ -2208,18 +2534,35 @@ paths:
               schema:
                 type: string
               description: Bearer
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '403':
           description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '404':
           description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '409':
           description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
             `version_mismatch`, `budget_exceeded`).
@@ -2227,36 +2570,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '422':
           description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '429':
           description: Quota atingida (`resource_limit`); consulte retryable e o snapshot antes de repetir.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '500':
           description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '503':
           description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '413':
           description: Corpo acima de 1 MiB (payload_too_large).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ToolError'
+          headers:
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
         '405':
           description: Método não permitido (method_not_allowed); preserva Allow.
           content:
@@ -2267,6 +2646,11 @@ paths:
             Allow:
               schema:
                 type: string
+            X-Tool-Call-Id:
+              schema:
+                type: string
+                pattern: ^[A-Za-z0-9_.:-]{1,120}$
+              description: ID efetivo da chamada lógica; ausente quando o valor enviado é inválido.
       security:
       - BearerAuth: []
         RunToken: []

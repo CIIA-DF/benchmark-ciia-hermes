@@ -62,5 +62,5 @@ def test_upgrade_passes_without_nul_and_ignores_escaped_backslash(legacy):
                 process_id="PROC-OK", corpus_version="v1", payload={"title": r"literal \u0000"}
             )
         )
-    migrate(legacy)
+    migrate(legacy, "0011")
     assert revision(legacy) == "0011"

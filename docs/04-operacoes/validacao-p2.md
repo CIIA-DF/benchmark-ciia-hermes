@@ -52,3 +52,20 @@ Fase 2 do [plano por blocos](../02-arquitetura/backend-plano-blocos.md), aberta 
 | `ruff check`, `ruff format --check` | Sem erros |
 
 **Limites.** O aceite da Metodologia sobre como contar esses runs está pendente. A contagem é declarada pelo cliente e não é verificável no servidor. Na exportação JSONL v2, `parameters` só sai com `--include-content`; levar a contagem para `declared` fica para o bloco O. Adaptadores que montam `ExperimentRun` sem a `RunBridge` (LangGraph isolado, runner da Evaluation) precisam gravar `len(tools.unobserved)`. Hermes, LangGraph e Evaluation precisam ser avisados.
+
+## P9a — Contador de caracteres parciais
+
+**Problema.** Para conferir o limite de 100.000 caracteres, cada `POST /runs/{id}/events` com `text_delta` relia e concatenava todos os deltas anteriores (`ExecutionService.partial`). O custo crescia a cada evento, e o run inteiro ficava quadrático. Com deltas de 40 caracteres, como os do simulador, são até 2.500 eventos.
+
+**Mudança.** A migração `0012` acrescenta `runs.partial_chars`, preenchido somando os deltas já gravados. `add_event` confere o limite pelo contador e o incrementa na mesma transação, sob a trava do run (`worker_run`, `FOR UPDATE`) que já protege `event_sequence`. O replay idempotente de um evento não soma de novo. `partial()` continua servindo a `GET /runs/{id}` e ao `/result`.
+
+| Verificação | Resultado |
+| --- | --- |
+| Custo isolado de `partial()` (script temporário, mediana de 30 chamadas) | 1,2 ms com 10 deltas; 5,0 ms com 500; 16,4 ms com 2.500 |
+| `scripts.measure_backend events --count 2500` (mediana por decil, ms por evento), antes | 16,7; 13,1; 17,9; 19,3; **266,8**; 18,6; 21,9; 22,4; **262,6**; 27,7 |
+| Mesmo comando, depois | **186,1**; 11,8; 14,6; 14,1; 11,3; **241,0**; 12,4; 12,2; 15,0; **254,2** |
+| `pytest test_p9_partial_chars.py test_ready.py test_p3_legacy_nul.py test_migrations.py` | 10 aprovados: limite exato em 100.000, replay sem contagem dupla, `status` fora da conta, preenchimento pela `0012` depois de downgrade/upgrade e head `0012` |
+
+Os decis em negrito são picos de contenção da máquina, com outra suíte e outro projeto rodando. Eles aparecem nos dois casos e não acompanham o tamanho do run. Fora deles, o custo por evento sobe de 13 para 28 ms antes da mudança e fica entre 11 e 15 ms depois. A máquina não oferece medição limpa; o resultado vale como tendência, não como número de desempenho.
+
+**Limites.** `GET /runs/{id}` ainda reconstrói o texto parcial a cada consulta, o que é proporcional ao run, mas não por evento. A `0012` não foi exercitada em PostgreSQL com dados; isso fica no bloco H.

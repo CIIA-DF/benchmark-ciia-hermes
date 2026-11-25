@@ -12,7 +12,7 @@ Alembic controla o schema. As seis tools exigem worker autenticado e uma
 reserva ativa de execução. Checklists são importados administrativamente;
 pendências e minutas usam transação, evidências e idempotência.
 As concessões atuais do proprietário e do worker limitam cada operação.
-Migrações Alembic 0001–0011 cobrem corpus, identidades e concessões, execuções,
+Migrações Alembic 0001–0012 cobrem corpus, identidades e concessões, execuções,
 chamadas lógicas e tentativas físicas, trilha administrativa e o registro
 experimental `/experiments` com revisões ([ADR 011](../05-decisoes/011-registro-experimental-revisoes.md));
 `GET /ready` confirma o schema na revisão esperada. Referência vigente das

@@ -728,7 +728,7 @@ class ExecutionService:
     def add_event(self, actor, run_id, lease, value):
         raw = value.model_dump(mode="json")
         with self.transaction() as conn:
-            self.worker_run(conn, actor, run_id, lease)
+            row = self.worker_run(conn, actor, run_id, lease)
             previous = (
                 conn.execute(
                     select(events).where(
@@ -744,9 +744,16 @@ class ExecutionService:
                     fail(409, "idempotency_conflict", "Evento reutilizado com outro conteúdo.")
                 return {"sequence": previous["sequence"]}
             if value.kind == "text_delta":
-                if len(self.partial(conn, run_id)) + len(value.text) > 100_000:
+                # Contador sob a trava do run (P9a): não relê os deltas anteriores.
+                if row["partial_chars"] + len(value.text) > 100_000:
                     fail(422, "context_limit", "Resposta excedeu o limite do contrato.")
             seq = self.event(conn, str(run_id), value.kind, payload, raw["event_id"])
+            if value.kind == "text_delta":
+                conn.execute(
+                    update(runs)
+                    .where(runs.c.run_id == str(run_id))
+                    .values(partial_chars=runs.c.partial_chars + len(value.text))
+                )
         return {"sequence": seq}
 
     def partial(self, conn, run_id, upto=None):

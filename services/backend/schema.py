@@ -73,6 +73,8 @@ runs = Table(
     Column("started_at", Float),
     Column("finished_at", Float),
     Column("event_sequence", Integer, nullable=False),
+    # Total de caracteres dos text_delta (P9a), mantido sob a trava do run.
+    Column("partial_chars", Integer, nullable=False, server_default="0"),
     Column("result", JSON),
     Column("result_sha256", String),
     UniqueConstraint("owner_id", "idempotency_key", name="uq_runs_owner_key"),

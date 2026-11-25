@@ -21,6 +21,7 @@ Scripts não publicam branches nem implantam como parte do check. A incorporaç�
 - export_chat: exportação canônica JSONL v2; chat por padrão, --kind benchmark/all, filtros por participante/conversa/run e conteúdo opt-in. [Formato e migração](../docs/04-operacoes/exportacao-canonica.md).
 - benchmark_batch: cria runs de benchmark em lote (tarefa × executor × repetição) a partir de um arquivo no formato `evaluation/tasks.json`; só o `prompt` vai para o agente. Chave de idempotência `rotulo:tarefa:executor:repeticao` (rótulo, `task_id` e executor sem `:`, para que chaves de combinações diferentes não colidam), ordem intercalada e contrabalançada entre executores (`position` no manifesto) e janela `--window` de runs não terminais (a fila tem cota e expira em `RUN_QUEUE_TIMEOUT_SECONDS`). Repete erro de transporte e 5xx `retryable` com espera crescente e só desiste sem progresso por `--stall-seconds` (padrão 1200). Escreve manifesto JSONL; se parar, lista os itens não enviados como `not_submitted`, e rodar de novo com o mesmo rótulo retoma sem duplicar; `--dry-run` só mostra o plano. Exige `BACKEND_OPERATOR_TOKEN`.
 - export_openapi: grava services/backend/openapi.yaml a partir da aplicação; --check só confere.
+- measure_backend: medições sintéticas do item 9 da auditoria de 30/10 (P9) em SQLite temporário; mede custo relativo antes/depois, não desempenho de produção. [Validação P2](../docs/04-operacoes/validacao-p2.md).
 
 Consulte [operação do chat](../docs/04-operacoes/chat.md) para os comandos completos.
 

@@ -1,4 +1,4 @@
-# ADR 007 — rastreio de tentativas e orçamento comum das tools (contrato v0.3)
+# ADR 008 — rastreio de tentativas e orçamento comum das tools (contrato v0.3)
 
 Data: 25/10/2026. Estado: implementado localmente na `team/backend`; proposta às equipes
 até 28/10/2026, ainda sem aprovação de Hermes, LangGraph e Metodologia.

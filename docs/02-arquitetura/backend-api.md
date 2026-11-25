@@ -1,5 +1,7 @@
 # API do backend — referência v0.3
 
+> Referência histórica pré-D. Para comportamento vigente, erros, limites e exemplos, consulte a [referência consolidada](backend-api-atual.md) e o [estado atual](../04-operacoes/backend-estado-atual.md). As seções abaixo preservam a evolução anterior e não substituem a referência vigente.
+
 Data: 25/10/2026. Responsável: Backend & Tools. Complementa o [TDD](backend-tdd.md).
 
 ## Fonte e atualização

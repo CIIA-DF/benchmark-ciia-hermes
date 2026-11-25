@@ -2,14 +2,16 @@
 
 ## Blocos pendentes
 
-Observação para a entrega na branch `team/backend`: os blocos F e A têm fechamento técnico local em SQLite.
-Os blocos **I, D, E, O e H permanecem pendentes**, conforme o plano fornecido pelo responsável.
+Atualização de 31/10/2026: **I1–I3 têm fechamento técnico local**, com suíte compartilhada de 454 casos e quatro complementos dirigidos.
+[Relatório completo I e limites da validação](../04-operacoes/validacao-i-fechamento.md).
+Os blocos **D, E, O e H permanecem pendentes**.
+Na publicação anterior da branch team/backend, a observação listava I, D, E, O e H como pendentes; I foi tratado nesta etapa.
+Este fechamento não substitui ressalvas de outras auditorias, inclusive a revisão manual da correção A7.
 Publicar a branch não equivale à conclusão do plano, ao aceite global ou à autorização de deploy.
 Relatórios, propostas e atualizações incrementais de documentação não encerram os blocos abaixo.
 
 | Bloco | Trabalho restante |
 | --- | --- |
-| I — Integrações | I1: clientes/protocolo e retries; I2: bootstrap, provisionamento, rotação e revogações; I3: transporte, proxy e ambiente |
 | D — Documentação formal | Consolidar endpoints, contratos, exemplos, ADRs, migrações, versões e estado verificado/proposto após formalizar as interfaces |
 | E — Exportação canônica | Exportar do histórico persistido, reconciliar IDs/tentativas/fases/efeitos, distinguir declarado/observado/avaliado e versionar legados |
 | O — Observabilidade | Definir indicadores reproduzíveis, correlação segura e análise sintética que sustente decisões sem inventar ganhos reais |
@@ -330,7 +332,7 @@ A aprovação final permanece manual e não implica autorização de deploy.
 
 ## Registro de execução F0
 
-F0 implementado e verificado localmente em SQLite: 231 testes na suíte completa, incluindo os 12 cenários novos; execução dirigida final com 12 aprovados. Migração aditiva 0006, sem backfill ou alteração de histórico legado. [Evidências F0](../04-operacoes/validacao-f0.md) e [ADR 008](../05-decisoes/008-tentativas-fisicas-tools.md). PostgreSQL e aceite manual pendentes; F1 aguarda liberação específica.
+F0 implementado e verificado localmente em SQLite: 231 testes na suíte completa, incluindo os 12 cenários novos; execução dirigida final com 12 aprovados. Migração aditiva 0006, sem backfill ou alteração de histórico legado. [Evidências F0](../04-operacoes/validacao-f0.md) e [ADR 009](../05-decisoes/009-tentativas-fisicas-tools.md). PostgreSQL e aceite manual pendentes; F1 aguarda liberação específica.
 
 
 ## Registro de execução F1
@@ -472,3 +474,45 @@ A0–A13 verificados no escopo local, com aceites dirigidos preservados. Após A
 Lint/formato de 212 arquivos, links/invariantes, OpenAPI e whitespace aprovados.
 [Relatório completo, matriz, workflow e limites](../04-operacoes/validacao-a-fechamento.md).
 PostgreSQL, runtimes/LLMs reais e revisão manual continuam pendentes. Bloco I não iniciado; nenhuma publicação autorizada por este fechamento.
+
+## Registro de execução I1 — 31/10/2026
+
+Clientes capturam requisição/contexto e preservam ID/corpo/chave em retry. Recusa definitiva não é repetida por sinalizador incoerente.
+36 casos dirigidos distintos aprovados em 133,97 s, incluindo provas de efeito perdido, revogação e paralelismo.
+[Relatório I1](../04-operacoes/validacao-i1.md). Suíte completa reservada ao fechamento I; I2 ainda não iniciado neste registro.
+
+## Registro de execução I2 — 31/10/2026
+
+Bootstrap cria apenas ausentes; CLI exige update/rotate explícitos e rotação preserva direitos atuais. Migração 0009 audita mudanças sem credenciais.
+23 casos dirigidos distintos aprovados em 7,49 s. [Relatório I2](../04-operacoes/validacao-i2.md).
+Suíte completa reservada ao fechamento I; I3 ainda não iniciado neste registro.
+
+## Registro de execução I3 — 31/10/2026
+
+Proxy limita corpo por bytes e tempo, valida conexão, preserva cabeçalhos permitidos e SSE, cancela upstream e retorna erros seguros.
+29 casos dirigidos distintos aprovados em 135,95 s. [Relatório I3](../04-operacoes/validacao-i3.md).
+Nginx verificado estaticamente; Docker Linux, PostgreSQL e runtimes reais permanecem pendentes. Fechamento consolidado I ainda em execução neste registro.
+
+## Complemento dirigido I2/I3 — 31/10/2026
+
+CLI I2 também protege falhas na criação da conexão: aceite dirigido final de 26 casos em 51,29 s, incluindo três novas sondas.
+I3 confirmou lint/tipagem do portal e repetiu seus 19 casos próprios em 8,67 s, sem skips.
+A validação consolidada acompanha uma suíte completa já iniciada por outra tarefa na mesma worktree, evitando execução duplicada concorrente.
+Resultados, cobertura complementar e limites serão registrados no fechamento I.
+
+## Fechamento local I — 31/10/2026
+
+I1–I3 concluídos tecnicamente no escopo local, com relatório individual e aceites dirigidos: 36, 26 e 29 casos.
+A suíte oficial compartilhada terminou com código 0: 454 aprovados em 1.640,62 s. Quatro casos novos passaram em complementos dirigidos.
+Não houve uma execução única de 458 casos nem repetição integral após o último ajuste CLI; [o relatório distingue as evidências](../04-operacoes/validacao-i-fechamento.md).
+Lint/tipagem do portal, lint/formatação Python, OpenAPI, links/invariantes e whitespace aprovados.
+D, E, O e H permanecem pendentes. PostgreSQL, Nginx/Compose e runtimes reais não homologados; liberação final manual.
+Sem commit, publicação, deploy ou revisão automática nesta execução do objetivo I.
+
+## Registro de execução D — 31/10/2026
+
+Consolidação editorial das 21 operações, rastreamento, migrações e versões. [Referência vigente](backend-api-atual.md), [estado atual](../04-operacoes/backend-estado-atual.md) e [evidências D](../04-operacoes/validacao-d.md). Registros anteriores de D pendente permanecem históricos; implementação documental entregue, verificação registrada no relatório e liberação manual ainda pendente. E, O e H não foram executados neste bloco.
+
+## Registro de execução E — 02/11/2026
+
+Exportador canônico v2 implementado localmente; histórico persistido substitui reconstrução por SSE. [Formato e compatibilidade](../04-operacoes/exportacao-canonica.md) e [validação E](../04-operacoes/validacao-e.md). Preserva legado, nulos, conteúdo opt-in e falhas tardias; publicação exclusiva de snapshot completo. Revisão manual/consumidores e PostgreSQL continuam pendentes. O e H não foram implementados nesta entrega; registros anteriores de E pendente permanecem históricos.

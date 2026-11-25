@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 class LeasedStreamingResponse(StreamingResponse):
+    """Libera a reserva de SSE ao encerrar ou cancelar, inclusive sem iniciar iteração."""
+
     def __init__(self, content, *, release: Callable[[], None], **kwargs):
         super().__init__(content, **kwargs)
         self.release = release

@@ -1,4 +1,4 @@
-# ADR 004 — tools como operações de negócio e fronteira RAG
+# ADR 005 — tools como operações de negócio e fronteira RAG
 
 Data: 24/10/2026. Estado: implementado localmente, revisão conjunta pendente.
 Responsáveis: Backend e Documentos/RAG.
@@ -20,4 +20,4 @@ da equipe. Reaproveitar o banco e a busca literal existentes reduz duplicação.
 A substituição da recuperação exige testes de fontes/filtros e revisão de RAG.
 Não implica implementar OCR, embeddings ou mudar os schemas documentais.
 
-Ver [TDD](../02-arquitetura/backend-tdd.md). Complementa o ADR 003; não o substitui.
+Ver [TDD](../02-arquitetura/backend-tdd.md). Complementa o ADR 004; não o substitui.

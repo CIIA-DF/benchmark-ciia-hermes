@@ -57,6 +57,8 @@ class EventLimitReached(ToolFailure):
 
 
 class ExecutionService:
+    """Gerencia runs, reservas, eventos e artefatos duráveis no backend."""
+
     def __init__(self, engine, corpus=None):
         self.engine = engine
         self.tracking = ToolTracking(engine)
@@ -90,6 +92,7 @@ class ExecutionService:
 
     @contextmanager
     def transaction(self):
+        """Confirme o trabalho ou reverta-o; trate limite de eventos em nova transação."""
         with self.engine.connect() as conn:
             if self.engine.dialect.name == "sqlite":
                 conn.exec_driver_sql("BEGIN IMMEDIATE")
@@ -555,6 +558,7 @@ class ExecutionService:
             )
 
     def claim(self, actor, executor, run_id=None):
+        """Reserve um run elegível ao worker e retorne o token temporário da reserva."""
         if actor["role"] != "worker" or actor["executor"] != executor:
             fail(403, "forbidden", "Worker incompatível com o executor.")
         self.check_executor(executor)
@@ -972,6 +976,7 @@ class ExecutionService:
             conn.execute(delete(stream_leases).where(stream_leases.c.lease_id == lease_id))
 
     def authorize_tool_context(self, conn, actor, context, lease, *, write=False):
+        """Confira a reserva e o escopo; para escrita, revalide perfis e concessões."""
         raw = context.model_dump(
             mode="json", include={"run_id", "process_id", "corpus_version", "requirements_version"}
         )
@@ -1018,6 +1023,7 @@ class ExecutionService:
         return row
 
     def reserve_tool_call(self, conn, run_id, call):
+        """Vincule ID lógico a tool e argumentos antes do efeito, sob lock do run."""
         self.tracking.bind(conn, run_id, call)
         # Caller holds the run lock. This transaction commits before the effect:
         # rollback/crash cannot free an ID for a different operation.
@@ -1134,6 +1140,10 @@ class ExecutionService:
         ]
 
     def write_artifact(self, actor, query, lease, tool, call):
+        """Valide fontes e persista ou recupere a escrita pela chave de idempotência.
+
+        A chave da escrita é distinta do ID lógico da chamada reservado antes do efeito.
+        """
         raw = query.model_dump(mode="json")
         hashed = digest(raw)
         with self.transaction() as conn:

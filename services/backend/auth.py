@@ -254,6 +254,7 @@ def authenticate(engine: Engine, authorization: str | None) -> Principal:
 
 
 def authorize(conn: Connection, principal_id: str, process_id: str, corpus_version: str) -> None:
+    """Exija concessão explícita do perfil para o processo e a versão do corpus."""
     found = conn.execute(
         select(permissions).where(
             permissions.c.principal_id == principal_id,

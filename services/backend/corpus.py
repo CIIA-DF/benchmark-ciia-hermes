@@ -12,6 +12,8 @@ from services.backend.storage import chunks, documents, processes
 
 
 class CorpusRepository:
+    """Lê corpus preparado por Documentos/RAG usando a transação do chamador."""
+
     def process(self, conn, context):
         row = conn.execute(
             select(processes.c.payload).where(
@@ -134,6 +136,7 @@ class CorpusRepository:
         return result
 
     def validate_sources(self, conn, context, sources):
+        """Confira referências contra o corpus e o escopo, sem inferir completude."""
         for ref in sources:
             if isinstance(ref, InventoryEvidence):
                 if (ref.process_id, ref.corpus_version) != (

@@ -101,10 +101,14 @@ class Chunk(Contract):
 
 
 class ToolContext(Contract):
-    run_id: UUID
-    process_id: Identifier
-    corpus_version: Identifier
-    requirements_version: Identifier
+    """Escopo da execução autenticada; o agente não escolhe estes campos no catálogo."""
+
+    run_id: UUID = Field(description="Execução autenticada à qual a chamada pertence.")
+    process_id: Identifier = Field(description="Identificador do processo no escopo da execução.")
+    corpus_version: Identifier = Field(description="Versão do corpus autorizado para a execução.")
+    requirements_version: Identifier = Field(
+        description="Versão do checklist associada ao processo."
+    )
 
 
 class InventoryItem(Contract):
@@ -133,13 +137,17 @@ class ProcessResult(ToolContext):
 
 
 class SearchInput(ToolContext):
+    """Busca literal de trechos no processo e corpus da execução."""
+
     query: str = Field(
         min_length=1,
         max_length=200,
         pattern=r"^[^\x00]+$",
         description="Busca literal; U+0000 não é permitido.",
     )
-    limit: StrictInt = Field(default=5, ge=1, le=20)
+    limit: StrictInt = Field(
+        default=5, ge=1, le=20, description="Número máximo de trechos retornados; padrão 5."
+    )
 
 
 class SearchResult(ToolContext):
@@ -160,8 +168,14 @@ class SearchResult(ToolContext):
 
 
 class ReadInput(ToolContext):
-    document_id: Identifier
-    pages: list[StrictInt] | None = Field(default=None, min_length=1)
+    """Seleção de documento e, opcionalmente, de suas páginas."""
+
+    document_id: Identifier = Field(description="Identificador de documento no corpus autorizado.")
+    pages: list[StrictInt] | None = Field(
+        default=None,
+        min_length=1,
+        description="Números de páginas positivas e distintas; omita ou use null para todas.",
+    )
 
     @model_validator(mode="after")
     def valid_pages(self):
@@ -210,33 +224,60 @@ class RequirementsResult(ToolContext):
 
 
 class Evidence(Contract):
-    document_id: Identifier
-    chunk_id: Identifier
-    page: StrictInt = Field(ge=1)
+    """Referência verificável a um trecho e à página de origem no corpus."""
+
+    document_id: Identifier = Field(description="Documento que contém o trecho citado.")
+    chunk_id: Identifier = Field(description="Identificador do trecho citado nesse documento.")
+    page: StrictInt = Field(
+        ge=1, description="Número da página de origem do trecho, a partir de 1."
+    )
 
 
 class InventoryEvidence(Contract):
-    kind: Literal["inventory"] = "inventory"
-    process_id: Identifier
-    corpus_version: Identifier
+    """Referência ao inventário para fundamentar uma limitação da exportação."""
+
+    kind: Literal["inventory"] = Field(
+        default="inventory", description="Identifica referência ao inventário."
+    )
+    process_id: Identifier = Field(description="Processo a que o inventário pertence.")
+    corpus_version: Identifier = Field(description="Versão do corpus a que o inventário pertence.")
 
 
 class WriteInput(ToolContext):
-    idempotency_key: Identifier
-    content: Text
-    evidence: list[Evidence | InventoryEvidence] = Field(min_length=1)
-    evidence_note: Text
+    """Entrada comum de escrita fundamentada com chave para repetição idempotente."""
+
+    idempotency_key: Identifier = Field(
+        description="Chave da escrita; reutilize-a apenas com a mesma ferramenta "
+        "e conteúdo da entrada."
+    )
+    content: Text = Field(description="Texto integral da minuta ou pendência a persistir.")
+    evidence: list[Evidence | InventoryEvidence] = Field(
+        min_length=1, description="Referências a trechos ou ao inventário que fundamentam o texto."
+    )
+    evidence_note: Text = Field(
+        description="Explicação de como as referências fundamentam o texto."
+    )
 
 
 class PendencyInput(WriteInput):
-    requirement_id: Identifier
+    """Pendência associada a um requisito do checklist versionado."""
+
+    requirement_id: Identifier = Field(
+        description="Identificador do requisito no checklist da execução."
+    )
 
 
 class WriteReceipt(ToolContext):
-    artifact_id: UUID
-    persisted_at: AwareDatetime
-    content_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
-    replayed: StrictBool
+    """Comprovante do artefato persistido, inclusive em repetição idempotente."""
+
+    artifact_id: UUID = Field(description="Identificador do artefato persistido.")
+    persisted_at: AwareDatetime = Field(
+        description="Instante com fuso horário da persistência original."
+    )
+    content_sha256: str = Field(
+        pattern=r"^[a-f0-9]{64}$", description="SHA-256 hexadecimal do texto persistido em UTF-8."
+    )
+    replayed: StrictBool = Field(description="Indica retorno de escrita idempotente anterior.")
 
 
 class ArtifactResponse(Contract):
@@ -247,6 +288,8 @@ class ArtifactResponse(Contract):
 
 
 class ToolCallRecord(Contract):
+    """Chamada declarada no relatório experimental, sujeita à reconciliação do servidor."""
+
     tool_call_id: Identifier
     tool: ToolName
     duration_ms: StrictFloat = Field(ge=0)
@@ -304,6 +347,8 @@ class PhysicalToolPhase(Contract):
 
 
 class PhysicalToolAttempt(Contract):
+    """Registro de requisição física, que pode pertencer a uma chamada lógica."""
+
     attempt_id: UUID
     tool: ToolName
     method: str

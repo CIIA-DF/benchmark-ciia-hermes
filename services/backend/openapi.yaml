@@ -2300,6 +2300,7 @@ components:
       - kind
       - text
       title: AgentEvent
+      description: Evento do adaptador; deltas preservam espaços e quebras de linha.
     AgentResult:
       properties:
         status:
@@ -2340,6 +2341,7 @@ components:
       required:
       - status
       title: AgentResult
+      description: Resultado declarado pelo adaptador e fontes a validar pelo servidor.
     ArtifactResponse:
       properties:
         artifact_id:
@@ -2544,6 +2546,7 @@ components:
       - lease_seconds
       - heartbeat_seconds
       title: ClaimedRun
+      description: Trabalho reservado ao worker, com token e intervalos da reserva em segundos.
     ConversationDetail:
       properties:
         process_id:
@@ -2762,24 +2765,28 @@ components:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         document:
           $ref: '#/components/schemas/Document'
       additionalProperties: false
@@ -2810,16 +2817,19 @@ components:
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Document Id
+          description: Documento que contém o trecho citado.
         chunk_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Chunk Id
+          description: Identificador do trecho citado nesse documento.
         page:
           type: integer
           minimum: 1.0
           title: Page
+          description: Número da página de origem do trecho, a partir de 1.
       additionalProperties: false
       type: object
       required:
@@ -2827,6 +2837,7 @@ components:
       - chunk_id
       - page
       title: Evidence
+      description: Referência verificável a um trecho e à página de origem no corpus.
     ExecutorCapability:
       properties:
         name:
@@ -2879,24 +2890,28 @@ components:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         contract_version:
           type: string
           const: '0.1'
@@ -3091,6 +3106,7 @@ components:
           type: string
           const: inventory
           title: Kind
+          description: Identifica referência ao inventário.
           default: inventory
         process_id:
           type: string
@@ -3098,18 +3114,21 @@ components:
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Processo a que o inventário pertence.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus a que o inventário pertence.
       additionalProperties: false
       type: object
       required:
       - process_id
       - corpus_version
       title: InventoryEvidence
+      description: Referência ao inventário para fundamentar uma limitação da exportação.
     InventoryItem:
       properties:
         document_id:
@@ -3223,35 +3242,41 @@ components:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         idempotency_key:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Idempotency Key
+          description: Chave da escrita; reutilize-a apenas com a mesma ferramenta e conteúdo da entrada.
         content:
           type: string
           maxLength: 100000
           minLength: 1
           title: Content
+          description: Texto integral da minuta ou pendência a persistir.
         evidence:
           items:
             anyOf:
@@ -3260,17 +3285,20 @@ components:
           type: array
           minItems: 1
           title: Evidence
+          description: Referências a trechos ou ao inventário que fundamentam o texto.
         evidence_note:
           type: string
           maxLength: 100000
           minLength: 1
           title: Evidence Note
+          description: Explicação de como as referências fundamentam o texto.
         requirement_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirement Id
+          description: Identificador do requisito no checklist da execução.
       additionalProperties: false
       type: object
       required:
@@ -3284,6 +3312,7 @@ components:
       - evidence_note
       - requirement_id
       title: PendencyInput
+      description: Pendência associada a um requisito do checklist versionado.
     Process:
       properties:
         process_id:
@@ -3337,24 +3366,28 @@ components:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         process:
           $ref: '#/components/schemas/Process'
         inventory:
@@ -3377,30 +3410,35 @@ components:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         document_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Document Id
+          description: Identificador de documento no corpus autorizado.
         pages:
           anyOf:
           - items:
@@ -3409,6 +3447,7 @@ components:
             minItems: 1
           - type: 'null'
           title: Pages
+          description: Números de páginas positivas e distintas; omita ou use null para todas.
       additionalProperties: false
       type: object
       required:
@@ -3418,6 +3457,7 @@ components:
       - requirements_version
       - document_id
       title: ReadInput
+      description: Seleção de documento e, opcionalmente, de suas páginas.
     ReadinessResponse:
       properties:
         status:
@@ -3465,24 +3505,28 @@ components:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         items:
           items:
             $ref: '#/components/schemas/Requirement'
@@ -3679,30 +3723,35 @@ components:
       - partial_answer
       - last_event_id
       title: RunResponse
+      description: Retrato da execução, eventos observados e artefatos associados.
     SearchInput:
       properties:
         run_id:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         query:
           type: string
           maxLength: 200
@@ -3715,6 +3764,7 @@ components:
           maximum: 20.0
           minimum: 1.0
           title: Limit
+          description: Número máximo de trechos retornados; padrão 5.
           default: 5
       additionalProperties: false
       type: object
@@ -3725,30 +3775,35 @@ components:
       - requirements_version
       - query
       title: SearchInput
+      description: Busca literal de trechos no processo e corpus da execução.
     SearchResult:
       properties:
         run_id:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         export_completeness:
           type: string
           enum:
@@ -3819,6 +3874,7 @@ components:
       required:
       - status
       title: StoredResult
+      description: Resultado persistido; inclui falhas terminais produzidas pelo servidor.
     TaskMetadata:
       properties:
         task_id:
@@ -3888,30 +3944,35 @@ components:
       - duration_ms
       - status
       title: ToolCallRecord
+      description: Chamada declarada no relatório experimental, sujeita à reconciliação do servidor.
     ToolContext:
       properties:
         run_id:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
       additionalProperties: false
       type: object
       required:
@@ -3920,6 +3981,7 @@ components:
       - corpus_version
       - requirements_version
       title: ToolContext
+      description: Escopo da execução autenticada; o agente não escolhe estes campos no catálogo.
     ToolError:
       properties:
         code:
@@ -3969,35 +4031,41 @@ components:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         idempotency_key:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Idempotency Key
+          description: Chave da escrita; reutilize-a apenas com a mesma ferramenta e conteúdo da entrada.
         content:
           type: string
           maxLength: 100000
           minLength: 1
           title: Content
+          description: Texto integral da minuta ou pendência a persistir.
         evidence:
           items:
             anyOf:
@@ -4006,11 +4074,13 @@ components:
           type: array
           minItems: 1
           title: Evidence
+          description: Referências a trechos ou ao inventário que fundamentam o texto.
         evidence_note:
           type: string
           maxLength: 100000
           minLength: 1
           title: Evidence Note
+          description: Explicação de como as referências fundamentam o texto.
       additionalProperties: false
       type: object
       required:
@@ -4023,45 +4093,54 @@ components:
       - evidence
       - evidence_note
       title: WriteInput
+      description: Entrada comum de escrita fundamentada com chave para repetição idempotente.
     WriteReceipt:
       properties:
         run_id:
           type: string
           format: uuid
           title: Run Id
+          description: Execução autenticada à qual a chamada pertence.
         process_id:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Process Id
+          description: Identificador do processo no escopo da execução.
         corpus_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Corpus Version
+          description: Versão do corpus autorizado para a execução.
         requirements_version:
           type: string
           maxLength: 120
           minLength: 1
           pattern: ^[A-Za-z0-9_.:-]+$
           title: Requirements Version
+          description: Versão do checklist associada ao processo.
         artifact_id:
           type: string
           format: uuid
           title: Artifact Id
+          description: Identificador do artefato persistido.
         persisted_at:
           type: string
           format: date-time
           title: Persisted At
+          description: Instante com fuso horário da persistência original.
         content_sha256:
           type: string
           pattern: ^[a-f0-9]{64}$
           title: Content Sha256
+          description: SHA-256 hexadecimal do texto persistido em UTF-8.
         replayed:
           type: boolean
           title: Replayed
+          description: Indica retorno de escrita idempotente anterior.
       additionalProperties: false
       type: object
       required:
@@ -4074,6 +4153,7 @@ components:
       - content_sha256
       - replayed
       title: WriteReceipt
+      description: Comprovante do artefato persistido, inclusive em repetição idempotente.
   securitySchemes:
     BearerAuth:
       type: http

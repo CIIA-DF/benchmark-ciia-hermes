@@ -1,5 +1,9 @@
 # Runbooks
 
+- [Estado atual Backend & Tools](backend-estado-atual.md): índice vigente, implementação, evidências e liberações separadas.
+- [Validação documental D](validacao-d.md): fichas, exemplos, versões e limites.
+- [S1/S2](validacao-s1-s2.md): dependências Python atualizadas; Next do portal e documentos reais na `main` registrados para outras frentes.
+
 - [Validação do bloco 1 em 25/10/2026](validacao-bloco1-2026-10-25.md): snapshots coerentes, falhas no chat, reconexão limitada e heartbeat.
 
 - [Correções de streaming e polling em 25/10/2026](correcoes-streaming-worker-2026-10-25.md): comportamento e validação dos dois apontamentos.

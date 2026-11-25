@@ -80,6 +80,8 @@ class ClaimInput(Contract):
 
 
 class AgentEvent(Contract):
+    """Evento do adaptador; deltas preservam espaços e quebras de linha."""
+
     event_id: UUID
     kind: Literal["status", "text_delta"]
     # Deltas must preserve spaces and line breaks, unlike general contract strings.
@@ -89,8 +91,10 @@ class AgentEvent(Contract):
 
 
 class AgentResult(Contract):
+    """Resultado declarado pelo adaptador e fontes a validar pelo servidor."""
+
     model_config = {"extra": "forbid", "str_strip_whitespace": False}
-    status: Literal["succeeded", "failed", "timed_out"]
+    status: TerminalStatus
     answer: str = Field(default="", max_length=100_000)
     sources: list[Reference] = Field(default_factory=list, max_length=100)
     error_code: Literal["adapter_error", "context_limit", "model_timeout"] | None = None
@@ -98,6 +102,8 @@ class AgentResult(Contract):
 
 
 class ClaimedRun(Contract):
+    """Trabalho reservado ao worker, com token e intervalos da reserva em segundos."""
+
     run_id: UUID
     context: RunContext
     history: list[HistoryMessage]
@@ -111,6 +117,8 @@ class ClaimedRun(Contract):
 
 
 class StoredResult(AgentResult):
+    """Resultado persistido; inclui falhas terminais produzidas pelo servidor."""
+
     error_code: (
         Literal[
             "adapter_error",
@@ -130,6 +138,8 @@ class ArtifactSummary(Contract):
 
 
 class RunResponse(Contract):
+    """Retrato da execução, eventos observados e artefatos associados."""
+
     model_config = {"extra": "forbid", "str_strip_whitespace": False}
     run_id: UUID
     conversation_id: UUID | None

@@ -6,7 +6,7 @@ F4 do [plano vigente](../02-arquitetura/backend-plano-blocos.md). Worktree ofici
 
 Integração T4/F0 preservada. Nenhuma falha funcional nova foi reproduzida. Entrega: sete testes HTTP/banco e documentação.
 
-Código de produção, contratos, OpenAPI e migrações permanecem iguais. Fontes: [T4](validacao-t4.md), [F0](validacao-f0.md) e [ADR 008](../05-decisoes/008-tentativas-fisicas-tools.md).
+Código de produção, contratos, OpenAPI e migrações permanecem iguais. Fontes: [T4](validacao-t4.md), [F0](validacao-f0.md) e [ADR 009](../05-decisoes/009-tentativas-fisicas-tools.md).
 
 ## Workflow e contratos
 

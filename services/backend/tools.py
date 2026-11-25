@@ -29,6 +29,8 @@ CALL_ID = re.compile(r"[A-Za-z0-9_.:-]{1,120}")
 
 
 class ToolService:
+    """Orquestra as tools autorizadas, sem depender do transporte HTTP."""
+
     def __init__(self, execution):
         self.execution = execution
         self.corpus = execution.corpus
@@ -46,6 +48,11 @@ class ToolService:
         }
 
     def call(self, name, actor, query, lease, tool_call_id=None, physical_attempt_id=None):
+        """Autorize e reserve a chamada lógica antes da transação de leitura ou escrita.
+
+        Uma tentativa física pode reutilizar o ID lógico; falhas são registradas
+        separadamente para que o rollback do efeito não apague a auditoria.
+        """
         if name not in TOOLS:
             fail(404, "not_found", "Ferramenta fora do catálogo.")
         call = self.attempt(

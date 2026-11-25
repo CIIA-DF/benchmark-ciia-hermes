@@ -170,3 +170,31 @@ def test_both_clients_receive_recoverable_validation_without_retry_or_search(
     with engine.connect() as conn:
         physical = client.app.state.execution.tracking.history(conn, context["run_id"])
     assert len(physical) == 1 and physical[0]["http_status"] == 422
+
+
+def test_tool_catalog_does_not_send_class_docstrings_to_the_model():
+    """Docstrings de classe ficam no OpenAPI; o prompt do modelo só leva tool e campos."""
+    import inspect as pyinspect
+
+    from pydantic import BaseModel
+
+    from contracts import models
+
+    docstrings = {
+        pyinspect.cleandoc(value.__doc__)
+        for value in vars(models).values()
+        if isinstance(value, type) and issubclass(value, BaseModel) and value.__doc__
+    }
+    assert docstrings, "Esperava docstrings de classe em contracts.models."
+    catalog = tool_catalog()
+    for tool in catalog:
+        nodes = [tool["parameters"], *tool["parameters"].get("$defs", {}).values()]
+        assert not {node.get("description") for node in nodes} & docstrings, tool["name"]
+    parameters = {tool["name"]: tool["parameters"] for tool in catalog}
+    for name in ("consultar_processo", "consultar_requisitos"):
+        assert parameters[name] == {
+            "additionalProperties": False,
+            "properties": {},
+            "required": [],
+            "type": "object",
+        }

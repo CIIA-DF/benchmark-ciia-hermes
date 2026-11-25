@@ -1,4 +1,4 @@
-# ADR 003 — chat, tools e execuções persistentes
+# ADR 004 — chat, tools e execuções persistentes
 
 Data: 20/10/2026, America/Sao_Paulo.
 Estado: implementação local para revisão das equipes afetadas.

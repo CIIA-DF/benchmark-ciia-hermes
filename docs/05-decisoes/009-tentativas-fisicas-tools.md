@@ -1,6 +1,6 @@
-# ADR 008 — tentativas físicas e fases das ferramentas
+# ADR 009 — tentativas físicas e fases das ferramentas
 
-Estado: implementado localmente no F0; revisão manual e homologação PostgreSQL pendentes. Complementa o ADR 007 sem reescrever seu histórico.
+Estado: implementado localmente no F0; revisão manual e homologação PostgreSQL pendentes. Complementa o ADR 008 sem reescrever seu histórico.
 
 ## Problema e decisão
 

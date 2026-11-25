@@ -13,6 +13,8 @@ MAX_BODY_BYTES = 1024 * 1024
 
 
 class HTTPBoundary:
+    """Limita corpos HTTP e protege respostas, sem armazenar a saída SSE inteira."""
+
     def __init__(self, app: ASGIApp):
         self.app = app
 

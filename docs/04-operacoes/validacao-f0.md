@@ -6,7 +6,7 @@ Escopo liberado: F0 do [plano fornecido pelo responsável](../02-arquitetura/bac
 
 O histórico anterior tinha três linhas 200/503/200 para duas requisições no cenário commit → falha de confirmação → retry. Essas linhas continuam válidas como estágios de compatibilidade, mas não definem a contagem física. Não há evidência para reconstruir a cardinalidade física de registros antigos.
 
-[ADR 008](../05-decisoes/008-tentativas-fisicas-tools.md) acrescenta a definição de tentativa física. A migração 0006, após 0005, cria duas tabelas independentes, sem modificar registros nem migrações anteriores:
+[ADR 009](../05-decisoes/009-tentativas-fisicas-tools.md) acrescenta a definição de tentativa física. A migração 0006, após 0005, cria duas tabelas independentes, sem modificar registros nem migrações anteriores:
 
 - physical_tool_attempts: UUID gerado pelo servidor, ferramenta/método, início/fim, associação autorizada a run/ID lógico/hash, estado da resposta preparada, HTTP/código observados e client_received nullable.
 - physical_tool_phases: UUID físico + fase como chave; instante, artefato e replay quando aplicáveis. Fases ordenadas semanticamente, inclusive com timestamps iguais.

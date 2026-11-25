@@ -28,6 +28,21 @@ def test_catalog_hides_privileged_context_and_preserves_argument_constraints():
     assert catalog["salvar_minuta"]["parameters"]["properties"]["evidence"]["minItems"] == 1
 
 
+def test_catalog_exposes_guidance_for_tool_arguments():
+    catalog = {item["name"]: item for item in tool_catalog()}
+    for tool in catalog.values():
+        assert tool["description"]
+        assert all(field.get("description") for field in tool["parameters"]["properties"].values())
+    search = catalog["buscar_documentos"]["parameters"]["properties"]
+    assert "literal" in search["query"]["description"].lower()
+    assert search["limit"]["default"] == 5
+    read = catalog["ler_documento"]["parameters"]["properties"]
+    assert "todas" in read["pages"]["description"]
+    write = catalog["registrar_pendencia"]["parameters"]
+    assert write["$defs"]["Evidence"]["properties"]["chunk_id"]["description"]
+    assert write["$defs"]["InventoryEvidence"]["properties"]["kind"]["description"]
+
+
 @pytest.mark.parametrize("executor", ["hermes", "langgraph"])
 def test_real_executor_requires_real_factory(executor):
     with pytest.raises(ValueError, match="exige fábrica"):

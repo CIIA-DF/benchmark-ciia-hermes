@@ -75,6 +75,11 @@ def initialize(engine: Engine) -> None:
 
 
 def ingest(engine: Engine, process: Process, document: Document, items: list[Chunk]) -> int:
+    """Persista dados preparados com trechos rastreáveis e corpus versionado imutável.
+
+    Rejeita referências inconsistentes e alterações de conteúdo na mesma versão.
+    A preparação do corpus permanece sob responsabilidade de Documentos/RAG.
+    """
     if (document.process_id, document.corpus_version) != (
         process.process_id,
         process.corpus_version,

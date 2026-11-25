@@ -1,4 +1,4 @@
-# ADR 005 — participante pseudônimo no piloto sem login
+# ADR 006 — participante pseudônimo no piloto sem login
 
 Data: 24/10/2026. Estado: decidido pelo responsável, implementado localmente.
 

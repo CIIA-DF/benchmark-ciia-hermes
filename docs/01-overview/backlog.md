@@ -23,6 +23,10 @@
 - **Task 2.3 — Catálogo de Ferramentas de Leitura:** Desenvolver e expor os endpoints e contratos para `consultar_processo`, `buscar_documentos`, `ler_documento` e `consultar_requisitos`.
 - **Task 2.4 — Ferramentas de Escrita e Idempotência Rígida:** Desenvolver os endpoints para `registrar_pendencia` e `salvar_minuta`, implementando `chave_idempotencia` para prevenir duplicidade em reexecuções.
 - **Task 2.5 — Gerenciamento de Execuções e Contexto Autenticado:** Implementar rotas `/runs` para criação e acompanhamento de tarefas, garantindo que os identificadores de execução venham do contexto autenticado do worker.
+- **Task 2.6 — Consolidar evidências de validação:** Em trabalho futuro, avaliar a consolidação dos relatórios de validação por bloco (A, F, T etc.), reduzindo repetição e preservando resultados, datas, comandos, limitações e referências entre documentos.
+- **Task 2.7 — Descrever ferramentas e contratos:** Revisar descrições de ferramentas e argumentos no catálogo e nos modelos de `contracts/`, incluindo `models.py` e `execution.py`. Documentar significado, uso e restrições relevantes para leitura humana e por agentes; usar descrições de schema quando precisarem chegar aos consumidores. Avaliar keywords apenas quando houver uso concreto.
+
+Levantamento conjunto e pontos sugeridos: [documentação do Backend & Tools](../04-operacoes/levantamento-documentacao-backend.md).
 
 **Milestone:** Endpoints funcionais de consulta de processo e registro idempotente de pendências com testes de validação.
 

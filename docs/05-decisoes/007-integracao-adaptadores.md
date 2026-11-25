@@ -1,4 +1,4 @@
-# ADR 006 — integração por fábrica explícita e homologação real
+# ADR 007 — integração por fábrica explícita e homologação real
 
 Data: 24/10/2026. Estado: infraestrutura local implementada; agentes pendentes.
 Responsáveis pela revisão: Backend, Hermes, LangGraph, Infra e Metodologia.

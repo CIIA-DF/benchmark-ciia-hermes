@@ -6,7 +6,7 @@ Escopo: F1 do [plano vigente](../02-arquitetura/backend-plano-blocos.md), na wor
 
 A inspeção confirmou que consultar_processo já propaga o UUID físico da fronteira HTTP ao ToolService pelo F0. Reserva lógica ocorre antes do domínio; leitura/validação continua protegida por T1/T1-R. Não foi reproduzida nova falha de negócio que justifique alterar leitura, contrato ou cliente. Conforme o plano, esta entrega acrescenta aceite integrado específico e documentação, preservando a implementação funcional.
 
-Arquivo de código novo: [test_f1.py](../../tests/backend/test_f1.py), com oito cenários HTTP/banco. Nenhum arquivo de produção, schema, dependência, rota, cabeçalho ou migração foi alterado no F1. O rastreamento vem de [F0](validacao-f0.md)/[ADR 008](../05-decisoes/008-tentativas-fisicas-tools.md); comportamento de domínio vem de [T1](validacao-t1-2026-10-28.md) e [T1-R](validacao-t1-r.md).
+Arquivo de código novo: [test_f1.py](../../tests/backend/test_f1.py), com oito cenários HTTP/banco. Nenhum arquivo de produção, schema, dependência, rota, cabeçalho ou migração foi alterado no F1. O rastreamento vem de [F0](validacao-f0.md)/[ADR 009](../05-decisoes/009-tentativas-fisicas-tools.md); comportamento de domínio vem de [T1](validacao-t1-2026-10-28.md) e [T1-R](validacao-t1-r.md).
 
 ## Workflow, contratos e consumidores
 

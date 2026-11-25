@@ -1,5 +1,7 @@
 # Contratos v0.3 — backend, tools e agentes
 
+> Consolidação D (31/10/2026): [referência vigente por endpoint](../docs/02-arquitetura/backend-api-atual.md) e [estado de implementação/verificação/liberação](../docs/04-operacoes/backend-estado-atual.md). O conteúdo abaixo preserva o histórico incremental de compatibilidade; quotas, fases físicas, erros e versões atuais estão consolidados na referência vigente.
+
 Fontes executáveis: [models.py](models.py) e [execution.py](execution.py).
 A API publica OpenAPI em `/openapi.json` e documentação em `/docs`.
 Pydantic rejeita campos extras e entradas inválidas sem ecoar seu conteúdo.
@@ -117,6 +119,13 @@ Todas usam `POST /tools/NOME` e devolvem o contexto autenticado.
 | `registrar_pendencia` | `PendencyInput`. | `WriteReceipt` confirmado. |
 | `salvar_minuta` | `WriteInput`. | `WriteReceipt` confirmado. |
 
+O catálogo gerado por `tool_catalog()` inclui descrições de uso e dos argumentos
+visíveis ao modelo; os campos de `ToolContext` são retirados desse schema e
+fornecidos pelo contexto autenticado. Descrições também aparecem no OpenAPI.
+Elas orientam consumidores, mas a entrega ao modelo depende dos adaptadores reais,
+ainda não homologados. A alteração de metadados de schema requer revisão de
+Backend, Documentos, Hermes, LangGraph e Metodologia antes da integração.
+
 A busca atual é substring literal, com filtros aplicados antes do limite.
 Não há recuperação vetorial nesta entrega. Resultado vazio é 200 e não
 comprova ausência no processo original. Checklist não importado gera 404.
@@ -163,7 +172,7 @@ eventos devem manter suas chaves originais ao repetir a chamada.
 
 ## v0.3 — rastreio e orçamento das tools (25/10/2026)
 
-Adições opcionais, descritas no [ADR 007](../docs/05-decisoes/007-rastreio-orcamento-tools.md):
+Adições opcionais, descritas no [ADR 008](../docs/05-decisoes/008-rastreio-orcamento-tools.md):
 cabeçalho `X-Tool-Call-Id` nas seis tools; código `budget_exceeded` (409) em `ToolError`;
 evento SSE `tool` com `tool_call_id`, `status`, `code` e `replayed`; histórico de cada
 tentativa no servidor; `AsyncToolClient.calls` para compor `ExperimentRun.tool_calls`.
@@ -303,7 +312,7 @@ client_received permanece null. Legado não recebe backfill e tool_call_history
 continua um ledger de compatibilidade de estágios, sem precisão física presumida.
 Nenhum endpoint/schema público mudou. Backend, agentes e Metodologia devem revisar
 antes de integrar; adoção ampla/exportação permanecem nos blocos próprios.
-[ADR 008](../docs/05-decisoes/008-tentativas-fisicas-tools.md) e [evidências F0](../docs/04-operacoes/validacao-f0.md).
+[ADR 009](../docs/05-decisoes/009-tentativas-fisicas-tools.md) e [evidências F0](../docs/04-operacoes/validacao-f0.md).
 
 ## F1 — consultar_processo com rastreamento físico
 

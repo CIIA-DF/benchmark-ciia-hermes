@@ -6,7 +6,7 @@ F3 do [plano vigente](../02-arquitetura/backend-plano-blocos.md). Worktree ofici
 
 Integração existente de T3 com F0 preservada. Não foi reproduzida nova falha funcional. Alterações: nove testes integrados e documentação. Código de produção, modelos, OpenAPI e migrações permanecem iguais.
 
-Fontes: [T3](validacao-t3.md), [F0](validacao-f0.md) e [ADR 008](../05-decisoes/008-tentativas-fisicas-tools.md).
+Fontes: [T3](validacao-t3.md), [F0](validacao-f0.md) e [ADR 009](../05-decisoes/009-tentativas-fisicas-tools.md).
 
 ## Workflow e contratos
 

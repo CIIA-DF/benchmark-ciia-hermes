@@ -15,6 +15,13 @@ logger = logging.getLogger(__name__)
 
 
 class ToolTracking:
+    """Registra requisições físicas e fases, distintas do vínculo da chamada lógica.
+
+    started precede o efeito; effect_confirmed registra artefato ou replay;
+    completed, failed e interrupted registram o encerramento observado no servidor.
+    Resposta preparada não comprova recebimento pelo cliente.
+    """
+
     def __init__(self, engine):
         self.engine = engine
 

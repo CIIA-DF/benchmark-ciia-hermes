@@ -91,21 +91,27 @@ from services.backend.auth import authenticate
 from services.backend.errors import ToolFailure
 from services.backend.execution import ExecutionService
 from services.backend.storage import make_engine
-engine = make_engine(sys.argv[1])
+engine = make_engine(os.environ["SYNTHETIC_SSE_DATABASE_URL"])
 try:
     actor = authenticate(engine, os.environ["SYNTHETIC_SSE_AUTH"])
-    ExecutionService(engine).open_stream(actor, sys.argv[2])
+    ExecutionService(engine).open_stream(actor, sys.argv[1])
     print(json.dumps({"status": 200}))
 except ToolFailure as exc:
     print(json.dumps({"status": exc.status}))
 finally:
     engine.dispose()
 """
-    env = {**os.environ, "SYNTHETIC_SSE_AUTH": client.operator_headers["Authorization"]}
+    # str(engine.url) troca a senha por "***"; com PostgreSQL o subprocesso precisa da URL
+    # completa, que vai pelo ambiente e não pela linha de comando.
+    env = {
+        **os.environ,
+        "SYNTHETIC_SSE_AUTH": client.operator_headers["Authorization"],
+        "SYNTHETIC_SSE_DATABASE_URL": engine.url.render_as_string(hide_password=False),
+    }
 
     def open_one(_):
         completed = subprocess.run(
-            [sys.executable, "-c", code, str(engine.url), run["run_id"]],
+            [sys.executable, "-c", code, run["run_id"]],
             env=env,
             capture_output=True,
             text=True,

@@ -1,0 +1,231 @@
+diff --git a/agents/hermes/adapter.py b/agents/hermes/adapter.py
+index 54bae14..70138d0 100644
+--- a/agents/hermes/adapter.py
++++ b/agents/hermes/adapter.py
+@@ -45,7 +45,11 @@ TOKEN_PRICES_PER_MILLION = {
+ 
+ 
+ class HermesAdapter(AgentAdapter):
+-    def __init__(self):
++    def __init__(self, tool_client=None, metadata: dict | None = None):
++        # tool_client: cliente injetado pela RunBridge da v0.2 (token e reserva do worker).
++        # metadata: task_id, split e repetition da reserva (agents.compat.task_fields).
++        self.tool_client = tool_client
++        self.metadata = dict(metadata or {})
+         self.final_response = ""
+ 
+     def run(
+@@ -58,6 +62,10 @@ class HermesAdapter(AgentAdapter):
+         repetition: int = 1,
+     ) -> ExperimentRun:
+         self.final_response = ""
++        # Na RunBridge, a reserva do servidor define tarefa, divisão e repetição.
++        task_id = self.metadata.get("task_id", task_id)
++        split = self.metadata.get("split", split)
++        repetition = self.metadata.get("repetition", repetition)
+         config = _model_config_from_environment()
+         started_at = datetime.now(UTC)
+         started = time.perf_counter()
+@@ -66,7 +74,9 @@ class HermesAdapter(AgentAdapter):
+             {"role": "user", "content": task},
+         ]
+         backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
+-        tool_client = ToolClient(backend_url)
++        tool_client = (
++            self.tool_client if self.tool_client is not None else ToolClient(backend_url)
++        )
+         tool_calls: list[ToolCallRecord] = []
+         persisted_artifact_ids: list[str] = []
+         input_tokens = 0
+diff --git a/agents/hermes/bridge.py b/agents/hermes/bridge.py
+new file mode 100644
+index 0000000..cb4671b
+--- /dev/null
++++ b/agents/hermes/bridge.py
+@@ -0,0 +1,10 @@
++"""Fábrica do worker v0.2 para o Hermes: ``--adapter agents.hermes.bridge:adapter``."""
++
++from agents.compat import RunBridge, task_fields
++from agents.hermes.adapter import HermesAdapter
++
++
++def adapter():
++    return RunBridge(
++        lambda tools, execution: HermesAdapter(tool_client=tools, metadata=task_fields(execution))
++    )
+diff --git a/tests/hermes/test_bridge_v02.py b/tests/hermes/test_bridge_v02.py
+new file mode 100644
+index 0000000..35c9867
+--- /dev/null
++++ b/tests/hermes/test_bridge_v02.py
+@@ -0,0 +1,170 @@
++"""Conferência cruzada K: HermesAdapter (team/hermes + patch proposto) pela RunBridge v0.2.
++
++LLM falso (sem rede); worker, tools autenticadas, /runs/{id}/result e exportação reais em
++SQLite. Não homologa o Hermes com modelo real.
++"""
++
++import json
++import types
++from uuid import uuid4
++
++import httpx
++import pytest
++from fastapi.testclient import TestClient
++
++import agents.hermes.adapter as hermes_adapter
++from agents.interface import ModelConfig
++from contracts.catalog import openai_tools
++from contracts.execution import ClaimedRun
++from pipelines.documents.ingest import chunk_document
++from scripts.checklist import import_checklist
++from services.backend.app import create_app
++from services.backend.auth import provision
++from services.backend.storage import ingest
++from tests.backend.test_compat import drive
++
++
++def fake_llm(monkeypatch, responses, seen):
++    class FakeLLM:
++        def __init__(self, **kwargs):
++            pass
++
++        def __enter__(self):
++            return self
++
++        def __exit__(self, *exc):
++            return False
++
++        def post(self, url, **kwargs):
++            assert url.endswith("/chat/completions"), url
++            seen.append(kwargs["json"])
++            return httpx.Response(
++                200, json=responses.pop(0), request=httpx.Request("POST", url)
++            )
++
++    module = types.ModuleType("httpx_hermes_fake")
++    module.__dict__.update(httpx.__dict__)
++    module.Client = FakeLLM
++    monkeypatch.setattr(hermes_adapter, "httpx", module)
++    monkeypatch.setattr(
++        hermes_adapter,
++        "_model_config_from_environment",
++        lambda: ModelConfig(
++            base_url="http://llm.invalid/v1", model="model-test", api_key="x", timeout_seconds=5
++        ),
++    )
++
++
++def llm_round(calls=None, content=None, usage=(10, 5)):
++    message = {"role": "assistant", "content": content}
++    if calls:
++        message["tool_calls"] = [
++            {
++                "id": f"call-{i}",
++                "type": "function",
++                "function": {"name": name, "arguments": json.dumps(args)},
++            }
++            for i, (name, args) in enumerate(calls)
++        ]
++    return {
++        "choices": [{"message": message}],
++        "usage": {"prompt_tokens": usage[0], "completion_tokens": usage[1]},
++    }
++
++
++@pytest.fixture
++def hermes_client(engine, corpus, monkeypatch):
++    monkeypatch.setenv("ENABLED_EXECUTORS", "simulation,hermes")
++    process, document = corpus
++    ingest(engine, process, document, chunk_document(document))
++    import_checklist(
++        engine,
++        process.process_id,
++        process.corpus_version,
++        process.requirements_version,
++        [{"requirement_id": "REQ-K-001", "description": "Fictício", "source": "Teste"}],
++    )
++    suffix, operator, worker = uuid4().hex, uuid4().hex, uuid4().hex
++    grants = [(process.process_id, process.corpus_version)]
++    provision(engine, "operator-" + suffix, operator, "operator", grants, can_write=True)
++    provision(
++        engine, "worker-hermes-" + suffix, worker, "worker", grants, can_write=True,
++        executor="hermes",
++    )
++    with TestClient(create_app(engine)) as client:
++        client.operator_headers = {"Authorization": "Bearer " + operator}
++        client.worker_headers = {"Authorization": "Bearer " + worker}
++        yield client, process
++
++
++def claim(client, process, repetition):
++    response = client.post(
++        "/runs",
++        headers=client.operator_headers,
++        json={
++            "process_id": process.process_id,
++            "corpus_version": process.corpus_version,
++            "requirements_version": process.requirements_version,
++            "executor": "hermes",
++            "task": "Tarefa fictícia K",
++            "task_id": "DEV-001",
++            "repetition": repetition,
++            "idempotency_key": str(uuid4()),
++        },
++    )
++    assert response.status_code == 202, response.text
++    reserved = client.post(
++        "/runs/claim", headers=client.worker_headers, json={"executor": "hermes"}
++    )
++    assert reserved.status_code == 200, reserved.text
++    return ClaimedRun.model_validate(reserved.json())
++
++
++def test_patched_hermes_runs_through_bridge_with_reservation_metadata(
++    hermes_client, monkeypatch
++):
++    from agents.hermes.bridge import adapter
++
++    client, process = hermes_client
++    seen = []
++    fake_llm(
++        monkeypatch,
++        [
++            llm_round(
++                [("consultar_processo", {}), ("ler_documento", {"document_id": "DOC-NAO-EXISTE"})]
++            ),
++            llm_round(content="Resposta sintética K."),
++        ],
++        seen,
++    )
++    execution = claim(client, process, repetition=2)
++    stored = drive(client, execution, adapter())
++    assert stored["status"] == "succeeded", stored
++    report = stored["result"]["experiment"]
++    assert report["executor"] == "hermes"
++    assert (report["task_id"], report["split"], report["repetition"]) == (
++        "DEV-001",
++        "development",
++        2,
++    )
++    assert [c["tool"] for c in report["tool_calls"]] == ["consultar_processo", "ler_documento"]
++    assert [c["status"] for c in report["tool_calls"]] == ["ok", "error"]
++    assert (report["input_tokens"], report["output_tokens"]) == (20, 10)
++    assert stored["result"]["answer"] == "Resposta sintética K."
++    # Hermes ainda envia o próprio catálogo ao modelo (TOOLS de agents/hermes/tools.py).
++    sent = {t["function"]["name"]: t["function"]["description"] for t in seen[0]["tools"]}
++    shared = {t["function"]["name"]: t["function"]["description"] for t in openai_tools()}
++    assert set(sent) == set(shared)
++    print("descricoes_divergentes", sorted(k for k in shared if sent[k] != shared[k]))
++
++
++def test_unpatched_hermes_cannot_build_v02_tool_client(hermes_client, monkeypatch):
++    from agents.compat import RunBridge
++
++    client, process = hermes_client
++    fake_llm(monkeypatch, [llm_round([("consultar_processo", {})])], [])
++    execution = claim(client, process, repetition=1)
++    # Sem cliente injetado, o adaptador cria ToolClient(backend_url), assinatura da v0.1.
++    stored = drive(client, execution, RunBridge(lambda tools, _: hermes_adapter.HermesAdapter()))
++    assert stored["status"] == "failed"
++    assert stored["result"]["error_code"] == "adapter_error"

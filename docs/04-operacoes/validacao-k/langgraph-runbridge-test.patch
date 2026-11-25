@@ -1,0 +1,136 @@
+diff --git a/tests/test_langgraph_bridge_v02.py b/tests/test_langgraph_bridge_v02.py
+new file mode 100644
+index 0000000..9fb4406
+--- /dev/null
++++ b/tests/test_langgraph_bridge_v02.py
+@@ -0,0 +1,130 @@
++"""Conferência cruzada K: LangGraphAdapter (856ff06) pela RunBridge + ExperimentSink na v0.2.
++
++Modelo falso (sem rede); worker, tools autenticadas, /experiments e /result reais em SQLite.
++"""
++
++from uuid import uuid4
++
++import pytest
++from fastapi.testclient import TestClient
++from langchain_core.messages import AIMessage
++
++from agents.compat import RunBridge, task_fields
++from agents.interface import ModelConfig
++from agents.langgraph.adapter import LangGraphAdapter, RunMetadata
++from contracts.catalog import openai_tools
++from contracts.execution import ClaimedRun
++from pipelines.documents.ingest import chunk_document
++from scripts.checklist import import_checklist
++from services.backend.app import create_app
++from services.backend.auth import provision
++from services.backend.storage import ingest
++from tests.backend.test_compat import drive
++
++
++class FakeModel:
++    def __init__(self, outputs):
++        self.outputs = iter(outputs)
++        self.tools = None
++
++    def bind_tools(self, tools):
++        self.tools = tools
++        return self
++
++    def invoke(self, messages):
++        return next(self.outputs)
++
++
++@pytest.fixture
++def lg_client(engine, corpus, monkeypatch):
++    monkeypatch.setenv("ENABLED_EXECUTORS", "simulation,langgraph")
++    process, document = corpus
++    ingest(engine, process, document, chunk_document(document))
++    import_checklist(
++        engine,
++        process.process_id,
++        process.corpus_version,
++        process.requirements_version,
++        [{"requirement_id": "REQ-K-001", "description": "Fictício", "source": "Teste"}],
++    )
++    suffix, operator, worker = uuid4().hex, uuid4().hex, uuid4().hex
++    grants = [(process.process_id, process.corpus_version)]
++    provision(engine, "operator-" + suffix, operator, "operator", grants, can_write=True)
++    provision(
++        engine, "worker-lg-" + suffix, worker, "worker", grants, can_write=True,
++        executor="langgraph",
++    )
++    with TestClient(create_app(engine)) as client:
++        client.operator_headers = {"Authorization": "Bearer " + operator}
++        client.worker_headers = {"Authorization": "Bearer " + worker}
++        yield client, process
++
++
++def test_langgraph_adapter_through_bridge_sink_and_experiments(lg_client):
++    client, process = lg_client
++    response = client.post(
++        "/runs",
++        headers=client.operator_headers,
++        json={
++            "process_id": process.process_id,
++            "corpus_version": process.corpus_version,
++            "requirements_version": process.requirements_version,
++            "executor": "langgraph",
++            "task": "Tarefa fictícia K",
++            "task_id": "DEV-001",
++            "repetition": 3,
++            "idempotency_key": str(uuid4()),
++        },
++    )
++    assert response.status_code == 202, response.text
++    claim = client.post("/runs/claim", headers=client.worker_headers, json={"executor": "langgraph"})
++    assert claim.status_code == 200, claim.text
++    execution = ClaimedRun.model_validate(claim.json())
++    model = FakeModel(
++        [
++            AIMessage(
++                content="",
++                tool_calls=[{"name": "consultar_processo", "args": {}, "id": "c1"}],
++            ),
++            AIMessage(content="Resposta sintética K do LangGraph."),
++        ]
++    )
++
++    def factory(tools, sink, claimed):
++        return LangGraphAdapter(
++            model=model,
++            model_config=ModelConfig(
++                base_url="https://example.invalid",
++                model="synthetic-test-model",
++                api_key="x",
++                timeout_seconds=10,
++            ),
++            tool_client=tools,
++            sink=sink,
++            metadata=RunMetadata(
++                **task_fields(claimed),
++                code_commit="k-test",
++                harness_version="k",
++                adapter_version="856ff06",
++                endpoint_id="synthetic",
++            ),
++        )
++
++    stored = drive(client, execution, RunBridge(factory))
++    assert stored["status"] == "succeeded", stored
++    report = stored["result"]["experiment"]
++    assert (report["executor"], report["task_id"], report["repetition"]) == (
++        "langgraph",
++        "DEV-001",
++        3,
++    )
++    assert [c["tool"] for c in report["tool_calls"]] == ["consultar_processo"]
++    revisions = client.get(
++        f"/experiments/{execution.run_id}/revisions", headers=client.operator_headers
++    )
++    assert revisions.status_code == 200, revisions.text
++    assert len(revisions.json()) >= 1
++    assert revisions.json()[-1] == report
++    # O grafo do 856ff06 expõe só 3 tools com descrições próprias.
++    bound = sorted(t.name for t in model.tools)
++    print("tools_langgraph", bound, "catalogo", sorted(t["function"]["name"] for t in openai_tools()))

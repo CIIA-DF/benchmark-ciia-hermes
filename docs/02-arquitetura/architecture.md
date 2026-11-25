@@ -12,6 +12,12 @@ Alembic controla o schema. As seis tools exigem worker autenticado e uma
 reserva ativa de execução. Checklists são importados administrativamente;
 pendências e minutas usam transação, evidências e idempotência.
 As concessões atuais do proprietário e do worker limitam cada operação.
+Migrações Alembic 0001–0010 cobrem corpus, identidades e concessões, execuções,
+chamadas lógicas e tentativas físicas, trilha administrativa e o registro
+experimental `/experiments` com revisões ([ADR 011](../05-decisoes/011-registro-experimental-revisoes.md));
+`GET /ready` confirma o schema na revisão esperada. Referência vigente das
+operações: [API v0.2](backend-api-atual.md); estado e evidências:
+[índice do backend](../04-operacoes/backend-estado-atual.md).
 
 O portal local representa um operador configurado no servidor e mantém
 credenciais fora do navegador. Uso remoto depende de identidade individual

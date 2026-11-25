@@ -1,5 +1,17 @@
 # Estado do projeto e evidências
 
+## Backend & Tools — 22/11/2026
+
+Estado vigente da `team/backend`: [índice de estado e evidências](../04-operacoes/backend-estado-atual.md).
+Seis tools autenticadas e 26 operações HTTP ([referência](../02-arquitetura/backend-api-atual.md)),
+identidade administrativa auditada (I), exportação canônica JSONL v2 (E), registro
+experimental `/experiments` portado do LangGraph (J, [ADR 011](../05-decisoes/011-registro-experimental-revisoes.md)),
+`GET /ready` e migrações Alembic 0001–0010. Suíte de 21/11/2026: 514 testes aprovados em
+SQLite; em PostgreSQL 17, 498 aprovados e 16 falhas analisadas
+([relatório](../04-operacoes/validacao-suite-2026-11-21.md)). Hermes e LangGraph com LLM
+real, homologação em PostgreSQL/infraestrutura (H) e indicadores (O) continuam pendentes.
+As seções abaixo são históricas.
+
 ## Entrega Backend & Tools — 24/10/2026
 
 Implementação local atual na branch `team/backend`, com seis tools, API, memória,
@@ -103,7 +115,7 @@ PDF/OCR, recuperação semântica, requisitos institucionais validados, autentic
 
 ## Andamento das frentes e branches de desenvolvimento (Novembro/2026)
 
-- **Backend (`team/backend`)**: Linha de base v0.2 desenvolvida com implementação e auditoria das 6 tools HTTP (`consultar_processo`, `buscar_documentos`, `ler_documento`, `consultar_requisitos`, `registrar_pendencia`, `salvar_minuta`), orquestrador de execuções, streaming de chat via SSE e especificação OpenAPI 3.0 (`services/backend/openapi.yaml`).
+- **Backend (`team/backend`)**: Linha de base v0.2 desenvolvida com implementação e auditoria das 6 tools HTTP (`consultar_processo`, `buscar_documentos`, `ler_documento`, `consultar_requisitos`, `registrar_pendencia`, `salvar_minuta`), orquestrador de execuções, streaming de chat via SSE e especificação OpenAPI 3.0 (`services/backend/openapi.yaml`). Em 21–22/11: identidade administrativa, exportação JSONL v2, `/experiments` com revisões (port do `task/langgraph-grafo`), `GET /ready` e `RunBridge` para adaptadores `run()`; detalhes no [estado atual](../04-operacoes/backend-estado-atual.md).
 - **Metodologia / Avaliação (`team/evaluation`)**: Conclusão do conjunto de 6 tarefas piloto DEV-001 a DEV-006 em `evaluation/tasks.json`, runner de avaliação (`runner.py`), métricas, rubricas e protocolo formal de avaliação cega (`blind_review.md`).
 - **LangGraph (`task/langgraph-grafo`)**: Implementação do grafo executável com `StateGraph` em `agents/langgraph/graph.py` e documentação de arquitetura visual.
 - **Hermes (`feat/hermes` e `team/hermes`)**: Implementação do adaptador do agente Hermes com injeção de `ToolContext` e testes unitários.

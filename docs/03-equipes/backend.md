@@ -37,7 +37,7 @@ Use `uv run --locked python -m scripts.dev check` antes do PR.
 ## Entrega local e próximas integrações
 
 [PRD](../02-arquitetura/backend-prd.md), [TDD](../02-arquitetura/backend-tdd.md),
-[referência da API](../02-arquitetura/backend-api.md) e [handoff dos agentes](../04-operacoes/integracao-agentes.md) descrevem a entrega.
+[referência vigente da API](../02-arquitetura/backend-api-atual.md), [estado atual](../04-operacoes/backend-estado-atual.md) e [handoff dos agentes](../04-operacoes/integracao-agentes.md) descrevem a entrega.
 Demonstração das seis tools: `uv run --locked python -m scripts.tools_demo`.
 
 ## Primeiras tarefas (histórico v0.1)

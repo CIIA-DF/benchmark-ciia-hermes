@@ -32,12 +32,14 @@ from contracts.execution import (
     HealthResponse,
     HeartbeatResponse,
     MessageInput,
+    ReadinessResponse,
     RunInput,
     RunResponse,
 )
 from contracts.models import (
     ArtifactResponse,
     DocumentResult,
+    ExperimentRun,
     PendencyInput,
     Process,
     ProcessResult,
@@ -53,7 +55,9 @@ from contracts.models import (
 from services.backend.auth import authenticate, bootstrap
 from services.backend.errors import ToolFailure, fail
 from services.backend.execution import TERMINAL, ExecutionService
+from services.backend.experiments import ExperimentRecords
 from services.backend.http_boundary import HTTPBoundary
+from services.backend.migrate import schema_revisions
 from services.backend.storage import initialize, make_engine
 from services.backend.streaming import LeasedStreamingResponse
 from services.backend.tools import CALL_ID, ToolService
@@ -100,6 +104,7 @@ SSE_EXAMPLE = (
 def create_app(engine: Engine | None = None) -> FastAPI:
     database = engine if engine is not None else make_engine()
     service = ExecutionService(database)
+    experiments = ExperimentRecords(service)
     tools = ToolService(service)
 
     @asynccontextmanager
@@ -274,6 +279,29 @@ def create_app(engine: Engine | None = None) -> FastAPI:
         return HealthResponse()
 
     @app.get(
+        "/ready",
+        response_model=ReadinessResponse,
+        tags=["Saúde"],
+        summary="Verifica se o schema do banco está na revisão esperada",
+        description="Compara a revisão Alembic aplicada com a head do código, sem migrar. "
+        "Diferença ou banco sem controle de versão retorna 503 storage_unavailable retryable "
+        "(por exemplo, migração ainda em curso). `/health` continua só testando a conexão. "
+        "Não verifica fila, workers, modelos ou inferência.",
+        responses=errors(503),
+    )
+    def ready() -> ReadinessResponse:
+        with database.connect() as conn:
+            current, head = schema_revisions(conn)
+        if current != head:
+            fail(
+                503,
+                "storage_unavailable",
+                "Schema do banco fora da revisão esperada.",
+                retryable=True,
+            )
+        return ReadinessResponse(schema_revision=head)
+
+    @app.get(
         "/capabilities",
         response_model=CapabilitiesResponse,
         tags=["Operador"],
@@ -431,6 +459,60 @@ def create_app(engine: Engine | None = None) -> FastAPI:
     )
     def finish_run(run_id: UUID, value: AgentResult, request: Request):
         return service.finish(actor(request), str(run_id), lease(request), value)
+
+    # Registro experimental com revisões; port de task/langgraph-grafo (856ff06, João Enomoto).
+    @app.post(
+        "/experiments",
+        response_model=ExperimentRun,
+        tags=["Experimentos"],
+        summary="Registra a primeira revisão do ExperimentRun do run reservado",
+        description="Somente o worker com a reserva do run de benchmark. `parameters.revision` "
+        "ausente vira 1; outro valor retorna 409. Reenvio idêntico é idempotente, inclusive "
+        "após o encerramento; conteúdo diferente retorna 409 idempotency_conflict. Contexto, "
+        "tarefa e executor devem ser os da reserva, e `tool_calls` o histórico observado. "
+        "Registro não comprova sucesso: `verified_success` e `evaluator` ficam nulos.",
+        responses=errors(401, 403, 409, 422, 500, 503),
+    )
+    def record_experiment(run: ExperimentRun, request: Request):
+        return experiments.save(actor(request), lease(request), run)
+
+    @app.get(
+        "/experiments/{run_id}",
+        response_model=ExperimentRun,
+        tags=["Experimentos"],
+        summary="Relê a revisão atual do ExperimentRun",
+        description="Operador dono do run ou worker do mesmo executor com concessão do "
+        "processo. Run sem registro ou fora do escopo retorna 404 not_found.",
+        responses=errors(401, 403, 404, 422, 503),
+    )
+    def read_experiment(run_id: UUID, request: Request):
+        return experiments.get(actor(request), str(run_id))
+
+    @app.put(
+        "/experiments/{run_id}",
+        response_model=ExperimentRun,
+        tags=["Experimentos"],
+        summary="Acrescenta revisão sequencial ao ExperimentRun",
+        description="Somente o worker com a reserva ativa. A revisão deve ser a atual + 1 e "
+        "não pode alterar identidade, protocolo, orçamento nem avaliação externa, nem reduzir "
+        "latência, tokens ou chamadas já registradas: 409 idempotency_conflict. Caminho "
+        "diferente do corpo retorna 422. Run encerrado só aceita o reenvio idêntico.",
+        responses=errors(401, 403, 409, 422, 500, 503),
+    )
+    def revise_experiment(run_id: UUID, run: ExperimentRun, request: Request):
+        return experiments.update(actor(request), lease(request), str(run_id), run)
+
+    @app.get(
+        "/experiments/{run_id}/revisions",
+        response_model=list[ExperimentRun],
+        tags=["Experimentos"],
+        summary="Histórico de revisões do ExperimentRun",
+        description="Mesmo escopo de leitura de `GET /experiments/{run_id}`. Run autorizado "
+        "sem registro retorna lista vazia.",
+        responses=errors(401, 403, 404, 422, 503),
+    )
+    def experiment_history(run_id: UUID, request: Request):
+        return experiments.revisions(actor(request), str(run_id))
 
     @app.get(
         "/runs/{run_id}/events",

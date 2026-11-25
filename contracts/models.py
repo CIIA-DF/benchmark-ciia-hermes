@@ -279,7 +279,24 @@ class ExperimentRun(ToolContext):
     evaluator: str | None
 
 
+# Revisão de um ExperimentRun sem parameters.revision (ADR 011): o servidor grava como 1.
+FIRST_REVISION = 1
+
+
+def experiment_record(run: ExperimentRun) -> dict:
+    """JSON comparável de um ExperimentRun, com ``parameters.revision`` padrão 1 (ADR 011).
+
+    Regra única para servidor (``/experiments`` e resultado do run), ``ExperimentRunClient`` e
+    ``RunBridge``: um relatório sem ``revision`` equivale à revisão 1 gravada.
+    """
+    value = run.model_dump(mode="json")
+    value["parameters"].setdefault("revision", FIRST_REVISION)
+    return value
+
+
 class PhysicalToolPhase(Contract):
+    """Fase registrada para uma requisição física; não comprova entrega ao cliente."""
+
     phase: Literal["started", "effect_confirmed", "completed", "failed", "interrupted"]
     recorded_at: StrictFloat
     artifact_id: UUID | None = None

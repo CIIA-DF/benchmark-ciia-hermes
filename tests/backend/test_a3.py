@@ -219,6 +219,11 @@ def test_queue_configuration_is_positive_and_default_is_twenty(engine, monkeypat
             ExecutionService(engine)
 
 
+def test_enabled_executors_ignore_spaces_and_empty_items(engine, monkeypatch):
+    monkeypatch.setenv("ENABLED_EXECUTORS", " simulation, hermes ,langgraph,,")
+    assert ExecutionService(engine).enabled == {"simulation", "hermes", "langgraph"}
+
+
 def test_one_owner_cannot_multiply_quota_by_using_another_granted_process(client, corpus, engine):
     from pipelines.documents.ingest import chunk_document
     from services.backend.storage import ingest

@@ -48,6 +48,52 @@ paths:
               schema:
                 type: string
       security: []
+  /ready:
+    get:
+      tags:
+      - Saúde
+      summary: Verifica se o schema do banco está na revisão esperada
+      description: Compara a revisão Alembic aplicada com a head do código, sem migrar. Diferença ou banco
+        sem controle de versão retorna 503 storage_unavailable retryable (por exemplo, migração ainda
+        em curso). `/health` continua só testando a conexão. Não verifica fila, workers, modelos ou inferência.
+      operationId: ready
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReadinessResponse'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
   /capabilities:
     get:
       tags:
@@ -1179,6 +1225,347 @@ paths:
       security:
       - BearerAuth: []
         RunToken: []
+  /experiments:
+    post:
+      tags:
+      - Experimentos
+      summary: Registra a primeira revisão do ExperimentRun do run reservado
+      description: 'Somente o worker com a reserva do run de benchmark. `parameters.revision` ausente
+        vira 1; outro valor retorna 409. Reenvio idêntico é idempotente, inclusive após o encerramento;
+        conteúdo diferente retorna 409 idempotency_conflict. Contexto, tarefa e executor devem ser os
+        da reserva, e `tool_calls` o histórico observado. Registro não comprova sucesso: `verified_success`
+        e `evaluator` ficam nulos.'
+      operationId: recordExperiment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRun'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /experiments/{run_id}:
+    get:
+      tags:
+      - Experimentos
+      summary: Relê a revisão atual do ExperimentRun
+      description: Operador dono do run ou worker do mesmo executor com concessão do processo. Run sem
+        registro ou fora do escopo retorna 404 not_found.
+      operationId: readExperiment
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+    put:
+      tags:
+      - Experimentos
+      summary: Acrescenta revisão sequencial ao ExperimentRun
+      description: 'Somente o worker com a reserva ativa. A revisão deve ser a atual + 1 e não pode alterar
+        identidade, protocolo, orçamento nem avaliação externa, nem reduzir latência, tokens ou chamadas
+        já registradas: 409 idempotency_conflict. Caminho diferente do corpo retorna 422. Run encerrado
+        só aceita o reenvio idêntico.'
+      operationId: reviseExperiment
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExperimentRun'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperimentRun'
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '409':
+          description: Conflito de estado, idempotência, versão ou orçamento (`conflict`, `idempotency_conflict`,
+            `version_mismatch`, `budget_exceeded`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Saída inválida (`invalid_response`) ou falha interna (`internal_error`), sem detalhes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
+  /experiments/{run_id}/revisions:
+    get:
+      tags:
+      - Experimentos
+      summary: Histórico de revisões do ExperimentRun
+      description: Mesmo escopo de leitura de `GET /experiments/{run_id}`. Run autorizado sem registro
+        retorna lista vazia.
+      operationId: experimentHistory
+      parameters:
+      - name: run_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          title: Run Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExperimentRun'
+                title: Response Experimenthistory
+        '401':
+          description: Credencial ausente ou inválida (`unauthorized`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            WWW-Authenticate:
+              schema:
+                type: string
+              description: Bearer
+        '403':
+          description: Perfil, concessão de processo/corpus, reserva ou contexto incompatível (`forbidden`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '404':
+          description: Recurso inexistente ou fora do alcance do perfil (`not_found`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '422':
+          description: Entrada inválida ou limite excedido (`validation_error`, `context_limit`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '503':
+          description: Banco ou executor indisponível (`storage_unavailable`, `executor_unavailable`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '500':
+          description: Falha interna (internal_error) ou saída inválida (invalid_response).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '413':
+          description: Corpo acima de 1 MiB (payload_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+        '405':
+          description: Método não permitido (method_not_allowed); preserva Allow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolError'
+          headers:
+            Allow:
+              schema:
+                type: string
+      security:
+      - BearerAuth: []
   /artifacts/{artifact_id}:
     get:
       tags:
@@ -3031,6 +3418,22 @@ components:
       - requirements_version
       - document_id
       title: ReadInput
+    ReadinessResponse:
+      properties:
+        status:
+          type: string
+          const: ready
+          title: Status
+          default: ready
+        schema_revision:
+          type: string
+          title: Schema Revision
+      additionalProperties: false
+      type: object
+      required:
+      - schema_revision
+      title: ReadinessResponse
+      description: Banco na revisão de schema que o código espera; não verifica workers nem modelos.
     Requirement:
       properties:
         requirement_id:
@@ -3127,6 +3530,7 @@ components:
       - corpus_version
       - requirements_version
       title: RunContext
+      description: Escopo recebido do servidor para uma execução reservada.
     RunInput:
       properties:
         process_id:

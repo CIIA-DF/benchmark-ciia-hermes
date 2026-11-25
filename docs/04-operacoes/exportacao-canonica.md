@@ -25,6 +25,7 @@ Uma linha por run, ordenada por `created_at`, `run_id`. `export_version` é a st
 | `run_id`, `conversation_id`, `participant_id`, `kind`, `executor`, `context` | Identidade/contexto persistidos; participante vem da conversa por outer join |
 | `declared.status`, `declared.error_code`, `declared.sources` | Resultado submetido pelo worker quando existe `result_sha256`; sem essa evidência ficam `null`, inclusive timeout produzido pelo servidor |
 | `declared.experiment` | Metadados e chamadas declaradas de `ExperimentRun`, ou `null` se ausente; não é verdade metodológica |
+| `declared.experiment_revisions` | Desde 21/11/2026: revisões gravadas em `/experiments` ([ADR 011](../05-decisoes/011-registro-experimental-revisoes.md)), em ordem, com `revision`, `recorded_at` e os mesmos campos de `declared.experiment`; lista vazia se o worker não usou as rotas. Quando o resultado traz `experiment`, a última revisão coincide com ele. Um run `failed` ou `timed_out` pode ter revisões com `declared.experiment` nulo (o adaptador gravou e depois falhou); nesse caso a avaliação não deve presumir que os dois coincidem |
 | `observed.status`, `error_code`, timestamps | Estado persistido do run; não equivale ao estado HTTP de uma chamada |
 | `observed.latency_ms` | Diferença entre `finished_at` e `started_at`, vezes 1.000; `null` se faltar um extremo. Relógio de parede pode sofrer ajustes; não soma durações de tools paralelas |
 | `observed.task_metadata` | `task_id`, `split`, `repetition` registrados pelo servidor |
@@ -36,7 +37,7 @@ Uma linha por run, ordenada por `created_at`, `run_id`. `export_version` é a st
 | `history_precision` | Fonte `persisted_history`, legado `stages_not_physical_requests`, total de requisições desconhecido e exclusão explícita de tentativas sem run atribuível |
 | `content` | Presente apenas com opt-in; artefatos incluem ID junto ao payload para associação segura |
 
-`declared.experiment` preserva versão do registro, IDs/contexto, tarefa/split/repetição/executor, versões de código/harness/adaptador, modelo/endpoint, hash do prompt, início/latência declarados, chamadas, tokens/custo, sucesso declarado e IDs de artefatos declarados. `parameters` só aparece em `content.parameters`. Valores opcionais ausentes permanecem `null`; zeros realmente registrados continuam zero. A versão interna `ExperimentRun.contract_version=0.1` não muda.
+`declared.experiment` preserva versão do registro, IDs/contexto, tarefa/split/repetição/executor, versões de código/harness/adaptador, modelo/endpoint, hash do prompt, início/latência declarados, chamadas, tokens/custo, sucesso declarado e IDs de artefatos declarados. `parameters` só aparece em `content.parameters` (e, por revisão, em `content.revision_parameters`). Valores opcionais ausentes permanecem `null`; zeros realmente registrados continuam zero. A versão interna `ExperimentRun.contract_version=0.1` não muda.
 
 As tentativas físicas incluem UUID, método, ferramenta, run/ID lógico/hash atribuídos, início/fim, `response_state`, `http_status`, `code`, `client_received` e fases. Cada fase conserva nome, timestamp, artefato e replay. Ordem das fases é semântica: início, efeito e conclusão/falha/interrupção; não depende de relógios monotônicos.
 

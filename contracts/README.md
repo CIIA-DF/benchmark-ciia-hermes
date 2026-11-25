@@ -449,3 +449,31 @@ Mantém ID lógico, contratos e regras F; executor incompatível recebe 403. [Wo
 A0–A13 verificados por suíte completa de 390 testes em SQLite após os aceites individuais.
 [Workflow, campos/códigos públicos, limites e pendências](../docs/04-operacoes/validacao-a-fechamento.md).
 PostgreSQL e revisão das equipes afetadas permanecem pendentes para homologação global. Sem publicação ou aceite automático de integração.
+
+## I1 — consumo estável dos contratos
+
+ToolClient e AsyncToolClient preservam a mesma requisição durante retry e validam resposta contra o contexto/entrada capturados.
+Contratos públicos permanecem iguais; entrada mutada externamente não altera a operação em andamento.
+[Evidências I1](../docs/04-operacoes/validacao-i1.md).
+
+## I2 — identidades administrativas
+
+Bootstrap preserva perfis existentes. Provisionamento CLI cria por padrão; update/rotate são operações explícitas.
+Rotação preserva papel/executor/escrita/grants. Migração 0009 audita estados sem credenciais, sem DTO HTTP novo.
+[Evidências e compatibilidade I2](../docs/04-operacoes/validacao-i2.md).
+
+
+## Fechamento local do bloco I
+
+I1–I3 preservam os contratos funcionais das tools, reforçam clientes/identidade e delimitam transporte do portal.
+Suíte compartilhada de 454 casos aprovada; quatro casos acrescentados depois foram cobertos pelos aceites dirigidos finais.
+Não houve uma execução única de 458 casos. [Matriz, workflow e limites](../docs/04-operacoes/validacao-i-fechamento.md).
+PostgreSQL, Nginx/Compose e agentes reais permanecem para homologação. D, E, O e H continuam pendentes.
+
+## Exportação canônica v2 — 02/11/2026
+
+O [contrato de arquivo E](../docs/04-operacoes/exportacao-canonica.md) substitui a reconstrução de tools por SSE. Dados declarados, observados e avaliados são separados; chamadas, tentativas, fases, legado e artefatos mantêm suas unidades. Consumidores de export_version 1 precisam adaptar os caminhos documentados. Não muda API 0.3.0 nem ExperimentRun 0.1. Revisão das equipes consumidoras permanece manual.
+
+## Registro experimental com revisões — 21/11/2026
+
+Port do `task/langgraph-grafo` (`856ff06`, João Enomoto): `POST /experiments`, `GET /experiments/{run_id}`, `PUT /experiments/{run_id}` e `GET /experiments/{run_id}/revisions`, com o mesmo `ExperimentRun` 0.1 e as mesmas regras de revisão (`parameters.revision` sequencial; identidade, protocolo, orçamento e avaliação externa fixos; métricas não diminuem). Mudanças da v0.2: escrita só pelo worker com `X-Run-Token` do run de benchmark; leitura pelo operador dono ou por worker do mesmo executor com concessão; `tool_calls` de cada revisão igual ao histórico do servidor; resultado com `experiment` precisa trazer a última revisão. `ExperimentRunClient` mantém `save`/`update`/`get` e aceita `token`/`run_token`. Não muda `contract_version` 0.3 nem `ExperimentRun` 0.1. [ADR 011](../docs/05-decisoes/011-registro-experimental-revisoes.md). Revisão do LangGraph e da Metodologia pendente.

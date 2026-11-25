@@ -13,11 +13,13 @@ from pydantic import ValidationError
 from sqlalchemy import and_, delete, func, insert, or_, select, update
 from sqlalchemy.engine import Connection, RowMapping
 
+from contracts.execution import TERMINAL_STATUSES
 from contracts.models import ArtifactResponse, Process, Requirement, ToolContext
 from services.backend.artifact_integrity import validate_artifact
 from services.backend.auth import authenticate, authorize, token_hash
 from services.backend.corpus import CorpusRepository
 from services.backend.errors import ToolFailure, fail
+from services.backend.experiments import ExperimentRecords, canonical, check_scope
 from services.backend.hashing import digest
 from services.backend.result_integrity import validate_experiment_history
 from services.backend.schema import (
@@ -38,7 +40,7 @@ from services.backend.schema import (
 from services.backend.storage import processes
 from services.backend.tracking import ToolTracking
 
-TERMINAL = {"succeeded", "failed", "timed_out"}
+TERMINAL = TERMINAL_STATUSES
 MAX_EVENTS_PER_RUN = 20_000
 MAX_SSE_CONNECTIONS = 5
 SSE_LEASE_SECONDS = 30.0
@@ -64,7 +66,12 @@ class ExecutionService:
         self.max_run_seconds = int(os.getenv("RUN_TIMEOUT_SECONDS", "300"))
         self.queue_timeout_seconds = int(os.getenv("RUN_QUEUE_TIMEOUT_SECONDS", "300"))
         self.max_queued_per_operator = int(os.getenv("RUN_MAX_QUEUED_PER_OPERATOR", "20"))
-        self.enabled = set(os.getenv("ENABLED_EXECUTORS", "simulation").split(","))
+        # "hermes, langgraph" e vírgulas sobrando não podem desabilitar executores em silêncio.
+        self.enabled = {
+            name.strip()
+            for name in os.getenv("ENABLED_EXECUTORS", "simulation").split(",")
+            if name.strip()
+        }
         # Chamadas lógicas de tool por run; 0 mantém sem limite até a decisão da Metodologia.
         self.max_tool_calls = int(os.getenv("RUN_MAX_TOOL_CALLS", "0"))
         if (
@@ -770,15 +777,17 @@ class ExecutionService:
                 fail(422, "validation_error", "Resposta final inconsistente com o streaming.")
             if value.experiment:
                 report = value.experiment
-                if (
-                    report.model_dump(mode="json", include=set(row["context"])) != row["context"]
-                    or report.executor != row["executor"]
-                    or report.verified_success is not None
-                    or report.evaluator is not None
-                    or any(getattr(report, k) != v for k, v in row["task_metadata"].items())
-                ):
-                    fail(422, "validation_error", "Registro experimental incompatível.")
+                check_scope(row, report)
                 validate_experiment_history(conn, row, report)
+            latest = ExperimentRecords.latest(conn, run_id)
+            # Com revisões gravadas em /experiments, o resultado precisa trazer a última delas.
+            # Falha sem registro continua aceita; sucesso sem registro cai na regra abaixo.
+            if (
+                latest is not None
+                and value.experiment is not None
+                and canonical(value.experiment) != canonical(latest)
+            ):
+                fail(422, "validation_error", "Resultado difere da última revisão experimental.")
             if row["kind"] == "benchmark" and value.status == "succeeded" and not value.experiment:
                 fail(422, "validation_error", "Benchmark exige registro experimental.")
             now = time.time()

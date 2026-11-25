@@ -66,6 +66,103 @@ Para testar protocolo sem inferência:
 `uv run --locked python -m agents.worker --executor simulation`.
 Não registrar o simulador sob o nome de outro executor.
 
+### Ponte para adaptadores `run()` da v0.1 (desde 21/11/2026)
+
+Hermes (`team/hermes`), LangGraph (`task/langgraph-grafo`) e o runner da Evaluation
+implementam `run(task, context) -> ExperimentRun` com cliente síncrono. Para não exigir a
+reescrita em `stream()` antes de 15/12, [agents/compat.py](../../agents/compat.py) oferece
+`RunBridge`, que embrulha esse formato como `AgentAdapter`:
+
+```python
+# Fábrica sem argumentos entregue pela equipe, usada em --adapter modulo:funcao.
+from agents.compat import RunBridge
+
+
+def adapter():
+    return RunBridge(lambda tools, execution: MeuAdaptador(tool_client=tools))
+```
+
+- A fábrica interna recebe um `SyncToolClient` (`call(name, arguments) -> dict`) e o
+  `ClaimedRun`, e cria o adaptador por execução. O cliente delega ao `AsyncToolClient` do
+  worker: mesmo token de reserva, `X-Tool-Call-Id`, novas tentativas e tradução de erros
+  descritos acima. O contexto da execução é injetado pelo servidor; não reutilize clientes
+  `ToolClient(base_url)` próprios.
+- O adaptador precisa aceitar o cliente injetado. O LangGraph já recebe `tool_client` no
+  construtor. O Hermes atual cria `ToolClient(backend_url)` dentro de `run()`; a equipe
+  precisa expor um parâmetro equivalente antes de usar a ponte.
+- Resposta: `run_with_result()` (resposta e registro), quando existir; senão `run()` e o
+  atributo `final_response`. O texto sai inteiro ao final, em deltas de até 4000 caracteres.
+- Em `benchmark`, o `ExperimentRun` precisa ter o mesmo `run_id`, processo, versões,
+  tarefa, divisão, repetição e executor da reserva; divergência vira
+  `AgentResult(status="failed", error_code="adapter_error")`. `tool_calls` é substituído
+  pelo registro do cliente comum, igual para os dois executores, e `persisted_artifact_ids`
+  pelos artefatos dessas chamadas; a conferência continua pelo histórico do servidor.
+- Exceção no `run()` vira resultado terminal: `model_timeout` para timeout HTTP do modelo,
+  `adapter_error` nos demais casos.
+- Limites: sem eventos parciais nem streaming de raciocínio; a thread do `run()` não é
+  interrompida, e o prazo continua sendo o da reserva no servidor. A migração nativa para
+  `stream()` continua recomendada para o chat.
+
+#### `ExperimentSink` para o LangGraph
+
+O adaptador do LangGraph (`task/langgraph-grafo`, `856ff06`) grava o `ExperimentRun` por um
+`sink` (`save`/`get`/`update`). Uma fábrica de três argumentos recebe o `ExperimentSink`, que
+grava nas rotas `/experiments` com o token e a reserva do worker
+([ADR 011](../05-decisoes/011-registro-experimental-revisoes.md)):
+
+```python
+from agents.compat import RunBridge, task_fields
+
+
+def adapter():
+    return RunBridge(
+        lambda tools, sink, execution: LangGraphAdapter.from_environment(
+            model_factory=FABRICA_DO_PROVEDOR,
+            tool_client=tools,
+            sink=sink,
+            metadata=RunMetadata(**task_fields(execution), **VERSOES_DA_EQUIPE),
+        )
+    )
+```
+
+`FABRICA_DO_PROVEDOR` e `VERSOES_DA_EQUIPE` (`code_commit`, `harness_version`,
+`adapter_version`, `endpoint_id`) são da equipe LangGraph; o backend não os define.
+
+- Antes de gravar, o sink troca `tool_calls` e `persisted_artifact_ids` pelos do cliente comum.
+  Os IDs `tool-<hex>` do `RecordingToolClient` não chegam ao servidor.
+- Em benchmark, a última revisão gravada vira o `experiment` do resultado. Se houver chamada de
+  tool depois dela, a ponte encerra com `adapter_error`: grave uma revisão nova antes de terminar.
+- O `ExperimentRun` devolvido por `run()`/`run_with_result()` precisa ser igual à última revisão
+  gravada (sem `parameters.revision` conta como 1). Se diferir, por exemplo latência ou tokens
+  atualizados depois do último `save`/`update`, a ponte encerra com `adapter_error` em vez de
+  descartar o relatório final; a ponte não grava revisões no lugar do adaptador. O LangGraph do
+  `856ff06` já devolve o registro que acabou de gravar.
+- Em chat, o sink guarda a revisão só em memória; o servidor não registra experimento de chat.
+- Quem usa `ExperimentRunClient` diretamente passa `token=` e `run_token=`; sem eles, 401.
+
+Evidência: `tests/backend/test_compat.py` e `tests/backend/test_experiment_runs.py`
+(adaptadores falsos sobre worker e backend reais em SQLite). Isso não homologa Hermes nem
+LangGraph reais.
+
+### Rodada do benchmark (Hermes × LangGraph)
+
+1. Provisione um worker por executor (`worker-hermes`, `worker-langgraph`), cada um com seu
+   token em variável privada, `executor`, `can_write` e as concessões do corpus da rodada
+   (`scripts.provision`, ver [chat](chat.md)). Para revogar, use `--operation update` com
+   concessões vazias; para trocar só o token, `--operation rotate`.
+2. Habilite `ENABLED_EXECUTORS=hermes,langgraph` e use o mesmo `LLM_BASE_URL`, `LLM_MODEL` e
+   parâmetros nos dois workers (ADR 003).
+3. Defina `RUN_MAX_TOOL_CALLS` com a Metodologia antes da coleta; `0` deixa sem limite.
+4. Confira `GET /ready` (schema na revisão esperada) antes de enfileirar.
+5. Enfileire com `scripts.benchmark_batch` usando um rótulo fixo por rodada, por exemplo:
+   `uv run --locked python -m scripts.benchmark_batch evaluation/tasks.json --label camada1-dev --executor hermes --executor langgraph --repetitions 5 > manifesto.jsonl`.
+   A ordem é contrabalançada (cada executor vai primeiro na metade dos pares, com `position` no
+   manifesto), como pede o protocolo da Metodologia. O lote tolera um reinício do backend: repete
+   erro de transporte e 503 `retryable`. Só desiste quando nada avança por `--stall-seconds`, e
+   nesse caso lista os itens restantes como `not_submitted`. Para retomar, rode o mesmo comando
+   com o mesmo rótulo: os runs já criados são reaproveitados.
+6. Exporte com `scripts.export_chat --kind benchmark` para a avaliação.
+
 ## Checklist de homologação por equipe
 
 - Registrar origem/licença/versão do runtime, factory, commit e dependências fixadas.

@@ -9,7 +9,7 @@ from collections.abc import AsyncIterator
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Protocol
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import httpx
 from pydantic import ValidationError
@@ -17,11 +17,13 @@ from pydantic import ValidationError
 from contracts.catalog import TOOLS
 from contracts.execution import AgentEvent, AgentResult, ClaimedRun
 from contracts.models import (
+    ExperimentRun,
     ReadInput,
     SearchInput,
     ToolCallRecord,
     ToolContext,
     ToolError,
+    experiment_record,
 )
 
 # Erros que o modelo pode corrigir com outros argumentos; os demais encerram a chamada.
@@ -48,6 +50,7 @@ def tool_outcome(
     expected_context: dict | None = None,
     expected_input: dict | None = None,
 ) -> dict:
+    """Valide resposta e contexto esperados ou converta a falha em erro estruturado."""
     if response.is_success:
         name = name or response.request.url.path.rsplit("/", 1)[-1]
         try:
@@ -157,11 +160,22 @@ class ToolClient:
 
     allowed = set(TOOLS)
 
-    def __init__(self, base_url: str, token: str, context: dict, run_token: str):
+    def __init__(
+        self,
+        base_url: str,
+        token: str,
+        context: dict,
+        run_token: str,
+        timeout_seconds: float = 15,
+    ):
+        # timeout_seconds: port de task/langgraph-grafo (856ff06), registrado pelo LangGraph.
+        if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+            raise ValueError("timeout_seconds deve ser positivo.")
+        self.timeout_seconds = timeout_seconds
         self.context = context
         self.client = httpx.Client(
             base_url=base_url,
-            timeout=15,
+            timeout=timeout_seconds,
             headers={
                 "Authorization": f"Bearer {token}",
                 "X-Run-Token": run_token,
@@ -194,7 +208,68 @@ class ToolClient:
         self.client.close()
 
 
+class ExperimentRunClient:
+    """Grava e relê ExperimentRun pelo backend para confirmar persistência.
+
+    Port de task/langgraph-grafo (856ff06, João Enomoto) com a mesma interface
+    (``save``/``update``/``get``) e a mesma releitura de conferência. Na v0.2 as rotas exigem
+    o token do worker e, para escrever, a reserva do run (``token`` e ``run_token``).
+    """
+
+    def __init__(
+        self,
+        base_url: str,
+        timeout_seconds: float = 15,
+        *,
+        token: str | None = None,
+        run_token: str | None = None,
+    ):
+        if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+            raise ValueError("timeout_seconds deve ser positivo.")
+        self.base_url = base_url
+        self.timeout_seconds = timeout_seconds
+        self.headers = {}
+        if token:
+            self.headers["Authorization"] = f"Bearer {token}"
+        if run_token:
+            self.headers["X-Run-Token"] = run_token
+
+    def _client(self) -> httpx.Client:
+        return httpx.Client(
+            base_url=self.base_url, timeout=self.timeout_seconds, headers=self.headers
+        )
+
+    def save(self, run: ExperimentRun) -> ExperimentRun:
+        return self._write("post", "/experiments", run)
+
+    def update(self, run: ExperimentRun) -> ExperimentRun:
+        return self._write("put", f"/experiments/{run.run_id}", run)
+
+    def get(self, run_id: UUID) -> ExperimentRun | None:
+        with self._client() as client:
+            response = client.get(f"/experiments/{run_id}")
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            return ExperimentRun.model_validate(response.json())
+
+    def _write(self, method: str, path: str, run: ExperimentRun) -> ExperimentRun:
+        with self._client() as client:
+            response = getattr(client, method)(path, json=run.model_dump(mode="json"))
+            response.raise_for_status()
+            saved = ExperimentRun.model_validate(response.json())
+            verified_response = client.get(f"/experiments/{run.run_id}")
+            verified_response.raise_for_status()
+            verified = ExperimentRun.model_validate(verified_response.json())
+        # Sem "revision", o servidor grava a revisão 1 (regra única em contracts.models).
+        if verified != saved or experiment_record(verified) != experiment_record(run):
+            raise RuntimeError("A releitura de ExperimentRun divergiu do recibo salvo.")
+        return verified
+
+
 class AsyncToolClient:
+    """Cliente assíncrono para tools HTTP no escopo da execução reservada."""
+
     def __init__(self, client: httpx.AsyncClient, execution: ClaimedRun):
         self.client = client
         self.execution = execution

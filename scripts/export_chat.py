@@ -14,6 +14,7 @@ from contracts.models import ExperimentRun, ToolContext, WriteReceipt
 from services.backend.schema import (
     artifacts,
     conversations,
+    experiment_run_revisions,
     logical_tool_calls,
     messages,
     runs,
@@ -94,6 +95,19 @@ def records(
         for artifact in stored_artifacts:
             # Validate without normalizing timestamps or changing the stored receipt.
             WriteReceipt.model_validate(artifact["receipt"])
+        # Revisões gravadas em /experiments (ADR 011). A última coincide com result.experiment
+        # quando o resultado traz experiment; um run que falhou pode ter revisões e experiment nulo.
+        revisions = list(
+            conn.execute(
+                select(experiment_run_revisions)
+                .where(experiment_run_revisions.c.run_id == row["run_id"])
+                .order_by(experiment_run_revisions.c.revision)
+            )
+            .mappings()
+            .all()
+        )
+        for revision in revisions:
+            ExperimentRun.model_validate(revision["payload"])
         item = {
             "export_version": EXPORT_VERSION,
             "participant_id": row["participant_id"],
@@ -112,6 +126,16 @@ def records(
                     if result.get("experiment") is not None
                     else None
                 ),
+                "experiment_revisions": [
+                    {
+                        "revision": revision["revision"],
+                        "recorded_at": revision["recorded_at"],
+                        "experiment": {
+                            key: revision["payload"].get(key) for key in EXPERIMENT_FIELDS
+                        },
+                    }
+                    for revision in revisions
+                ],
             },
             "observed": {
                 "status": row["status"],
@@ -185,6 +209,9 @@ def records(
                     for artifact in stored_artifacts
                 ],
                 "parameters": experiment.get("parameters"),
+                "revision_parameters": [
+                    revision["payload"].get("parameters") for revision in revisions
+                ],
             }
         yield item
 

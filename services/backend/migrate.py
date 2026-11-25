@@ -9,10 +9,23 @@ from alembic.migration import MigrationContext
 from sqlalchemy import MetaData, inspect, text
 
 
+def alembic_config() -> Config:
+    return Config(str(Path(__file__).resolve().parents[2] / "alembic.ini"))
+
+
+def schema_revisions(connection) -> tuple[str | None, str]:
+    """Revisão aplicada no banco e a esperada pelo código (head), sem alterar nada."""
+    from alembic.script import ScriptDirectory
+
+    head = ScriptDirectory.from_config(alembic_config()).get_current_head()
+    current = MigrationContext.configure(connection).get_current_revision()
+    return current, head
+
+
 def migrate(engine, revision="head", *, downgrade=False):
     from services.backend.storage import chunks, documents, processes
 
-    config = Config(str(Path(__file__).resolve().parents[2] / "alembic.ini"))
+    config = alembic_config()
     with engine.begin() as connection:
         if engine.dialect.name == "postgresql":
             connection.execute(text("SELECT pg_advisory_xact_lock(20261020)"))

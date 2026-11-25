@@ -1,6 +1,6 @@
 """Contratos v0.2 de conversa, execução e streaming para ambos os adaptadores."""
 
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Literal, TypedDict, get_args
 from uuid import UUID
 
 from pydantic import Field, StrictBool, StrictFloat, StrictInt
@@ -9,10 +9,15 @@ from contracts.models import Contract, Evidence, ExperimentRun, Identifier, Inve
 
 Executor = Literal["simulation", "hermes", "langgraph"]
 RunStatus = Literal["queued", "running", "succeeded", "failed", "timed_out"]
+TerminalStatus = Literal["succeeded", "failed", "timed_out"]
+# Única definição dos status finais de um run (backend, exportação e scripts).
+TERMINAL_STATUSES = frozenset(get_args(TerminalStatus))
 Reference = Evidence | InventoryEvidence
 
 
 class RunContext(TypedDict):
+    """Escopo recebido do servidor para uma execução reservada."""
+
     # Keep dictionaries for existing adapters, with a closed schema in OpenAPI/Pydantic.
     run_id: Annotated[str, Field(pattern=r"^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$")]
     process_id: Identifier
@@ -36,7 +41,16 @@ class HealthResponse(Contract):
     contract_version: Literal["0.3"] = "0.3"
 
 
+class ReadinessResponse(Contract):
+    """Banco na revisão de schema que o código espera; não verifica workers nem modelos."""
+
+    status: Literal["ready"] = "ready"
+    schema_revision: str
+
+
 class ExecutionScope(Contract):
+    """Processo, versões e executor escolhidos para uma nova execução."""
+
     process_id: Identifier
     corpus_version: Identifier
     requirements_version: Identifier

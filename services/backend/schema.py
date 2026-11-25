@@ -203,3 +203,22 @@ administrative_events = Table(
     Column("before_state", JSON, nullable=True),
     Column("after_state", JSON, nullable=False),
 )
+
+# Registro experimental com revisões (port de task/langgraph-grafo, 856ff06, João Enomoto).
+experiment_runs = Table(
+    "experiment_runs",
+    metadata,
+    Column("run_id", String, ForeignKey("runs.run_id"), primary_key=True),
+    Column("revision", Integer, nullable=False),
+    Column("payload", JSON, nullable=False),
+    Column("updated_at", Float, nullable=False),
+)
+
+experiment_run_revisions = Table(
+    "experiment_run_revisions",
+    metadata,
+    Column("run_id", String, ForeignKey("experiment_runs.run_id"), primary_key=True),
+    Column("revision", Integer, primary_key=True),
+    Column("payload", JSON, nullable=False),
+    Column("recorded_at", Float, nullable=False),
+)

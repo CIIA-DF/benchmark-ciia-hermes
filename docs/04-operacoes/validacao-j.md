@@ -1,6 +1,6 @@
 # Validação J — port do registro experimental do LangGraph
 
-Data: 21/11/2026. Worktree `team/backend`, HEAD `128f8af`, com alterações locais sem commit. Origem do trabalho portado: `task/langgraph-grafo`, commit `856ff06` (João Enomoto, 18/11/2026). A branch do LangGraph não foi alterada. [ADR 011](../05-decisoes/011-registro-experimental-revisoes.md).
+Data: 21/11/2026. Worktree `team/backend`, HEAD `b266a31`, com alterações locais sem commit. Origem do trabalho portado: `task/langgraph-grafo`, commit `856ff06` (João Enomoto, 18/11/2026). A branch do LangGraph não foi alterada. [ADR 011](../05-decisoes/011-registro-experimental-revisoes.md).
 
 ## O que mudou
 
@@ -60,7 +60,7 @@ Nova rodada do `/code-review` na worktree `team/backend`, depois das correções
 | B | Na ponte, o relatório final do adaptador era descartado em favor da última revisão do sink | Se o relatório final diferir da última revisão gravada (`revision` ausente = 1), a ponte encerra com `adapter_error`; não grava revisões pelo adaptador ([integração](integracao-agentes.md)) | `test_compat.py` + `test_experiment_runs.py`: 27 aprovados |
 | L | A chave `rotulo:tarefa:executor:repeticao` podia colidir, porque rótulo e `task_id` aceitavam `:` | Rótulo, `task_id` e executor sem `:` | `test_benchmark_batch.py`: 9 aprovados |
 
-**Catálogo em relação ao `HEAD`:** sem as docstrings de classe, o catálogo ainda difere do `HEAD` (`128f8af`). As descrições das seis tools foram reescritas e os campos de entrada ganharam `description`, ambas alterações locais deliberadas anteriores a 21/11, recomendadas no [levantamento de documentação](levantamento-documentacao-backend.md). Isso muda o prompt enviado ao modelo. A versão do catálogo precisa ser congelada e revisada com Hermes, LangGraph e Metodologia antes da coleta, para que os runs sejam comparáveis.
+**Catálogo em relação ao `HEAD`:** sem as docstrings de classe, o catálogo ainda difere do `HEAD` (`b266a31`). As descrições das seis tools foram reescritas e os campos de entrada ganharam `description`, ambas alterações locais deliberadas anteriores a 21/11, recomendadas no [levantamento de documentação](levantamento-documentacao-backend.md). Isso muda o prompt enviado ao modelo. A versão do catálogo precisa ser congelada e revisada com Hermes, LangGraph e Metodologia antes da coleta, para que os runs sejam comparáveis.
 
 Também ficaram únicos os IDs dos testes de lote de 21/11 (`batch-*`), que falhavam no PostgreSQL compartilhado.
 

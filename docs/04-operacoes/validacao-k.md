@@ -1,6 +1,6 @@
 # Validação K — Hermes, LangGraph e Evaluation sobre o backend v0.2
 
-Data: 22/11/2026. Worktree `team/backend`, HEAD `4d07213` (blocos I, E, J, S1 e D em commits locais, mais o catálogo comum). As branches das outras equipes não foram alteradas: cada conferência rodou numa worktree temporária com o HEAD do backend e só as pastas da equipe copiadas da branch remota. Worktrees, venv e arquivos de apoio ficaram no diretório temporário da sessão, fora do repositório.
+Data: 22/11/2026. Worktree `team/backend`, HEAD `d879efb` (blocos I, E, J, S1 e D em commits locais, mais o catálogo comum). As branches das outras equipes não foram alteradas: cada conferência rodou numa worktree temporária com o HEAD do backend e só as pastas da equipe copiadas da branch remota. Worktrees, venv e arquivos de apoio ficaram no diretório temporário da sessão, fora do repositório.
 
 ## Resumo
 
@@ -20,7 +20,7 @@ Os dois executores enviam ao modelo catálogos diferentes do backend:
 - Hermes: as seis tools, com descrições próprias em `agents/hermes/tools.py`. As seis descrições diferem de `contracts.catalog.openai_tools()`.
 - LangGraph: só `consultar_processo`, `buscar_documentos` e `ler_documento`, com descrições próprias em `make_backend_tools`. O corte para três vem da v0.1, quando as escritas davam 501.
 
-Com isso, Hermes e LangGraph recebem prompts diferentes, e a comparação perde validade. O commit `4d07213` acrescenta `openai_tools()` e `catalog_version()` ([integração](integracao-agentes.md#catálogo-único-de-tools-proposta-de-22112026)). Adotar esse catálogo e congelar a versão antes da coleta depende das duas equipes e da Metodologia.
+Com isso, Hermes e LangGraph recebem prompts diferentes, e a comparação perde validade. O commit `d879efb` acrescenta `openai_tools()` e `catalog_version()` ([integração](integracao-agentes.md#catálogo-único-de-tools-proposta-de-22112026)). Adotar esse catálogo e congelar a versão antes da coleta depende das duas equipes e da Metodologia.
 
 ## Hermes
 

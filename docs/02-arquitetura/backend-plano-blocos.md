@@ -543,7 +543,7 @@ Catálogo comum `openai_tools()`/`catalog_version()` e conferência cruzada sobr
 
 Pendências da auditoria de 30/10: `X-Tool-Call-Id` na resposta (P2), U+0000 recusado em textos livres (P3), executores e limites repassados no Compose (P4) e isolamento dos testes no PostgreSQL reaproveitado (P6). Suíte completa em SQLite e PostgreSQL 17: [validação P](../04-operacoes/validacao-p.md). Item 1 (perda de transporte) e job do portal no CI aguardam decisão.
 
-O P3 alterou o schema dos parâmetros das tools e, com isso, o `catalog_version()` calculado no K; o novo valor ainda precisa ser registrado. A revisão de 25/11/2026 apontou dois efeitos do P3, corrigidos no mesmo dia: a migração `0011` interrompe a atualização de bancos que ainda guardam U+0000, sem alterar dados, e a `RunBridge` troca U+0000 da resposta do modelo por U+FFFD com evento de status, em vez de descartar a execução ([validação P](../04-operacoes/validacao-p.md#efeitos-do-p3-corrigidos-em-25112026)).
+O P3 alterou o schema dos parâmetros das tools e, com isso, o `catalog_version()` calculado no K; o novo valor está registrado em [integração dos agentes](../04-operacoes/integracao-agentes.md#catálogo-único-de-tools-proposta-de-22112026) e ainda precisa ser congelado com as equipes. A revisão de 25/11/2026 apontou dois efeitos do P3, corrigidos no mesmo dia: a migração `0011` interrompe a atualização de bancos que ainda guardam U+0000, sem alterar dados, e a `RunBridge` troca U+0000 da resposta do modelo por U+FFFD com evento de status, em vez de descartar a execução ([validação P](../04-operacoes/validacao-p.md#efeitos-do-p3-corrigidos-em-25112026)).
 
 ## Registro S — 22/11/2026
 

@@ -1,6 +1,6 @@
 # Suíte completa — SQLite e PostgreSQL 17 (21/11/2026)
 
-Worktree `team/backend`, HEAD `128f8af`, com as alterações locais sem commit do port J e da revisão de código ([validação J](validacao-j.md)). Por causa da memória da máquina (8 GB), a suíte rodou em seis grupos sequenciais: `test_a*`, `test_f*`, `test_t*`, o restante de `tests/backend`, `tests/integration` e `tests/documents`. Os logs e relatórios JUnit ficaram no diretório temporário da sessão, fora do repositório.
+Worktree `team/backend`, HEAD `b266a31`, com as alterações locais sem commit do port J e da revisão de código ([validação J](validacao-j.md)). Por causa da memória da máquina (8 GB), a suíte rodou em seis grupos sequenciais: `test_a*`, `test_f*`, `test_t*`, o restante de `tests/backend`, `tests/integration` e `tests/documents`. Os logs e relatórios JUnit ficaram no diretório temporário da sessão, fora do repositório.
 
 ## Resultado
 

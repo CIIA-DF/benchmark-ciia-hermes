@@ -158,6 +158,12 @@ e para a Metodologia, sem alterar o contrato HTTP:
 - registrar `contracts.catalog.catalog_version()` (SHA-256 do catálogo em JSON canônico) em
   `ExperimentRun.parameters["catalog_version"]` e congelar a versão antes da coleta.
 
+Valor em 25/11/2026, depois do P3 (que acrescentou o pattern sem U+0000 a `content` e
+`evidence_note`): `f419b756f28a47ace8f413ddc7204c66f9e30059991ba8e9b664d05100e77e2c`. O valor
+calculado sobre `d879efb` (22/11) não vale mais. Qualquer mudança nos schemas de entrada das tools
+muda a versão; recalcule com `python -c "from contracts.catalog import catalog_version;
+print(catalog_version())"` antes de congelar.
+
 A rota `GET /capabilities` não publica a versão: acrescentar o campo muda uma resposta com
 campos extras proibidos e depende de revisão das equipes. Evidência:
 `tests/backend/test_catalog_shared.py`.

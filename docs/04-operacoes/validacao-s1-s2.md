@@ -1,6 +1,6 @@
 # S1/S2 — dependências e segurança
 
-Data: 22/11/2026. Worktree `team/backend`, HEAD `128f8af`, com alterações locais sem commit. Origem: achados 01, 02 e 09 da [auditoria de 28/10/2026](auditoria-backend-2026-10-28.md) e itens S1/S2 do [plano de melhorias](../02-arquitetura/backend-plano-lacunas.md#dependências-operação-e-consolidação). Decisão do responsável: S1 é corrigido no backend; S2 só é registrado, porque o portal também serve o site de documentação e a landing, mantidos por outra frente.
+Data: 22/11/2026. Worktree `team/backend`, HEAD `b266a31`, com alterações locais sem commit. Origem: achados 01, 02 e 09 da [auditoria de 28/10/2026](auditoria-backend-2026-10-28.md) e itens S1/S2 do [plano de melhorias](../02-arquitetura/backend-plano-lacunas.md#dependências-operação-e-consolidação). Decisão do responsável: S1 é corrigido no backend; S2 só é registrado, porque o portal também serve o site de documentação e a landing, mantidos por outra frente.
 
 ## S1 — dependências Python (corrigido)
 

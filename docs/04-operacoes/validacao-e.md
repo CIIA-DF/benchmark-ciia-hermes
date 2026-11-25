@@ -1,6 +1,6 @@
 # Validação E — exportação canônica v2
 
-Data da verificação: 21/11/2026. Worktree `team/backend`, HEAD `128f8af` (merge de `origin/main`) com alterações locais não commitadas de 31/10 a 02/11 e de 21/11.
+Data da verificação: 21/11/2026. Worktree `team/backend`, HEAD `b266a31` (merge de `origin/main`) com alterações locais não commitadas de 31/10 a 02/11 e de 21/11.
 
 ## Origem deste registro
 

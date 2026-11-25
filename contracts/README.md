@@ -486,7 +486,7 @@ Rotação preserva papel/executor/escrita/grants. Migração 0009 audita estados
 I1–I3 preservam os contratos funcionais das tools, reforçam clientes/identidade e delimitam transporte do portal.
 Suíte compartilhada de 454 casos aprovada; quatro casos acrescentados depois foram cobertos pelos aceites dirigidos finais.
 Não houve uma execução única de 458 casos. [Matriz, workflow e limites](../docs/04-operacoes/validacao-i-fechamento.md).
-PostgreSQL, Nginx/Compose e agentes reais permanecem para homologação. D, E, O e H continuam pendentes.
+PostgreSQL, Nginx/Compose e agentes reais permanecem para homologação. D, E, O e H continuavam pendentes em 31/10; D e E foram entregues depois ([estado atual](../docs/04-operacoes/backend-estado-atual.md)).
 
 ## Exportação canônica v2 — 02/11/2026
 

@@ -15,7 +15,7 @@ from sqlalchemy import (
     insert,
     select,
 )
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import URL, Engine
 
 from contracts.models import Chunk, Document, Process
 
@@ -54,7 +54,7 @@ chunks = Table(
 )
 
 
-def make_engine(url: str | None = None) -> Engine:
+def make_engine(url: str | URL | None = None) -> Engine:
     url = url or os.getenv("DATABASE_URL", "sqlite:///./data/demo.db")
     if url == "sqlite:///./data/demo.db":
         Path("data").mkdir(exist_ok=True)

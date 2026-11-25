@@ -1,7 +1,6 @@
 """E: reconcile JSONL with independent SQL reads, including failures invisible in SSE."""
 
 import json
-import os
 from uuid import uuid4
 
 import pytest
@@ -250,14 +249,12 @@ def test_scope_kinds_empty_export_and_deterministic_output(
     assert export_chat.export_file(engine, path, participant_id=participants[0]) == 1
     assert all(r["kind"] == "chat" for r in map(json.loads, path.read_text().splitlines()))
     own = [context["run_id"], *(r for _, r in chats)]
-    if os.getenv("TEST_DATABASE_URL") is None:
-        # Banco temporário: o arquivo do banco inteiro inclui os três runs e é determinístico.
-        items, first = dump(engine, tmp_path)
-        assert set(own) <= {r["run_id"] for r in items}
-        _, second = dump(engine, tmp_path)
-        assert first.read_bytes() == second.read_bytes()
-    # Banco reaproveitado guarda corrupção proposital de outros testes (A1), que interrompe a
-    # exportação do banco inteiro; por run, a mesma garantia vale em qualquer banco.
+    # Cada teste tem banco próprio (SQLite temporário ou schema PostgreSQL, P8): o arquivo do
+    # banco inteiro inclui os três runs e é determinístico.
+    items, first = dump(engine, tmp_path)
+    assert set(own) <= {r["run_id"] for r in items}
+    _, second = dump(engine, tmp_path)
+    assert first.read_bytes() == second.read_bytes()
     for run_id in own:
         (item,), first = dump(engine, tmp_path, run_id=run_id)
         assert item["run_id"] == run_id

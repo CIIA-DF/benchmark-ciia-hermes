@@ -123,19 +123,13 @@ def test_rotation_preserves_revoked_profile_and_survives_stale_environment(
 def test_bootstrap_race_creates_one_identity_and_one_event(engine, monkeypatch):
     monkeypatch.setenv("BACKEND_OPERATOR_TOKEN", uuid4().hex)
     monkeypatch.delenv("BACKEND_WORKER_TOKEN", raising=False)
-    # local-operator tem nome fixo; num PostgreSQL reaproveitado ele já existe, e o bootstrap
-    # não deve gravar nada. Num banco novo, a corrida cria uma identidade e um evento.
-    before = {item["event_id"] for item in audits(engine, "local-operator")}
-    expected = 0 if before else 1
+    # Banco próprio por teste (P8): a corrida sempre parte de local-operator ausente.
+    assert audits(engine, "local-operator") == []
     with ThreadPoolExecutor(max_workers=2) as pool:
         list(pool.map(lambda _: bootstrap(engine), range(2)))
-    assert len([e for e in audits(engine, "local-operator") if e["event_id"] not in before]) == (
-        expected
-    )
+    assert len(audits(engine, "local-operator")) == 1
     bootstrap(engine)
-    assert len([e for e in audits(engine, "local-operator") if e["event_id"] not in before]) == (
-        expected
-    )
+    assert len(audits(engine, "local-operator")) == 1
 
 
 @pytest.mark.parametrize("operation", ["update", "rotate"])

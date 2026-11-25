@@ -1,6 +1,8 @@
 """Catálogo comum; argumentos do modelo nunca incluem contexto privilegiado."""
 
+import hashlib
 import inspect
+import json
 from copy import deepcopy
 from typing import NamedTuple
 
@@ -98,3 +100,20 @@ def tool_catalog():
         schema.pop("title", None)
         result.append({"name": name, "description": description, "parameters": schema})
     return result
+
+
+def openai_tools() -> list[dict]:
+    """Catálogo no formato de function calling (``/chat/completions`` e ``bind_tools``).
+
+    Hermes e LangGraph devem enviar ao modelo estas mesmas definições, para que a comparação
+    não dependa de descrições escritas por cada executor.
+    """
+    return [{"type": "function", "function": item} for item in tool_catalog()]
+
+
+def catalog_version() -> str:
+    """SHA-256 do catálogo em JSON canônico; registre em ``ExperimentRun.parameters``."""
+    canonical = json.dumps(
+        tool_catalog(), ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    )
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

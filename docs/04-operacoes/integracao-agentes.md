@@ -144,6 +144,24 @@ Evidência: `tests/backend/test_compat.py` e `tests/backend/test_experiment_runs
 (adaptadores falsos sobre worker e backend reais em SQLite). Isso não homologa Hermes nem
 LangGraph reais.
 
+#### Catálogo único de tools (proposta de 22/11/2026)
+
+Em 22/11/2026, cada executor descreve as tools para o modelo de um jeito: o Hermes
+(`team/hermes`, `agents/hermes/tools.py`) envia as seis com descrições próprias; o LangGraph
+(`task/langgraph-grafo`, `make_backend_tools`) expõe três, também com descrições próprias.
+Isso muda o prompt de cada executor e compromete a comparação. Proposta para as duas equipes
+e para a Metodologia, sem alterar o contrato HTTP:
+
+- enviar ao modelo `contracts.catalog.openai_tools()`, que é o `tool_catalog()` no formato de
+  function calling (`{"type": "function", "function": {...}}`), aceito por `/chat/completions`
+  e por `bind_tools` do LangChain;
+- registrar `contracts.catalog.catalog_version()` (SHA-256 do catálogo em JSON canônico) em
+  `ExperimentRun.parameters["catalog_version"]` e congelar a versão antes da coleta.
+
+A rota `GET /capabilities` não publica a versão: acrescentar o campo muda uma resposta com
+campos extras proibidos e depende de revisão das equipes. Evidência:
+`tests/backend/test_catalog_shared.py`.
+
 ### Rodada do benchmark (Hermes × LangGraph)
 
 1. Provisione um worker por executor (`worker-hermes`, `worker-langgraph`), cada um com seu

@@ -1,0 +1,3 @@
+{"id":"despachos", "request":{"question":"Quais despachos registram encaminhamentos entre unidades?"}, "relevant_ids":null}
+{"id":"oficios", "request":{"question":"Quais ofícios apresentam solicitações ou providências?"}, "relevant_ids":null}
+{"id":"assinaturas", "request":{"question":"Em que datas os documentos foram assinados eletronicamente?"}, "relevant_ids":null}

@@ -5,8 +5,14 @@ __pycache__/
 .env
 
 # Dados dos processos SEI (contêm dados pessoais): não versionar.
+!app/data/
+app/data/*
+!app/data/raw/
+!app/data/processed/
+!app/data/reports/
 app/data/raw/*
 app/data/processed/*
-app/data/reports/
+app/data/reports/*
 !app/data/raw/.gitkeep
 !app/data/processed/.gitkeep
+!app/data/reports/.gitkeep

@@ -29,7 +29,7 @@ def validate() -> list[str]:
     ci = yaml.load((ROOT / ".github/workflows/ci.yml").read_text(), Loader=yaml.BaseLoader)
     if not {"pull_request", "push"} <= ci["on"].keys():
         errors.append("CI precisa cobrir pull_request e push.")
-    if set(ci["jobs"]) != {"quality", "integration"}:
+    if set(ci["jobs"]) != {"quality", "integration", "portal"}:
         errors.append("Nomes obrigatórios dos checks mudaram.")
     compose = yaml.safe_load((ROOT / "infra/compose.yml").read_text(encoding="utf-8"))
     if compose["services"]["db"].get("ports"):

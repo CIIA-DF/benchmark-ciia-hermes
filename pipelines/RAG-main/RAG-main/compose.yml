@@ -1,0 +1,19 @@
+name: ciia-rag
+services:
+  db:
+    image: pgvector/pgvector:0.8.2-pg17
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_DB: rag
+      POSTGRES_PASSWORD: ${RAG_POSTGRES_PASSWORD:?Defina RAG_POSTGRES_PASSWORD no .env}
+    ports:
+      - "127.0.0.1:${RAG_POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - rag_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD, pg_isready, -U, rag, -d, rag]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+volumes:
+  rag_data:

@@ -1,8 +1,17 @@
-"""Verifica os schemas de ferramentas e a injeção de contexto do agente Hermes."""
+"""Verifica os schemas de ferramentas, catálogo compartilhado e injeção de contexto do Hermes."""
 
+import re
+from types import SimpleNamespace
 from uuid import uuid4
 
-from agents.hermes.tools import TOOLS, hermes_tool_schemas, inject_tool_context
+from agents.hermes.tools import (
+    TOOLS,
+    catalog_version,
+    hermes_tool_schemas,
+    inject_tool_context,
+    openai_tools,
+    tool_catalog,
+)
 from contracts.models import ToolContext
 
 EXPECTED_TOOL_NAMES = [
@@ -30,9 +39,33 @@ def test_hermes_tool_schemas_returns_all_six_tools():
         assert function["description"]
         assert isinstance(function["parameters"], dict)
         assert function["parameters"]["type"] == "object"
+        assert "title" not in function["parameters"]
 
-    # Garante retrocompatibilidade do alias TOOLS
+    # Garante retrocompatibilidade do alias TOOLS e equivalência com openai_tools
     assert TOOLS == schemas
+    assert openai_tools() == schemas
+    assert [item["function"] for item in schemas] == tool_catalog()
+
+
+def test_catalog_version_returns_stable_sha256_and_supports_shared_catalog(monkeypatch):
+    version = catalog_version()
+    assert re.fullmatch(r"[a-f0-9]{64}", version)
+    assert catalog_version() == version
+
+    fake_shared = SimpleNamespace(
+        tool_catalog=lambda: [{"name": "consultar_processo", "description": "x", "parameters": {}}],
+        openai_tools=lambda: [
+            {
+                "type": "function",
+                "function": {"name": "consultar_processo", "description": "x", "parameters": {}},
+            }
+        ],
+        catalog_version=lambda: "f" * 64,
+    )
+    monkeypatch.setattr("agents.hermes.tools._load_shared_catalog_module", lambda: fake_shared)
+    assert catalog_version() == "f" * 64
+    assert len(tool_catalog()) == 1
+    assert len(openai_tools()) == 1
 
 
 def test_hermes_tool_schemas_omit_context_fields_from_properties_and_required():

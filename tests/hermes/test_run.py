@@ -192,3 +192,79 @@ def test_main_with_custom_arguments_and_save(monkeypatch, tmp_path, capsys):
     assert saved_run["split"] == "final"
     assert saved_run["repetition"] == 2
     assert saved_run["cost_usd"] == 0.005
+
+
+def test_main_runs_multiple_tasks_with_task_ids_and_all(monkeypatch, tmp_path, capsys):
+    task_data = [
+        {
+            "task_id": "DEV-A",
+            "split": "development",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+            "process_id": "PROC-DEMO-001",
+            "prompt": "Primeira tarefa em lote.",
+        },
+        {
+            "task_id": "DEV-B",
+            "split": "development",
+            "corpus_version": "synthetic-v1",
+            "requirements_version": "demo-v1",
+            "process_id": "PROC-DEMO-001",
+            "prompt": "Segunda tarefa em lote.",
+        },
+    ]
+    tasks_file = tmp_path / "evaluation" / "tasks.json"
+    tasks_file.parent.mkdir(parents=True, exist_ok=True)
+    tasks_file.write_text(json.dumps(task_data, ensure_ascii=False), encoding="utf-8")
+
+    monkeypatch.setattr(hermes_run, "ROOT", tmp_path)
+    monkeypatch.setattr(hermes_run, "TASKS_PATH", tasks_file)
+
+    executed_ids = []
+
+    class MockBatchAdapter:
+        final_response = "Resposta do lote."
+
+        def run(
+            self,
+            task,
+            supplied_context,
+            *,
+            task_id=None,
+            split="development",
+            repetition=1,
+        ):
+            executed_ids.append(task_id)
+            return ExperimentRun(
+                **supplied_context.model_dump(),
+                task_id=task_id or "DEV-A",
+                split=split,
+                executor="hermes",
+                repetition=repetition,
+                code_commit="batch-commit",
+                harness_version="0.1.0",
+                adapter_version="0.1.0",
+                model="openai/gpt-4o-mini",
+                endpoint_id="endpoint-batch",
+                prompt_sha256="c" * 64,
+                parameters={"max_tool_rounds": 10},
+                started_at="2026-11-27T00:00:00Z",
+                latency_ms=50.0,
+                tool_calls=[],
+                input_tokens=10,
+                output_tokens=5,
+                cost_usd=0.0001,
+                agent_declared_success=True,
+                persisted_artifact_ids=[],
+                verified_success=None,
+                evaluator=None,
+            )
+
+    monkeypatch.setattr(hermes_run, "HermesAdapter", MockBatchAdapter)
+    monkeypatch.setattr(sys, "argv", ["run.py", "--all", "--save"])
+
+    hermes_run.main()
+
+    assert executed_ids == ["DEV-A", "DEV-B"]
+    results_files = list((tmp_path / "evaluation" / "results").glob("*.json"))
+    assert len(results_files) == 2

@@ -1,20 +1,22 @@
 """Adaptador Hermes com loop ReAct sobre a API OpenAI-compatible."""
 
 import hashlib
+import importlib
 import ipaddress
 import json
 import os
 import re
 import subprocess
 import time
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 from urllib.parse import urlsplit
 
 import httpx
 
-from agents.hermes.tools import TOOLS, inject_tool_context
+from agents.hermes.tools import TOOLS, catalog_version, hermes_tool_schemas, inject_tool_context
 from agents.interface import AgentAdapter, ModelConfig, ToolClient
 from contracts.models import ExperimentRun, ToolCallRecord, ToolContext
 
@@ -37,16 +39,80 @@ MODEL_TEMPERATURE = 0.0
 MODEL_SEED = 42
 _IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9_.:-]{1,120}$")
 TASKS_PATH = Path(__file__).resolve().parents[2] / "evaluation" / "tasks.json"
-TOKEN_PRICES_PER_MILLION = {
+
+# Preços por 1 milhão de tokens (prompt_usd, completion_usd) conforme ADR 003.
+TOKEN_PRICES_PER_MILLION: dict[str, tuple[float, float]] = {
     "gpt-4o-mini": (0.15, 0.60),
     "openai/gpt-4o-mini": (0.15, 0.60),
     "meta-llama/llama-3.1-70b-instruct": (0.35, 0.40),
+    "meta-llama/llama-3.3-70b-instruct": (0.35, 0.40),
+    "meta-llama/llama-3.3-70b-instruct:free": (0.0, 0.0),
+    "deepseek/deepseek-chat": (0.14, 0.28),
+    "qwen/qwen-2.5-72b-instruct": (0.35, 0.40),
+    "anthropic/claude-sonnet-4.5": (3.00, 15.00),
+    "anthropic/claude-sonnet-4.6": (3.00, 15.00),
 }
+
+# Códigos de erro definitivos do backend que encerram a execução (não corrigíveis pelo LLM).
+_DEFINITIVE_ERROR_CODES: frozenset[str] = frozenset(
+    {
+        "unauthorized",
+        "forbidden",
+        "version_mismatch",
+        "budget_exceeded",
+        "run_expired",
+    }
+)
+
+# Falhas de transporte anteriores ao envio ao servidor (P10 — unobserved_tool_calls).
+_NOT_SENT_ERRORS = (httpx.ConnectError, httpx.ConnectTimeout, httpx.PoolTimeout)
+
+
+@dataclass(frozen=True)
+class HermesRunResult:
+    """Resultado consolidado contendo texto final e registro ExperimentRun."""
+
+    response: str
+    experiment_run: ExperimentRun
 
 
 class HermesAdapter(AgentAdapter):
-    def __init__(self):
+    def __init__(
+        self,
+        tool_client: Any | None = None,
+        *,
+        sink: Any | None = None,
+        execution: Any | None = None,
+        system_prompt: str = SYSTEM_PROMPT,
+        max_tool_rounds: int = MAX_TOOL_ROUNDS,
+    ):
+        if max_tool_rounds < 1:
+            raise ValueError("max_tool_rounds deve ser pelo menos 1.")
+        self.tool_client = tool_client
+        self.sink = sink
+        self.execution = execution
+        self.system_prompt = system_prompt
+        self.max_tool_rounds = max_tool_rounds
         self.final_response = ""
+
+    def run_with_result(
+        self,
+        task: str,
+        context: ToolContext,
+        *,
+        task_id: str | None = None,
+        split: Literal["development", "final"] = "development",
+        repetition: int = 1,
+    ) -> HermesRunResult:
+        """Executa a tarefa e devolve par estruturado (response, experiment_run)."""
+        experiment_run = self.run(
+            task,
+            context,
+            task_id=task_id,
+            split=split,
+            repetition=repetition,
+        )
+        return HermesRunResult(response=self.final_response, experiment_run=experiment_run)
 
     def run(
         self,
@@ -61,13 +127,15 @@ class HermesAdapter(AgentAdapter):
         config = _model_config_from_environment()
         started_at = datetime.now(UTC)
         started = time.perf_counter()
+        active_tools = hermes_tool_schemas() if TOOLS == hermes_tool_schemas() else TOOLS
         messages: list[dict] = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": self.system_prompt},
             {"role": "user", "content": task},
         ]
         backend_url = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
-        tool_client = ToolClient(backend_url)
+        tool_client = self.tool_client if self.tool_client is not None else ToolClient(backend_url)
         tool_calls: list[ToolCallRecord] = []
+        local_unobserved_calls = 0
         persisted_artifact_ids: list[str] = []
         input_tokens = 0
         output_tokens = 0
@@ -79,13 +147,13 @@ class HermesAdapter(AgentAdapter):
             timeout=config.timeout_seconds,
             headers=_model_headers(config),
         ) as client:
-            for round_number in range(MAX_TOOL_ROUNDS + 1):
+            for round_number in range(self.max_tool_rounds + 1):
                 response = client.post(
                     f"{config.base_url.rstrip('/')}/chat/completions",
                     json={
                         "model": config.model,
                         "messages": messages,
-                        "tools": TOOLS,
+                        "tools": active_tools,
                         "tool_choice": "auto",
                         "temperature": MODEL_TEMPERATURE,
                         "seed": MODEL_SEED,
@@ -118,13 +186,13 @@ class HermesAdapter(AgentAdapter):
                 if calls is None:
                     calls = []
                 if not isinstance(calls, list):
-                    _request_valid_tool_calls(messages, round_number)
+                    _request_valid_tool_calls(messages, round_number, self.max_tool_rounds)
                     continue
                 if not calls:
                     content = message.get("content")
                     final_content = content if isinstance(content, str) else ""
                     break
-                if round_number == MAX_TOOL_ROUNDS:
+                if round_number == self.max_tool_rounds:
                     raise RuntimeError("Limite de rodadas de ferramentas do Hermes excedido.")
 
                 identities: list[tuple[str, str]] = []
@@ -134,13 +202,14 @@ class HermesAdapter(AgentAdapter):
                         break
                     identities.append(identity)
                 if len(identities) != len(calls):
-                    _request_valid_tool_calls(messages, round_number)
+                    _request_valid_tool_calls(messages, round_number, self.max_tool_rounds)
                     continue
 
                 messages.append(message)
                 for call, identity in zip(calls, identities, strict=True):
                     tool_call_id, name = identity
                     tool_started = time.perf_counter()
+                    observed_by_server = True
                     try:
                         _, _, arguments = _parse_tool_call(call)
                     except ValueError:
@@ -166,14 +235,27 @@ class HermesAdapter(AgentAdapter):
                                 and "message" in raw_result
                                 and "error" not in raw_result
                             ):
+                                err_code = raw_result["code"]
+                                if err_code in _DEFINITIVE_ERROR_CODES:
+                                    raise RuntimeError(
+                                        f"Erro definitivo da ferramenta {name}: {err_code}"
+                                    )
                                 result = {
                                     "error": {
-                                        "code": raw_result["code"],
+                                        "code": err_code,
                                         "message": raw_result["message"],
                                     }
                                 }
                                 status = "error"
                             elif isinstance(raw_result, dict) and "error" in raw_result:
+                                err_obj = raw_result["error"]
+                                err_code = (
+                                    err_obj.get("code") if isinstance(err_obj, dict) else None
+                                )
+                                if err_code in _DEFINITIVE_ERROR_CODES:
+                                    raise RuntimeError(
+                                        f"Erro definitivo da ferramenta {name}: {err_code}"
+                                    )
                                 result = raw_result
                                 status = "error"
                             else:
@@ -187,39 +269,23 @@ class HermesAdapter(AgentAdapter):
                                     artifact_id = result["artifact_id"]
                                     persisted_artifact_ids.append(artifact_id)
                         except httpx.HTTPStatusError as exc:
+                            if _is_definitive_http_error(exc):
+                                raise
                             status = "error"
-                            try:
-                                error_payload = exc.response.json()
-                                if isinstance(error_payload, dict):
-                                    code = (
-                                        error_payload.get("code")
-                                        or f"http_{exc.response.status_code}"
-                                    )
-                                    message = (
-                                        error_payload.get("message")
-                                        or exc.response.text
-                                        or "A chamada da ferramenta falhou."
-                                    )
-                                    result = {"error": {"code": code, "message": message}}
-                                else:
-                                    result = {
-                                        "error": {
-                                            "code": f"http_{exc.response.status_code}",
-                                            "message": (
-                                                exc.response.text
-                                                or "A chamada da ferramenta falhou."
-                                            ),
-                                        }
-                                    }
-                            except Exception:
-                                result = {
-                                    "error": {
-                                        "code": f"http_{exc.response.status_code}",
-                                        "message": (
-                                            exc.response.text or "A chamada da ferramenta falhou."
-                                        ),
-                                    }
+                            result = _extract_http_error_envelope(exc)
+                        except _NOT_SENT_ERRORS as exc:
+                            # P10: falha antes do envio não chega ao servidor e vira contagem em
+                            # parameters["unobserved_tool_calls"], ficando fora de tool_calls.
+                            observed_by_server = False
+                            if not hasattr(tool_client, "unobserved"):
+                                local_unobserved_calls += 1
+                            status = "error"
+                            result = {
+                                "error": {
+                                    "code": "backend_unavailable",
+                                    "message": f"Falha de comunicação com o backend: {exc}",
                                 }
+                            }
                         except httpx.HTTPError as exc:
                             status = "error"
                             result = {
@@ -237,15 +303,16 @@ class HermesAdapter(AgentAdapter):
                                 }
                             }
                     duration_ms = (time.perf_counter() - tool_started) * 1000
-                    tool_calls.append(
-                        ToolCallRecord(
-                            tool_call_id=tool_call_id,
-                            tool=name,
-                            duration_ms=duration_ms,
-                            status=status,
-                            artifact_id=artifact_id,
+                    if observed_by_server:
+                        tool_calls.append(
+                            ToolCallRecord(
+                                tool_call_id=tool_call_id,
+                                tool=name,
+                                duration_ms=duration_ms,
+                                status=status,
+                                artifact_id=artifact_id,
+                            )
                         )
-                    )
                     messages.append(
                         {
                             "role": "tool",
@@ -259,19 +326,44 @@ class HermesAdapter(AgentAdapter):
         self.final_response = final_content
         prompt_hash = hashlib.sha256(
             json.dumps(
-                {"system": SYSTEM_PROMPT, "task": task, "tools": TOOLS},
+                {"system": self.system_prompt, "task": task, "tools": active_tools},
                 ensure_ascii=False,
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest()
-        task_id = _resolve_task_id(task, context, task_id)
+        resolved_task_id, resolved_split, resolved_repetition = _resolve_execution_metadata(
+            self.execution,
+            task,
+            context,
+            task_id,
+            split,
+            repetition,
+        )
         endpoint_id = f"endpoint-{hashlib.sha256(config.base_url.encode()).hexdigest()[:16]}"
-        return ExperimentRun(
+
+        client_calls = getattr(tool_client, "calls", None)
+        if isinstance(client_calls, list) and client_calls:
+            recorded_tool_calls = list(client_calls)
+            recorded_artifacts = list(
+                dict.fromkeys(
+                    c.artifact_id for c in recorded_tool_calls if c.artifact_id is not None
+                )
+            )
+        else:
+            recorded_tool_calls = tool_calls
+            recorded_artifacts = persisted_artifact_ids
+
+        client_unobserved = getattr(tool_client, "unobserved", None)
+        unobserved_count = (
+            len(client_unobserved) if isinstance(client_unobserved, list) else 0
+        ) + local_unobserved_calls
+
+        experiment_run = ExperimentRun(
             **context.model_dump(exclude={"task_id"}),
-            task_id=task_id,
-            split=split,
+            task_id=resolved_task_id,
+            split=resolved_split,
             executor="hermes",
-            repetition=repetition,
+            repetition=resolved_repetition,
             code_commit=_git_commit(),
             harness_version=PROJECT_VERSION,
             adapter_version=PROJECT_VERSION,
@@ -279,14 +371,16 @@ class HermesAdapter(AgentAdapter):
             endpoint_id=endpoint_id,
             prompt_sha256=prompt_hash,
             parameters={
-                "max_tool_rounds": MAX_TOOL_ROUNDS,
+                "max_tool_rounds": self.max_tool_rounds,
                 "temperature": MODEL_TEMPERATURE,
                 "seed": MODEL_SEED,
                 "final_response": final_content,
+                "catalog_version": catalog_version(),
+                "unobserved_tool_calls": unobserved_count,
             },
             started_at=started_at,
             latency_ms=(time.perf_counter() - started) * 1000,
-            tool_calls=tool_calls,
+            tool_calls=recorded_tool_calls,
             input_tokens=input_tokens if input_tokens_known else None,
             output_tokens=output_tokens if output_tokens_known else None,
             cost_usd=_calculate_cost_usd(
@@ -296,10 +390,128 @@ class HermesAdapter(AgentAdapter):
                 output_tokens if output_tokens_known else None,
             ),
             agent_declared_success=bool(final_content.strip()),
-            persisted_artifact_ids=persisted_artifact_ids,
+            persisted_artifact_ids=recorded_artifacts,
             verified_success=None,
             evaluator=None,
         )
+
+        if self.sink is not None:
+            existing = (
+                self.sink.get(experiment_run.run_id)
+                if callable(getattr(self.sink, "get", None))
+                else None
+            )
+            if existing is not None and callable(getattr(self.sink, "update", None)):
+                experiment_run = self.sink.update(experiment_run)
+            elif callable(getattr(self.sink, "save", None)):
+                experiment_run = self.sink.save(experiment_run)
+
+        return experiment_run
+
+
+def create_adapter(
+    tool_client: Any | None = None,
+    sink: Any | None = None,
+    execution: Any | None = None,
+) -> HermesAdapter:
+    """Instancia HermesAdapter com cliente, sink e execução injetados pelo worker."""
+    return HermesAdapter(tool_client=tool_client, sink=sink, execution=execution)
+
+
+def adapter(*, use_sink: bool = False) -> Any:
+    """Fábrica sem argumentos compatível com `python -m agents.worker --executor hermes`."""
+    try:
+        compat = importlib.import_module("agents.compat")
+        run_bridge_cls = getattr(compat, "RunBridge", None)
+        if callable(run_bridge_cls):
+            if use_sink:
+                return run_bridge_cls(
+                    lambda tools, sink, execution: create_adapter(
+                        tool_client=tools,
+                        sink=sink,
+                        execution=execution,
+                    )
+                )
+            return run_bridge_cls(
+                lambda tools, execution: create_adapter(
+                    tool_client=tools,
+                    execution=execution,
+                )
+            )
+    except ImportError:
+        pass
+    return HermesAdapter()
+
+
+def _resolve_execution_metadata(
+    execution: Any | None,
+    task: str,
+    context: ToolContext,
+    task_id: str | None,
+    split: Literal["development", "final"],
+    repetition: int,
+) -> tuple[str, Literal["development", "final"], int]:
+    task_meta = getattr(execution, "task_metadata", None)
+    if not isinstance(task_meta, dict):
+        task_meta = {}
+
+    effective_task_id = task_id
+    if effective_task_id is None and isinstance(task_meta.get("task_id"), str):
+        candidate = task_meta["task_id"].strip()
+        if candidate:
+            effective_task_id = candidate
+
+    resolved_task_id = _resolve_task_id(task, context, effective_task_id)
+
+    resolved_split: Literal["development", "final"] = split
+    if split == "development" and task_meta.get("split") in ("development", "final"):
+        resolved_split = task_meta["split"]
+
+    resolved_repetition = repetition
+    meta_rep = task_meta.get("repetition")
+    if repetition == 1 and isinstance(meta_rep, int) and not isinstance(meta_rep, bool):
+        if meta_rep >= 1:
+            resolved_repetition = meta_rep
+
+    return resolved_task_id, resolved_split, resolved_repetition
+
+
+def _is_definitive_http_error(exc: httpx.HTTPStatusError) -> bool:
+    if exc.__class__.__name__ == "ToolCallError" or hasattr(exc, "error"):
+        return True
+    response = getattr(exc, "response", None)
+    if response is None:
+        return False
+    if response.status_code in {401, 403}:
+        return True
+    try:
+        payload = response.json()
+        if isinstance(payload, dict) and payload.get("code") in _DEFINITIVE_ERROR_CODES:
+            return True
+    except Exception:
+        pass
+    return False
+
+
+def _extract_http_error_envelope(exc: httpx.HTTPStatusError) -> dict[str, Any]:
+    try:
+        error_payload = exc.response.json()
+        if isinstance(error_payload, dict):
+            code = error_payload.get("code") or f"http_{exc.response.status_code}"
+            message = (
+                error_payload.get("message")
+                or exc.response.text
+                or "A chamada da ferramenta falhou."
+            )
+            return {"error": {"code": code, "message": message}}
+    except Exception:
+        pass
+    return {
+        "error": {
+            "code": f"http_{exc.response.status_code}",
+            "message": exc.response.text or "A chamada da ferramenta falhou.",
+        }
+    }
 
 
 def _resolve_task_id(task: str, context: ToolContext, task_id: str | None) -> str:
@@ -310,23 +522,24 @@ def _resolve_task_id(task: str, context: ToolContext, task_id: str | None) -> st
     if context_task_id is not None:
         return context_task_id
 
-    with TASKS_PATH.open(encoding="utf-8") as tasks_file:
-        tasks = json.load(tasks_file)
-    if not isinstance(tasks, list):
-        raise ValueError(f"O arquivo {TASKS_PATH} deve conter uma lista de tarefas.")
+    if TASKS_PATH.exists():
+        with TASKS_PATH.open(encoding="utf-8") as tasks_file:
+            tasks = json.load(tasks_file)
+        if not isinstance(tasks, list):
+            raise ValueError(f"O arquivo {TASKS_PATH} deve conter uma lista de tarefas.")
 
-    matching_ids = [
-        item["task_id"]
-        for item in tasks
-        if isinstance(item, dict)
-        and item.get("prompt") == task
-        and isinstance(item.get("task_id"), str)
-        and item["task_id"]
-    ]
-    if len(matching_ids) > 1:
-        raise ValueError(f"Mais de uma tarefa corresponde ao prompt em {TASKS_PATH}.")
-    if matching_ids:
-        return matching_ids[0]
+        matching_ids = [
+            item["task_id"]
+            for item in tasks
+            if isinstance(item, dict)
+            and item.get("prompt") == task
+            and isinstance(item.get("task_id"), str)
+            and item["task_id"]
+        ]
+        if len(matching_ids) > 1:
+            raise ValueError(f"Mais de uma tarefa corresponde ao prompt em {TASKS_PATH}.")
+        if matching_ids:
+            return matching_ids[0]
 
     return f"task-{hashlib.sha256(task.encode('utf-8')).hexdigest()[:16]}"
 
@@ -339,6 +552,9 @@ def _calculate_cost_usd(
 ) -> float | None:
     hostname = urlsplit(base_url).hostname
     if hostname is not None and _is_loopback_host(hostname):
+        return 0.0
+
+    if model.endswith(":free"):
         return 0.0
 
     prices = TOKEN_PRICES_PER_MILLION.get(model)
@@ -429,8 +645,12 @@ def _tool_call_identity(call: object) -> tuple[str, str] | None:
     return call_id, name
 
 
-def _request_valid_tool_calls(messages: list[dict], round_number: int) -> None:
-    if round_number == MAX_TOOL_ROUNDS:
+def _request_valid_tool_calls(
+    messages: list[dict],
+    round_number: int,
+    max_tool_rounds: int = MAX_TOOL_ROUNDS,
+) -> None:
+    if round_number == max_tool_rounds:
         raise RuntimeError("Limite de rodadas de ferramentas do Hermes excedido.")
     messages.append(
         {
@@ -449,7 +669,7 @@ def _parse_tool_call(call: object) -> tuple[str, str, dict]:
         raise ValueError("Resposta da LLM contém tool_call inválido.")
     call_id = call.get("id")
     function = call["function"]
-    name = function.get("name")
+    name = function["name"]
     raw_arguments = function.get("arguments")
     if not isinstance(call_id, str) or not isinstance(name, str):
         raise ValueError("Resposta da LLM contém ID ou nome de ferramenta inválido.")
